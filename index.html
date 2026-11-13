@@ -1475,13 +1475,16 @@ const CARD_ART=[
 function qPart(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;const p=u?LRC()[u[6]][1]:"道前基礎";return Math.max(0,CARD_PARTS.indexOf(p))}
 function qCat(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;return u?LRC()[u[6]][0]:""}
 /* 一張法語卡：背景（依四部）＋金框＋編號＋法類＋師父原話＋角色＋出處 */
+/* 同一類表情有幾個相近的姿勢，依卡片編號輪流，避免每張卡的角色都同一個動作 */
+const POSE_SET={think:["think","gentle","calm","happy"],fight:["fight","cheer","happy"],wow:["wow","happy","cheer"],happy:["happy","love","cheer"],gentle:["gentle","love","calm"],cheer:["cheer","happy","love"],calm:["calm","gentle","sit"]};
+function qPose(q,k,who){const set=POSE_SET[q[2]]||[q[2]||"happy"];const ok=set.filter(m=>MOODS[who].includes(m)||MOOD_NEAR[m]);return (ok.length?ok:set)[k%(ok.length||set.length)]}
 function qCard(q,k,o){o=o||{};const pi=qPart(q);const who=tileWho(q[3]||"jie");const mini=o.mini;
   const n=q[0].replace(/[，。！？、；：「」『』─…\s]/g,"").length;const sz=n<=14?1:n<=22?2:n<=30?3:4;
   return `<div class="fcard p${pi} sz${sz} ${mini?"mini":""}" ${mini?`data-act="q-open" data-k="${k}" role="button" tabindex="0" aria-label="第 ${k+1} 張法語卡"`:""}>
     <div class="fc-art" aria-hidden="true">${CARD_ART[pi]}<img src="cards/p${pi}.webp" alt="" loading="lazy" onerror="this.remove()"></div><div class="fc-frame" aria-hidden="true">${["tl","tr","bl","br"].map(c=>`<svg class="fc-corner ${c}" viewBox="0 0 24 24"><path d="M2 14V6a4 4 0 0 1 4-4h8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 10V8a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="4" cy="4" r="1.6" fill="currentColor"/></svg>`).join("")}</div>
     <div class="fc-head"><span class="fc-no num">No.${String(k+1).padStart(3,"0")}</span><span class="fc-cat">${esc(qCat(q))}</span></div>
     <div class="fc-body"><p class="fc-q">${esc(q[0])}</p><span class="fc-seal" aria-hidden="true">法語</span></div>
-    <span class="fc-char" aria-hidden="true">${charInner(who,q[2]||"happy")}</span>
+    <span class="fc-char" aria-hidden="true">${charInner(who,qPose(q,k,who))}</span>
     ${mini?"":`<div class="fc-foot"><span class="fc-src">${esc(qSource(q))}</span>${qUnit(q)!=null?`<button class="fc-go" data-act="q-listen" data-k="${k}">▶ 聽這一段</button>`:""}</div>`}
   </div>`}
 function qBack(k,mini){return `<div class="fcard back ${mini?"mini":""}" aria-hidden="true"><div class="fc-back-art"><svg viewBox="0 0 64 64"><path d="M32 6c6 10 13 15 13 24a13 13 0 0 1-26 0c0-9 7-14 13-24z" fill="#ffd36b" stroke="#fff" stroke-width="2"/><rect x="24" y="40" width="16" height="16" rx="3" fill="#fff5e4"/></svg></div>${k!=null?`<span class="fc-no num">No.${String(k+1).padStart(3,"0")}</span>`:""}<span class="fc-back-t">燈燈相續</span></div>`}
