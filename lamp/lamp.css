@@ -1,0 +1,108 @@
+/* 燈燈相續・一天一盞燈、記一則善行、我的燈海、燈譜（lamp/lamp.js、shan.js、sky.js 用）
+   顏色優先用網站本身的變數（--card、--ink、--mute、--shadow…），沒有就用後面的預設值。 */
+
+:root{
+  --x-jie:#ff7a59; --x-ding:#ffad1f; --x-hui:#6c8cff; --x-shan:#6E8F6B;
+  --gilt:#C9A227; --gilt-rim:#F2DFA8;
+}
+
+/* ── 四學小圓點 ── */
+.ddl-dots{display:inline-flex;gap:4px;align-items:center}
+.ddl-dots i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;
+  color:#fff;background:rgba(43,35,80,.12);color:rgba(43,35,80,.35)}
+.ddl-dots i.on{color:#fff}
+.ddl-dots i.x-jie.on{background:var(--x-jie)} .ddl-dots i.x-ding.on{background:var(--x-ding)}
+.ddl-dots i.x-hui.on{background:var(--x-hui)} .ddl-dots i.x-shan.on{background:var(--x-shan)}
+
+/* ── 首頁：今天的燈 ── */
+.ddl-today{display:flex;align-items:center;gap:10px;border:0;background:var(--card,#fff);border-radius:18px;padding:6px 14px 6px 8px;
+  box-shadow:var(--shadow,0 4px 14px rgba(43,35,80,.1));font:inherit;color:var(--ink,#2b2350);cursor:pointer;text-align:left}
+.ddl-today .ddl-art svg{display:block}
+.ddl-meta{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ddl-meta b{font-size:14px}
+
+/* ── 稀有度標籤 ── */
+.ddl-tier{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:rgba(43,35,80,.08);color:var(--mute,#6b6488);font-weight:600}
+.ddl-tier.t-uncommon{background:var(--gilt-rim);color:#7a5c0e}
+.ddl-tier.t-rare{background:linear-gradient(135deg,#E0BC4A,#C9A227);color:#fff}
+
+/* ── 開獎 ── */
+.ddl-sheet .panel{text-align:center}
+.ddl-reveal{position:relative;display:grid;place-items:center;margin:8px auto 4px;min-height:130px}
+.ddl-reveal svg{position:relative;z-index:1}
+.ddl-reveal.new svg,.ddl-reveal.up svg{animation:ddl-rise .9s cubic-bezier(.2,.8,.2,1.2) both}
+.ddl-glow{position:absolute;inset:0;margin:auto;width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,214,120,.65),rgba(255,214,120,0) 70%);animation:ddl-glow 2.4s ease-in-out infinite}
+.ddl-reveal.up .ddl-glow{background:radial-gradient(circle,rgba(242,223,168,.95),rgba(201,162,39,0) 70%)}
+@keyframes ddl-rise{from{transform:translateY(24px) scale(.7);opacity:0}to{transform:none;opacity:1}}
+@keyframes ddl-glow{0%,100%{transform:scale(.92);opacity:.75}50%{transform:scale(1.08);opacity:1}}
+@media (prefers-reduced-motion:reduce){.ddl-reveal svg,.ddl-glow{animation:none!important}}
+.ddl-eyebrow{margin:6px 0 0;font-size:12px;letter-spacing:.1em;color:var(--mute,#6b6488)}
+.ddl-name,.ddl-date{margin:2px 0 4px;font-size:24px}
+.ddl-sub{margin:0 0 10px;font-size:13px;color:var(--mute,#6b6488)}
+.ddl-hint{font-size:12px;color:var(--mute,#6b6488);margin:10px 0 2px}
+.ddl-rows{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+.ddl-row{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:700}
+.ddl-row i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff}
+.ddl-row.x-jie i{background:var(--x-jie)} .ddl-row.x-ding i{background:var(--x-ding)} .ddl-row.x-hui i{background:var(--x-hui)} .ddl-row.x-shan i{background:var(--x-shan)}
+.ddl-shans{list-style:none;margin:8px 0;padding:0;text-align:left;display:grid;gap:6px}
+.ddl-shan{background:var(--card-2,rgba(43,35,80,.05));border-radius:12px;padding:8px 10px;font-size:14px;line-height:1.5}
+.ddl-shan .k{margin-right:6px}
+.ddl-shan small{display:block;color:var(--mute,#6b6488);font-size:12px}
+
+/* ── 善：首頁一條 ── */
+.shan-strip{display:flex;align-items:center;gap:10px;background:var(--card,#fff);border-radius:18px;padding:8px 12px;
+  box-shadow:var(--shadow,0 4px 14px rgba(43,35,80,.1))}
+.shan-k{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;font-weight:700;font-size:17px;color:#fff;
+  background:linear-gradient(150deg,#8fb08a,#6E8F6B)}
+.shan-add{flex:1;border:0;background:none;font:inherit;font-size:15px;font-weight:600;color:var(--ink,#2b2350);text-align:left;cursor:pointer;padding:6px 0}
+.shan-n{display:inline-flex;gap:4px}
+.shan-n i{width:9px;height:9px;border-radius:50%;background:rgba(43,35,80,.14)}
+.shan-n i.on{background:var(--x-shan)}
+
+/* ── 善：記一則的彈層 ── */
+.shan-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;text-align:left}
+.shan-head h2{flex:1;margin:0;font-size:20px}
+.shan-kinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.shan-kinds button{border:2px solid transparent;background:var(--card-2,rgba(43,35,80,.05));border-radius:14px;padding:8px 2px;font:inherit;color:var(--ink,#2b2350);
+  display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.shan-kinds button .i{font-size:24px;line-height:1.2}
+.shan-kinds button .n{font-size:11.5px}
+.shan-kinds button.on{border-color:var(--x-shan);background:rgba(110,143,107,.12)}
+.shan-hint{font-size:12.5px;color:var(--mute,#6b6488);margin:8px 2px;text-align:left}
+.shan-sutra{display:grid;grid-template-columns:1fr 84px;gap:8px;margin-bottom:8px}
+.shan-sutra[hidden]{display:none}
+.shan-sutra input,.ddl-sheet textarea{font:inherit;font-size:15px;border:1px solid rgba(43,35,80,.16);border-radius:12px;padding:8px 10px;background:var(--card,#fff);color:var(--ink,#2b2350);width:100%;box-sizing:border-box}
+.shan-full{font-size:14px;color:var(--mute,#6b6488);text-align:left}
+.shan-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px;text-align:left}
+.shan-list li{display:grid;grid-template-columns:26px 1fr 30px;align-items:center;gap:6px;background:var(--card-2,rgba(43,35,80,.05));border-radius:12px;padding:6px 8px;font-size:14px}
+.shan-list li small{display:block;font-size:12px;color:var(--mute,#6b6488)}
+.shan-list .x{border:0;background:none;color:var(--mute,#6b6488);font-size:15px;cursor:pointer}
+
+/* ── 我的燈海 ── */
+.ddsky{position:relative}
+.ddsky-svg{display:block;width:100%;height:auto;border-radius:20px;box-shadow:var(--shadow,0 4px 14px rgba(43,35,80,.15))}
+.ddsky-svg circle[data-ddl-open]{cursor:pointer}
+.ddsky-bar{display:flex;justify-content:space-between;align-items:center;margin:8px 4px 0;font-size:13px;color:var(--mute,#6b6488)}
+.ddsky-no button{border:0;background:none;font-size:18px;color:var(--ink,#2b2350);cursor:pointer;padding:0 6px}
+.ddsky-no button:disabled{opacity:.25}
+.ddsky-count b{font-size:18px;color:var(--ink,#2b2350)}
+.ddsky-next{margin:4px 4px 0;font-size:12.5px;color:var(--mute,#6b6488)}
+
+/* ── 燈譜 ── */
+.ddalbum-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.ddalbum-head b{font-size:17px}
+.ddalbum-head span{font-size:13px;color:var(--mute,#6b6488)}
+.ddalbum-tier{margin-top:8px}
+.ddalbum-t{font-size:11.5px;font-weight:700;color:var(--mute,#6b6488)}
+.ddalbum-t.t-uncommon{color:#9c7516}.ddalbum-t.t-rare{color:#C9A227}
+.ddalbum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-top:4px}
+.ddalbum-c{border:0;background:var(--card-2,rgba(43,35,80,.04));border-radius:14px;padding:6px 2px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;color:var(--ink,#2b2350)}
+.ddalbum-c small{font-size:11px}
+.ddalbum-c:not(.on){opacity:.55}
+.ddalbum-cols{display:flex;gap:3px;margin-top:1px}
+.ddalbum-cols i{width:7px;height:7px;border-radius:50%;background:rgba(43,35,80,.12)}
+.ddalbum-cols i.on.c-jie{background:var(--x-jie)}.ddalbum-cols i.on.c-ding{background:var(--x-ding)}
+.ddalbum-cols i.on.c-hui{background:var(--x-hui)}.ddalbum-cols i.on.c-shan{background:var(--x-shan)}
+.ddalbum-cols i.on.c-gold{background:var(--gilt)}
+.ddalbum-c.on{cursor:pointer;background:var(--card,#fff);box-shadow:var(--shadow,0 2px 8px rgba(43,35,80,.08))}

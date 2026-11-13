@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>燈燈相續・燈的示範</title>
+<link rel="stylesheet" href="lamp.css">
+<style>
+  /* 只為了示範頁：模仿網站的底色與按鈕。正式網站用 index.html 自己的樣式。 */
+  :root{--ink:#2b2350;--mute:#6b6488;--card:#fff;--card-2:#f4f1fb;--shadow:0 6px 18px rgba(43,35,80,.12)}
+  body{margin:0;font-family:"Noto Sans TC",system-ui,sans-serif;background:linear-gradient(#f3eefc,#fdf3ea);color:var(--ink)}
+  main{max-width:520px;margin:0 auto;padding:16px}
+  h1{font-size:18px;margin:4px 0 12px}
+  h3{font-size:14px;color:var(--mute);margin:22px 0 8px;letter-spacing:.08em}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:1px solid rgba(43,35,80,.15);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink)}
+  .btn.primary{background:#ffad1f;border-color:#ffad1f;font-weight:700}
+  .btn.ghost{background:none}
+  .btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .sheet{position:fixed;inset:0;background:rgba(30,20,60,.35);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+  .panel{background:#fffaf5;width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:18px 16px 22px;max-height:88vh;overflow:auto;box-sizing:border-box}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2350;color:#fff;padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .3s;z-index:60}
+  #toast.on{opacity:1}
+  .card{background:#fff;border-radius:20px;padding:12px;box-shadow:var(--shadow)}
+</style>
+</head>
+<body>
+<main>
+  <h1>燈燈相續・燈的示範（假資料，不影響網站）</h1>
+  <div id="today"></div>
+  <h3>做一件功課（每做一件就抽一次）</h3>
+  <div class="row">
+    <button class="btn" data-act="jie">戒：聽聞一段</button>
+    <button class="btn" data-act="ding">定：上座一座</button>
+    <button class="btn" data-act="hui">慧：觀察修</button>
+    <button class="btn" data-shan-open>善：記一則</button>
+  </div>
+  <h3>測試</h3>
+  <div class="row">
+    <button class="btn" data-act="fake60">補 60 天假資料</button>
+    <button class="btn" data-act="fake120">補 130 天假資料</button>
+    <button class="btn" data-act="vip">慧：開／關</button>
+    <button class="btn" data-act="reset">清空</button>
+  </div>
+  <h3>首頁那一條</h3>
+  <div id="strip"></div>
+  <h3>我的燈海</h3>
+  <div id="sea" data-ddsky-host></div>
+  <h3>燈譜</h3>
+  <div class="card" id="album"></div>
+</main>
+<div id="layer"></div>
+<div id="toast"></div>
+
+<script>
+/* 模仿 index.html 的全域：S、DAYS（頂層 let）、today()、persist()、render()、toast() */
+const KEY = "dd-lamp-demo";
+let S = { vipOn: true, lr: { done: {} }, heard: {}, vheard: {}, vquiz: {} }, DAYS = {};
+try { const o = JSON.parse(localStorage.getItem(KEY)); if (o) { S = o.S; DAYS = o.DAYS; } } catch (e) {}
+function today() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function persist() { try { localStorage.setItem(KEY, JSON.stringify({ S, DAYS })); } catch (e) {} }
+function toast(m) { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 1800); }
+function ensureDay(k) { if (!DAYS[k]) DAYS[k] = { sits: [] }; return DAYS[k]; }
+</script>
+<script src="lamp.js"></script>
+<script src="shan.js"></script>
+<script src="sky.js"></script>
+<script>
+function render() {
+  document.getElementById("today").innerHTML = DDLamp.todayCard();
+  document.getElementById("strip").innerHTML = Shan.strip();
+  document.getElementById("sea").innerHTML = DDSky.mySea();
+  document.getElementById("album").innerHTML = DDSky.album();
+}
+let n = 0;
+function did(fn) { fn(ensureDay(today())); persist(); const r = DDLamp.sync(); render(); DDLamp.reveal(r); }
+function shift(k, d) { const x = new Date(k + "T12:00:00"); x.setDate(x.getDate() + d); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
+function fake(days) {
+  const t = today();
+  for (let i = days; i >= 1; i--) {
+    if (Math.random() < 0.15) continue;                 // 有些天沒做
+    const k = shift(t, -i), d = ensureDay(k);
+    if (Math.random() < 0.8) S.lr.done[k + "." + i] = k;
+    if (Math.random() < 0.7) d.sits.push({ m: 10 });
+    if (Math.random() < 0.4) d.vthink = true;
+    if (Math.random() < 0.6) d.shan = [{ k: "deed", t: "示範：幫同事倒了杯水" }];
+    if (Math.random() < 0.3) d.shan = (d.shan || []).concat([{ k: "grat", t: "示範：感恩班長的提醒" }]);
+    // 過去的日子：直接抽一盞（模擬當天就點亮了）
+    const realToday = today; window.today = () => k; DDLamp.sync(k); window.today = realToday;
+  }
+  persist(); render();
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act;
+  if (a === "jie") did(() => { S.lr.done["demo." + Date.now()] = today(); });
+  if (a === "ding") did((d) => d.sits.push({ m: 10 }));
+  if (a === "hui") did((d) => { d.vthink = true; S.vquiz[Date.now()] = today(); });
+  if (a === "fake60") fake(60);
+  if (a === "fake120") fake(130);
+  if (a === "vip") { S.vipOn = !S.vipOn; persist(); render(); toast(S.vipOn ? "慧算進去（四學）" : "慧不算（三學）"); }
+  if (a === "reset") { S = { vipOn: true, lr: { done: {} }, heard: {}, vheard: {}, vquiz: {} }; DAYS = {}; persist(); render(); }
+});
+render();
+</script>
+</body>
+</html>

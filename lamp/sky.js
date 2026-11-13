@@ -1,0 +1,508 @@
+/* 燈燈相續・我的燈海與燈譜（window.DDSky）
+ *
+ * 燈海的畫法（夜空／湖面／山谷三種底、風草塔月與出家人河燈雁星會長出來、月相同步、冬天飄雪）
+ * 整段取自燈燈悅心 src/sky.js 的「畫成圖卡」那一版（一張靜止的 SVG），排燈的位置取自 src/views/sea.js。
+ * 一片燈海 108 盞；第幾片決定底色，這一片填了幾盞決定長出什麼，一共點過幾盞決定另一層景。
+ *
+ * 一般 script，需要先載入 lamp/lamp.js。接法見 lamp/README.md。
+ */
+(function () {
+"use strict";
+const { BOWLS, sparkArt, SPARK_VB } = window.DDLamp;
+function star4(cx, cy, R) {
+  const r = R * 0.26;
+  return 'M' + [[0, -R], [r, -r], [R, 0], [r, r], [0, R], [-r, r], [-R, 0], [-r, -r]]
+    .map(([dx, dy]) => `${(cx + dx).toFixed(1)} ${(cy + dy).toFixed(1)}`).join('L') + 'Z';
+}
+
+
+const SCENES = [
+  { key: 'night', name: '夜空' },
+  { key: 'lake',  name: '湖面' },
+  { key: 'valley', name: '山谷' },
+];
+
+/** 第幾片天空 → 哪一種底。第 1 片永遠是夜空。 */
+function sceneOf(skyNo = 1) {
+  return SCENES[(Math.max(1, skyNo) - 1) % SCENES.length];
+}
+
+/* ── 會長出來的東西 ── */
+
+/** 這一片自己的進度。每一片都從空走到滿，所以這幾樣會重來。 */
+const SKY_STAGES = [
+  { at: 7,   cls: 'windy',  label: '燈會開始隨風飄' },
+  { at: 21,  cls: 'reeds',  label: '岸邊長出草，偶爾有人走過' },
+  { at: 49,  cls: 'pagoda', label: '遠處浮起一座塔，塔上偶爾亮燈' },
+  { at: 108, cls: 'moon',   label: '天上出現月亮' },
+];
+
+/** 這個群一共供過幾盞。不會因為換了新的一片而清空。 */
+const LIFE_STAGES = [
+  { at: 216,  cls: 'monk',  label: '有出家人經過，會停下來合掌' },
+  { at: 324,  cls: 'lights', label: '水上漂起河燈' },
+  { at: 540,  cls: 'geese', label: '偶爾有一行雁飛過' },
+  { at: 1080, cls: 'stars', label: '滿天都是星' },
+];
+
+/**
+ * 下一個會發生的事。
+ * 兩層各找一個，取比較近的那個講——「再 6 盞」要是真的再 6 盞。
+ */
+function nextMilestone(filled, reached = filled) {
+  const a = SKY_STAGES.find((m) => filled < m.at);
+  const b = LIFE_STAGES.find((m) => reached < m.at);
+  const left = (m, n) => (m ? m.at - n : Infinity);
+  if (left(a, filled) <= left(b, reached)) return a ? { ...a, left: a.at - filled } : null;
+  return b ? { ...b, left: b.at - reached } : null;
+}
+
+/* ── 節氣與時辰 ──
+ * 月亮已經跟真的月相同步了，這是往下接：冬天飄雪、清晨天色轉淡。
+ * 只做這兩件，再多天空就不是天空了。 */
+
+function ambience(now = new Date()) {
+  const h = now.getHours();
+  const m = now.getMonth() + 1;
+  return {
+    tod: h >= 5 && h < 8 ? 'dawn' : h >= 17 && h < 19 ? 'dusk' : 'night',
+    snow: m === 12 || m === 1 || m === 2,
+  };
+}
+
+/**
+ * 夜空那個容器要掛哪些 class。
+ * @param {{filled:number, reached?:number, skyNo?:number, now?:Date}} ctx
+ */
+function stageClasses(ctx) {
+  const { filled = 0, reached = filled, skyNo = 1, now = new Date() } = ctx;
+  const amb = ambience(now);
+  return [
+    `sc-${sceneOf(skyNo).key}`,
+    `tod-${amb.tod}`,
+    amb.snow ? 'snowy' : '',
+    ...SKY_STAGES.filter((m) => filled >= m.at).map((m) => m.cls),
+    ...LIFE_STAGES.filter((m) => reached >= m.at).map((m) => m.cls),
+  ].filter(Boolean).join(' ');
+}
+
+/* ── 月相 ──
+ * 關鍵是暗面不畫。用天空色的實心圓去切，等於在天空上蓋一塊不透明的
+ * 深色圓，暗的那半看得見，而且會擋住後面的燈。 */
+
+function moonPhase(date = new Date()) {
+  const ref = Date.UTC(2000, 0, 6, 18, 14);        // 一個已知的朔
+  const syn = 29.530588853 * 86400000;             // 朔望月
+  let p = ((date.getTime() - ref) % syn) / syn;
+  if (p < 0) p += 1;
+  return p;                                        // 0 是朔、0.5 是望
+}
+
+let moonSeq = 0;
+
+/** 月亮的 SVG 內容（不含外框），40×40 的座標系。 */
+function moonArt(date = new Date()) {
+  const p = moonPhase(date);
+  const cosT = Math.cos(2 * Math.PI * p);
+  // 亮的比例。全黑的朔留一點點，不然「天上出現月亮」會看不到東西。
+  const k = Math.max(0.055, (1 - cosT) / 2);
+  const waxing = p < 0.5;                          // 上弦：北半球亮在右邊
+  const gibbous = k > 0.5;
+  const rx = (Math.abs(cosT) * 20).toFixed(2);
+  const id = `ddsky-mn${++moonSeq}`;
+  const half = `M20 0A20 20 0 0 ${waxing ? 1 : 0} 20 40Z`;
+
+  return `<mask id="${id}">
+      <rect width="40" height="40" fill="#000"/>
+      <path d="${half}" fill="#fff"/>
+      <ellipse cx="20" cy="20" rx="${rx}" ry="20" fill="${gibbous ? '#fff' : '#000'}"/>
+    </mask>
+    <circle cx="20" cy="20" r="20" fill="#E8E2D2" mask="url(#${id})"/>`;
+}
+
+/* ── 幾何：草、塔、山、人、船 ──
+ * 都回傳純 path，DOM 和圖卡共用同一組形狀。 */
+
+/**
+ * 岸邊的草。
+ * 剪影，不是一根根線條——線條在深色天空上看起來像刮痕。
+ * 分遠近兩層：遠的矮、淺、密，近的高、深、疏，只有一層會很平。
+ */
+function grassPath(count, maxH, salt) {
+  const W = 320;
+  const step = W / count;
+  let d = 'M0 40';
+  for (let i = 0; i < count; i++) {
+    const x = i * step;
+    // 瘦而高才像草。寬而尖會變成松林。
+    const w = step * (0.42 + ((i * 7 + salt) % 5) * 0.09);
+    const h = maxH * (0.5 + ((i * 13 + salt) % 9) / 11);
+    const lean = (((i * 5 + salt) % 7) - 3) * (w * 0.55);
+    const tip = x + w / 2 + lean;
+    d += ` L${x.toFixed(1)} 40`
+       + ` Q${(x + w * 0.1 + lean * 0.4).toFixed(1)} ${(40 - h * 0.55).toFixed(1)} ${tip.toFixed(1)} ${(40 - h).toFixed(1)}`
+       + ` Q${(x + w * 0.9 + lean * 0.4).toFixed(1)} ${(40 - h * 0.45).toFixed(1)} ${(x + w).toFixed(1)} 40`;
+  }
+  return `${d} L${W} 40 Z`;
+}
+
+const PAGODA_ART = `
+  <path d="M40 4l20 12H20z"/><path d="M26 16h28v10H26z"/>
+  <path d="M40 26l24 12H16z"/><path d="M24 38h32v12H24z"/>
+  <path d="M40 50l28 14H12z"/><path d="M22 64h36v22H22z"/>
+  <path d="M8 86h64v10H8z"/>`;
+
+/** 遠山。山谷那一景的底，兩層疊出深度。 */
+const RANGE_FAR = 'M0 40 L38 14 L62 26 L96 4 L130 24 L162 12 L196 30 L232 10 L268 28 L300 16 L320 30 L320 40 Z';
+const RANGE_NEAR = 'M0 40 L26 26 L58 34 L88 20 L124 34 L158 24 L188 36 L226 22 L258 34 L292 26 L320 36 L320 40 Z';
+
+/** 走路的人。頭要露出草，整個埋在草裡就看不出是人。 */
+const WALKER_ART = `
+  <circle cx="8" cy="4.2" r="3.2"/>
+  <path d="M8 7.6c-2.8 0-4.4 2.2-4.9 7L2 24h12l-1.1-9.4c-.5-4.8-2.1-7-4.9-7z"/>`;
+
+/**
+ * 出家人。
+ * 跟走路的人要一眼分得出來：光頭、袈裟下襬比較寬、手在胸前合掌。
+ * 合掌是這個剪影的重點，所以手的那一塊要挖出來看得見。
+ */
+const MONK_ART = `
+  <circle cx="9" cy="4" r="3.4"/>
+  <path d="M9 7.4c-3.2 0-5 2.4-5.6 7.4L2 26h14l-1.4-11.2c-.6-5-2.4-7.4-5.6-7.4z"/>
+  <path d="M9 10.4l2.6 4.4H6.4z" fill="#0E1620" opacity=".55"/>`;
+
+/** 河燈。一盞小小的，飄在水上。 */
+const BOAT_ART = `
+  <path d="M1 7h14l-2.2 4H3.2z"/>
+  <path d="M8 0.6c1.7 2.2 2.5 3.4 2.5 4.6a2.5 2.5 0 0 1-5 0c0-1.2.8-2.4 2.5-4.6z" fill="#F0C479"/>`;
+
+/** 一行雁。單數隻，兩邊不對稱，才不像箭號。 */
+const GEESE = [
+  { x: 0, y: 0, s: 1 }, { x: 9, y: 5, s: .9 }, { x: 18, y: 10, s: .82 },
+  { x: -9, y: 6, s: .9 }, { x: -18, y: 12, s: .8 }, { x: -27, y: 19, s: .72 },
+];
+
+const GOOSE_ART = 'M0 3q3-3.2 5.4 0Q3 1.6 0 3ZM0 3q-3-3.2-5.4 0Q-3 1.6 0 3Z';
+
+/* ══════════════════ 畫成圖卡 ══════════════════
+ *
+ * 圖卡是一張靜止的 SVG：沒有動畫，所以會動的那些（風、走過的人、
+ * 閃的塔燈）要挑一個好看的瞬間定住，不是省略。 */
+
+const SKY_W = 1080;
+
+/** 場景的底色。時辰會調，冬天會再冷一點。 */
+function skyPaint(scene, amb) {
+  const base = {
+    night:  ['#1E2A38', '#16202C'],
+    lake:   ['#1B2740', '#101A2C'],
+    valley: ['#212C3A', '#141E29'],
+  }[scene] || ['#1E2A38', '#16202C'];
+
+  if (amb.tod === 'dawn') return ['#2B3A4E', '#3C4A55'];
+  if (amb.tod === 'dusk') return ['#2A2C3C', '#3B3040'];
+  return base;
+}
+
+/**
+ * 整片天空畫成一張 SVG。
+ *
+ * @param {{
+ *   items: Array<{lamp:object, joys?:number, key:string}>,
+ *   filled:number, reached:number, skyNo:number,
+ *   layout: Array<{x:number,y:number,glow:number,lamp:object}>,
+ *   height:number, now?:Date
+ * }} o
+ */
+function skySVG(o) {
+  const { layout = [], filled = 0, reached = filled, skyNo = 1, height = 1080, now = new Date() } = o;
+  const scene = sceneOf(skyNo).key;
+  const amb = ambience(now);
+  const [c1, c2] = skyPaint(scene, amb);
+
+  const W = SKY_W;
+  const H = height;
+  const px = (p) => (p / 100) * W;          // x 是百分比
+  const py = (p) => (p / 100) * H;          // y 也是百分比
+  const k = W / 360;                        // DOM 是 ~360 寬，這裡放大
+
+  // 地平線：畫面上是「底部那塊漸層的上緣」，比照搬過來。
+  const horizon = H - 94 * (H / 352);
+  const water = horizon + 6;
+
+  const parts = [];
+
+  // ── 底 ──
+  parts.push(`<defs>
+    <linearGradient id="ddsky-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/>
+    </linearGradient>
+    <linearGradient id="ddsky-ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${c2}" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0E1620" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="ddsky-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A3C5C" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#0E1828" stop-opacity=".98"/>
+    </linearGradient>
+    <linearGradient id="ddsky-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="ddsky-reflect" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
+      <rect x="0" y="${water}" width="${W}" height="${H - water}" fill="url(#ddsky-fade)"/>
+    </mask>
+  </defs>`);
+  parts.push(`<rect width="${W}" height="${H}" fill="url(#ddsky-bg)"/>`);
+
+  // ── 星 ──
+  if (reached >= 1080) {
+    parts.push([...Array(46)].map((_, i) => {
+      const x = px(6 + 88 * ((i * 0.7548776662) % 1));
+      const y = py(4 + 58 * ((i * 0.5698402909) % 1));
+      const R = (0.9 + (i % 3) * 0.6) * k * 2.3;
+      return `<path d="${star4(x, y, R)}" fill="#E8E2D2" opacity="${(0.4 + (i % 4) * 0.15).toFixed(2)}"/>`;
+    }).join(''));
+  }
+
+  // ── 月 ──
+  const moonBox = 36 * k;
+  if (filled >= 108) {
+    parts.push(`<g transform="translate(${px(12)} ${py(12)}) scale(${(moonBox / 40).toFixed(3)})">${moonArt(now)}</g>`);
+  }
+
+  // ── 雁 ──
+  if (reached >= 540) {
+    parts.push(`<g fill="none" stroke="#5A6E85" stroke-width="${(1.6 * k).toFixed(1)}" stroke-linecap="round" opacity=".8">`
+      + GEESE.map((g) => `<g transform="translate(${px(62) + g.x * k * 1.6} ${py(20) + g.y * k * 1.6}) scale(${(g.s * k * 1.5).toFixed(2)})"><path d="${GOOSE_ART}"/></g>`).join('')
+      + `</g>`);
+  }
+
+  // ── 遠山（山谷才有）──
+  if (scene === 'valley') {
+    const top = horizon - 86 * k;
+    parts.push(`<g transform="translate(0 ${top}) scale(${(W / 320).toFixed(3)} ${((86 * k) / 40).toFixed(3)})">
+      <path d="${RANGE_FAR}" fill="#26364A"/>
+      <path d="${RANGE_NEAR}" fill="#1C2A3A"/>
+    </g>`);
+  }
+
+  // 地平線那層暗漸層。順序很重要：它要在倒影「之前」畫——
+  // 畫在後面會把整片倒影蓋掉，水裡就只剩一塊黑。
+  // 湖面那一景不需要它，水自己就夠暗了。
+  if (scene !== 'lake') {
+    parts.push(`<rect x="0" y="${horizon - 6}" width="${W}" height="${H - horizon + 6}" fill="url(#ddsky-ground)"/>`);
+  }
+
+  // ── 水（湖面才有）──
+  if (scene === 'lake') {
+    parts.push(`<rect x="0" y="${water}" width="${W}" height="${H - water}" fill="url(#ddsky-water)"/>`);
+    // 月光在水面拉出一道
+    if (filled >= 108) {
+      parts.push(`<rect x="${px(12) + moonBox / 2 - 9 * k}" y="${water}" width="${18 * k}" height="${H - water}"
+        fill="#E8E2D2" opacity=".07"/>`);
+    }
+  }
+
+  // ── 塔 ──
+  if (filled >= 49) {
+    const pw = 52 * k;
+    const ph = 74 * k;
+    parts.push(`<g transform="translate(${W - px(9) - pw} ${horizon - 6 * k - ph}) scale(${(pw / 80).toFixed(3)} ${(ph / 96).toFixed(3)})"
+      fill="#33455A">${PAGODA_ART}
+      <rect x="35" y="69" width="10" height="11" rx="1.4" fill="#E8B45A" opacity=".9"/>
+    </g>`);
+  }
+
+  // ── 燈與倒影 ──
+  //
+  // 倒影壓成 0.4 倍，不是照鏡子：照鏡子的話，天上那盞的倒影會落到
+  // 水面底下更深的地方，整個掉出畫面。壓過之後全部收在水裡。
+  const sparks = layout.map((p, i) => sparkSVG(p, i, px, py, k)).join('');
+  if (scene === 'lake') {
+    // 遮罩要掛在外層那個「沒有 transform」的 g 上。掛在同一個 g 上的話，
+    // 遮罩會跟著一起翻過去——遮到的就變成天空，水面反而全被擦掉。
+    parts.push(`<g mask="url(#ddsky-reflect)"><g opacity=".6" transform="translate(0 ${water}) scale(1 -0.4) translate(0 ${-water})">${sparks}</g></g>`);
+  }
+  parts.push(sparks);
+
+  // ── 草 ──
+  if (filled >= 21) {
+    const gh = 16 * k * 1.6;
+    parts.push(`<g transform="translate(0 ${horizon - gh}) scale(${(W / 320).toFixed(3)} ${(gh / 40).toFixed(3)})">
+      <path d="${grassPath(40, 24, 0)}" fill="#3B4E63"/>
+      <path d="${grassPath(26, 37, 4)}" fill="#2A3A4C"/>
+    </g>`);
+  }
+
+  // ── 河燈 ──
+  if (reached >= 324) {
+    [0.28, 0.52, 0.74].forEach((t, i) => {
+      const s = k * 1.5 * (1 - i * 0.08);
+      parts.push(`<g transform="translate(${px(t * 100)} ${horizon - (4 + i * 3) * k}) scale(${s.toFixed(2)})" fill="#3E5268">${BOAT_ART}</g>`);
+    });
+  }
+
+  // ── 走過的人、出家人 ──
+  // 動畫定在「人剛好走到畫面裡」那一刻，不是省略不畫。
+  if (filled >= 21) {
+    const s = k * 1.5;
+    parts.push(`<g transform="translate(${px(34)} ${horizon - 21 * s}) scale(${s.toFixed(2)})" fill="#44586E">${WALKER_ART}</g>`);
+  }
+  if (reached >= 216) {
+    const s = k * 1.7;
+    parts.push(`<g transform="translate(${px(58)} ${horizon - 26 * s}) scale(${s.toFixed(2)})" fill="#4E6076">${MONK_ART}</g>`);
+  }
+
+  // ── 雪 ──
+  if (amb.snow) {
+    parts.push([...Array(60)].map((_, i) => {
+      const x = px((i * 37.7) % 100);
+      const y = py((i * 61.3) % 96);
+      const r = (0.8 + (i % 3) * 0.5) * k;
+      return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="#DCE6F0" opacity="${(0.25 + (i % 4) * 0.12).toFixed(2)}"/>`;
+    }).join(''));
+  }
+
+  return parts.join('');
+}
+
+/**
+ * 把顏色往白色拉，確保它在夜空上亮得起來。
+ * 燈身色有深到 #3A4A6B 的（螺青），原樣畫在夜空上等於看不見。
+ */
+function lift(hex, t = 0.45) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c) => Math.round(c + (255 - c) * t);
+  return `rgb(${mix(n >> 16 & 255)},${mix(n >> 8 & 255)},${mix(n & 255)})`;
+}
+
+/**
+ * 一盞燈在天上的樣子：一圈暈，上面擺那盞天燈（sparkArt）。
+ *
+ * 暈用燈身色，火用焰色。真實的燈就是這樣——火光是暖的，
+ * 但光是透過燈身透出來的，藍燈身暈出來就是藍的。
+ * 兩個都用焰色的話，手上抽到一盞藍燈、到天上變成一顆白點，
+ * 對不起來；而且焰色只有 6 種，整片天空會單調很多。
+ */
+function sparkSVG(p, i, px, py, k) {
+  const b = BOWLS[p.lamp.bowl] || BOWLS.cinnabar;
+  const tier = p.lamp.tier || 'common';
+  const base = { common: 7, uncommon: 9, rare: 12 }[tier] || 7;
+  const g = Math.max(0, Math.min(1, p.glow || 0));
+
+  const core = base * (1 + 0.5 * g) * k * 0.55;
+  const halo = core * (3.2 + 2.6 * g);
+  const x = px(p.x);
+  const y = py(p.y);
+  const id = `ddsky-g${i}`;
+
+  // 天燈跟畫面上是同一段 sparkArt，只是這裡用 <g> 擺位。
+  // core 在這裡是半徑，所以燈寬是 core * 3.4（畫面上是直徑 * 1.7）。
+  const sc = (core * 3.4) / SPARK_VB.w;
+
+  return `<radialGradient id="${id}" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="${lift(b.light)}" stop-opacity="${(0.85 + 0.15 * g).toFixed(2)}"/>
+      <stop offset="70%" stop-color="${lift(b.light)}" stop-opacity="0"/>
+    </radialGradient>
+    <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${halo.toFixed(1)}" fill="url(#${id})"/>
+    <g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(3)}) translate(-14 -13.8)">${sparkArt(p.lamp)}</g>`;
+}
+
+/* ══════════════ 燈燈相續：排燈、我的燈海、燈譜 ══════════════ */
+
+const SKY_SIZE = 108;
+const R2_X = 0.7548776662466927, R2_Y = 0.5698402909980532;
+const MOON = { x: 17, y: 18, rx: 12.5, ry: 11.5 };
+
+function hashStr(str) {
+  let h = 2166136261 ^ String(str).length;
+  for (let i = 0; i < String(str).length; i++) { h = Math.imul(h ^ String(str).charCodeAt(i), 16777619); h = (h << 13) | (h >>> 19); }
+  h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13;
+  return h >>> 0;
+}
+function clearOfMoon(x, y, seed) {
+  const dx = (x - MOON.x) / MOON.rx, dy = (y - MOON.y) / MOON.ry, d = Math.hypot(dx, dy);
+  if (d >= 1 || d === 0) return { x, y };
+  const push = 1 + ((seed >>> 20) % 100) / 220;
+  return { x: MOON.x + (dx / d) * MOON.rx * push, y: MOON.y + (dy / d) * MOON.ry * push };
+}
+
+/** 每盞燈在天上的位置（百分比）。四學都做到（泥金）的燈亮一點。 */
+function layoutOf(lamps, avoidMoon) {
+  if (lamps.length <= 2) return lamps.map((l, i) => ({ lamp: l, x: lamps.length === 1 ? 50 : 36 + i * 28, y: 36, glow: l.bowl === "gold" ? 0.4 : 0 }));
+  return lamps.map((l, i) => {
+    const seed = hashStr(l.date), n = i + 1;
+    const jx = ((seed % 1000) / 1000 - 0.5) * 11, jy = (((seed >>> 10) % 1000) / 1000 - 0.5) * 10;
+    let x = 8 + 84 * ((0.5 + n * R2_X) % 1) + jx;
+    let y = 10 + 50 * ((0.5 + n * R2_Y) % 1) + jy;
+    if (avoidMoon) ({ x, y } = clearOfMoon(x, y, seed));
+    return { lamp: l, x, y, glow: l.bowl === "gold" ? 0.4 : 0 };
+  }).sort((a, b) => a.glow - b.glow);
+}
+
+/** 第幾片（1 起算）的資訊。skyNo 不給就是目前這一片。 */
+function skyInfo(skyNo) {
+  const all = DDLamp.list();
+  const total = all.length;
+  const cur = Math.max(1, Math.ceil(total / SKY_SIZE));
+  const no = Math.min(Math.max(1, skyNo || cur), cur);
+  const lamps = all.slice((no - 1) * SKY_SIZE, no * SKY_SIZE);
+  return { no, cur, total, lamps, filled: lamps.length, reached: no === cur ? total : no * SKY_SIZE, scene: sceneOf(no) };
+}
+
+const esc_ = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/**
+ * 我的燈海：一張 SVG，每盞燈可以點（data-ddl-open，點了看那天做了什麼）。
+ * opts.skyNo 看第幾片；opts.scene 換底（"night"/"lake"/"valley"，例如燈坊用燈油換的景）。
+ */
+function mySea(opts) {
+  opts = opts || {};
+  const info = skyInfo(opts.skyNo);
+  const skyNo = opts.scene ? (SCENES.findIndex((s) => s.key === opts.scene) + 1 || info.no) : info.no;
+  const H = 1080;
+  const spots = layoutOf(info.lamps, info.filled >= 108);
+  const svg = skySVG({ layout: spots, filled: info.filled, reached: info.reached, skyNo, height: H });
+  const hits = spots.map((p) => `<circle cx="${(p.x / 100 * 1080).toFixed(0)}" cy="${(p.y / 100 * H).toFixed(0)}" r="34" fill="transparent" data-ddl-open="${p.lamp.date}"><title>${p.lamp.date}</title></circle>`).join("");
+  const next = nextMilestone(info.filled, info.reached);
+  return `<div class="ddsky">
+    <svg class="ddsky-svg" viewBox="0 0 1080 ${H}" role="img" aria-label="我的燈海，第 ${info.no} 片，${info.filled} 盞">${svg}${hits}</svg>
+    <div class="ddsky-bar">
+      <span class="ddsky-no">${info.cur > 1 ? `<button data-ddsky="${info.no - 1}" ${info.no <= 1 ? "disabled" : ""} aria-label="上一片">‹</button>` : ""}第 ${info.no} 片・${esc_(sceneOf(skyNo).name)}${info.cur > 1 ? `<button data-ddsky="${info.no + 1}" ${info.no >= info.cur ? "disabled" : ""} aria-label="下一片">›</button>` : ""}</span>
+      <span class="ddsky-count"><b>${info.filled}</b>／${SKY_SIZE}</span>
+    </div>
+    ${next && info.no === info.cur ? `<p class="ddsky-next">再 ${next.left} 盞，${esc_(next.label)}</p>` : ""}
+  </div>`;
+}
+
+/** 燈譜：20 種形制。點過的亮出來，沒點過的是灰色剪影。 */
+function album() {
+  const F = DDLamp.FORMS, seen = DDLamp.seenForms();
+  const tiers = ["common", "uncommon", "rare"];
+  const n = Object.keys(seen).length, all = Object.keys(F).length;
+  const C = DDLamp.COLORS, CN = { jie: "戒", ding: "定", hui: "慧", shan: "善", gold: "泥金" };
+  const nc = Object.values(seen).reduce((a, l) => a + Object.keys(l.colors || {}).length, 0);
+  const cols = (l) => `<span class="ddalbum-cols" aria-label="點過的顏色：${C.filter((c) => l && l.colors[c]).map((c) => CN[c]).join("、") || "無"}">${C.map((c) => `<i class="c-${c}${l && l.colors[c] ? " on" : ""}"></i>`).join("")}</span>`;
+  return `<div class="ddalbum">
+    <div class="ddalbum-head"><b>燈譜</b><span>形制 ${n}／${all}・顏色 ${nc}／${all * C.length}</span></div>
+    ${tiers.map((t) => `<div class="ddalbum-tier"><span class="ddalbum-t t-${t}">${DDLamp.TIER_LABEL[t]}</span>
+      <div class="ddalbum-grid">${Object.keys(F).filter((k) => F[k].tier === t).map((k) => {
+        const l = seen[k];
+        return l
+          ? `<button class="ddalbum-c on" data-ddl-open="${l.date}" aria-label="${esc_(F[k].name)}，${l.date} 第一次點亮">${DDLamp.render(Object.assign({}, l, { name: F[k].name }), { size: 54 })}<small>${esc_(F[k].name)}</small>${cols(l)}</button>`
+          : `<div class="ddalbum-c" aria-label="還沒點過">${DDLamp.render({ form: k, bowl: "cinnabar", flame: "gamboge", name: "？" }, { size: 54, lit: false })}<small>？</small>${cols(null)}</div>`;
+      }).join("")}</div></div>`).join("")}
+  </div>`;
+}
+
+/** 翻上一片／下一片：容器上要有 data-ddsky-host，換片時整塊重畫。 */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ddsky]");
+  if (!b) return;
+  const host = b.closest("[data-ddsky-host]") || b.closest(".ddsky").parentNode;
+  host.innerHTML = mySea({ skyNo: Number(b.dataset.ddsky) });
+});
+
+window.DDSky = { SKY_SIZE, SCENES, SKY_STAGES, LIFE_STAGES, sceneOf, nextMilestone, skyInfo, layoutOf, skySVG, mySea, album };
+})();
