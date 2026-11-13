@@ -1,5 +1,5 @@
 // 無風燭 service worker：離線也能開啟。頁面與程式先連網拿最新版；語音、圖片、字型用快取。
-const CACHE = "wfz-v5";
+const CACHE = "wfz-v6";
 const CORE = ["./", "./index.html", "./lectures.js", "./lectures_vip.js", "./chars/files.js", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png", "./voice/map.js", "./voice/silence.mp3"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -9,7 +9,7 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const same = url.origin === location.origin;
-  const fresh = req.mode === "navigate" || (same && /\.(html|js|webmanifest)$/.test(url.pathname));
+  const fresh = req.mode === "navigate" || (same && /(\/|\.html|\.js|\.webmanifest)$/.test(url.pathname));
   if (fresh) {
     e.respondWith(fetch(req).then(r => put(req, r)).catch(() => caches.match(req).then(r => r || caches.match("./index.html"))));
     return;
