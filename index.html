@@ -177,6 +177,39 @@ body.in-session .lplayer{visibility:hidden}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
 body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
+/* 法語卡：精美卡片 */
+.fcard{position:relative;width:min(300px,86vw);aspect-ratio:5/7;margin:12px auto 8px;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(43,35,80,.28);isolation:isolate;color:#2b2350;background:#fff}
+.fc-art{position:absolute;inset:0;z-index:-2}.fc-art svg{width:100%;height:100%;display:block}
+.fc-frame{position:absolute;inset:8px;border-radius:14px;border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 1px rgba(201,138,75,.55);z-index:-1;pointer-events:none}
+.fcard.p1{color:#fffaf0}
+.fc-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 0;font-size:11px;letter-spacing:.06em}
+.fc-no{font-weight:600;opacity:.85}
+.fc-cat{background:rgba(255,255,255,.72);color:#5b3a1e;border-radius:999px;padding:2px 9px;font-weight:600}
+.fc-q{font-family:var(--f-display);font-size:clamp(17px,5vw,21px);line-height:1.75;margin:0;padding:16px 22px 0;text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.fcard.p1 .fc-q{text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.fc-char{position:absolute;right:10px;bottom:46px;width:34%;aspect-ratio:1}.fc-char img,.fc-char svg{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(43,35,80,.25))}
+.fc-foot{position:absolute;left:0;right:0;bottom:0;padding:8px 16px 14px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.fc-src{font-size:10.5px;line-height:1.4;opacity:.9;max-width:62%}
+.fc-go{border:0;border-radius:999px;background:rgba(255,255,255,.85);color:#c2552f;font:inherit;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer}
+.fcard.mini{width:100%;margin:0;border-radius:12px;box-shadow:0 5px 12px rgba(43,35,80,.18);cursor:pointer}
+.fcard.mini .fc-frame{inset:4px;border-radius:9px;border-width:1.5px}
+.fcard.mini .fc-head{padding:8px 9px 0;font-size:8px}.fcard.mini .fc-cat{padding:1px 5px}
+.fcard.mini .fc-q{font-size:11px;line-height:1.5;padding:6px 9px 0}
+.fcard.mini .fc-char{right:4px;bottom:4px;width:44%}
+.fcard.back{background:linear-gradient(150deg,#3a3370,#6c5ba7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff6e0}
+.fcard.back::before{content:"";position:absolute;inset:8px;border-radius:14px;border:2px dashed rgba(255,214,140,.55)}
+.fc-back-art{width:34%}.fc-back-art svg{width:100%}
+.fc-back-t{font-family:var(--f-display);letter-spacing:.3em;font-size:14px}
+.fcard.back .fc-no{position:absolute;top:12px;left:14px;font-size:11px;opacity:.7}
+.fcard.back.mini{cursor:default;filter:saturate(.55) brightness(1.08)}.fcard.back.mini::before{inset:4px;border-radius:9px}.fcard.back.mini .fc-back-t{font-size:8px;letter-spacing:.15em}.fcard.back.mini .fc-no{top:6px;left:8px;font-size:8px}
+.flip{perspective:1200px;width:min(300px,86vw);margin:10px auto}
+.flip-in{position:relative;transition:transform .8s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.flip .fcard{margin:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip .fcard:not(.back){position:absolute;inset:0;transform:rotateY(180deg)}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.album-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.album-peek{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.album-seg{margin:6px 0 0}
 /* 法語卡 */
 .qcard{position:relative;margin:44px 0 6px;padding:22px 18px 16px;border-radius:22px;background:linear-gradient(160deg,#fffaf0,#fff3e0);box-shadow:var(--shadow);border:1px solid rgba(255,173,31,.35)}
 .qcard .sticker.tr{top:-50px;right:6px}
@@ -1220,7 +1253,7 @@ let route="today";
 const TABS=[["today","今","今日"],["progress","燈","進度"],["check","驗","檢核"],["adjust","調","調整"]];
 function renderTabs(){
   const due=CPS.some(cp=>cpStatus(cp)==="due");
-  const cur=SUBS.includes(route)?"today":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
+  const cur=SUBS.includes(route)?"today":route==="album"?"progress":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
 }
 function render(){
   document.body.dataset.theme=curTheme();
@@ -1231,8 +1264,9 @@ function render(){
   else if(route==="jie") app.innerHTML=vJie();
   else if(route==="ding") app.innerHTML=vDing();
   else if(route==="hui") app.innerHTML=vHui();
+  else if(route==="album") app.innerHTML=vAlbum();
   else app.innerHTML=vToday();
-  document.body.classList.toggle("sub",SUBS.includes(route));Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb");
+  const subRoute=SUBS.includes(route)||route==="album";document.body.classList.toggle("sub",subRoute);Scene.setMode(route==="progress"?"lamps":subRoute?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
   else{checkUnlock();checkFreeCard()}
@@ -1386,8 +1420,29 @@ const QS=()=>window.QUOTES||[];
 let dayAllDone=false;
 function qUnit(q){const i=lrIndex(q[1]);return i}
 function qSource(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;const cat=u?LRC()[u[6]][0]:"";return `師父・南普陀廣論第 ${String(q[1]).split(".")[0]} 卷${cat?"・"+cat:""}`}
-function qCard(q,k){const who=tileWho(q[3]||"jie");return `<div class="qcard">${sticker(who,q[2]||"happy","tr","")}<p class="qc-t">「${esc(q[0])}」</p>
-  <p class="qc-src">${esc(qSource(q))}</p>${qUnit(q)!=null?`<button class="lk-inline qc-go" data-act="q-listen" data-k="${k}">▶ 聽這一段</button>`:""}</div>`}
+const CARD_PARTS=["道前基礎","下士道","中士道","上士道"];
+const CARD_ART=[
+  /* 道前基礎：晨光與燈 */
+  `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="ca0" cx="50%" cy="78%" r="70%"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#ffd7a8"/><stop offset="1" stop-color="#f6b6a0"/></radialGradient></defs><rect width="300" height="420" fill="url(#ca0)"/>${[...Array(12)].map((_,i)=>`<path d="M150 330L${150+260*Math.cos(Math.PI*(1+i/11))} ${330+260*Math.sin(Math.PI*(1+i/11))}" stroke="#fff" stroke-width="14" opacity=".18"/>`).join("")}<circle cx="150" cy="330" r="46" fill="#fff6d6" opacity=".9"/><path d="M0 360q75-30 150 0t150 0v60H0z" fill="#f2a58d" opacity=".55"/><path d="M0 385q75-22 150 0t150 0v35H0z" fill="#e88f7a" opacity=".6"/></svg>`,
+  /* 下士道：月夜與星 */
+  `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ca1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2a5c"/><stop offset="1" stop-color="#6c5ba7"/></linearGradient></defs><rect width="300" height="420" fill="url(#ca1)"/>${[[40,50],[90,30],[250,70],[210,40],[60,140],[270,160],[30,230],[120,90],[180,120],[240,250]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i%3?1.6:2.6}" fill="#fff" opacity=".85"/>`).join("")}<circle cx="70" cy="300" r="28" fill="#fff4c9" opacity=".95"/><circle cx="70" cy="300" r="40" fill="#fff4c9" opacity=".15"/><path d="M0 380q60-40 120-10t180-20v70H0z" fill="#241f4a" opacity=".7"/></svg>`,
+  /* 中士道：山與河 */
+  `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ca2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8f3ee"/><stop offset="1" stop-color="#9fd8cf"/></linearGradient></defs><rect width="300" height="420" fill="url(#ca2)"/><circle cx="235" cy="235" r="26" fill="#fffbe8" opacity=".9"/><path d="M0 330L70 240l50 50 60-90 120 130v90H0z" fill="#6fb8ac" opacity=".75"/><path d="M0 360l90-70 60 40 70-60 80 70v80H0z" fill="#4f9c92" opacity=".8"/><path d="M0 400q80-30 150-5t150-10v35H0z" fill="#e8fbf7" opacity=".7"/></svg>`,
+  /* 上士道：蓮花與日輪 */
+  `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="ca3" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#fff8dc"/><stop offset=".55" stop-color="#ffe0a3"/><stop offset="1" stop-color="#f5b971"/></radialGradient></defs><rect width="300" height="420" fill="url(#ca3)"/><circle cx="150" cy="150" r="95" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/><circle cx="150" cy="150" r="70" fill="#fff4d0" opacity=".55"/>${[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>`<ellipse cx="150" cy="78" rx="10" ry="26" fill="#fff" opacity=".35" transform="rotate(${a} 150 150)"/>`).join("")}${[-60,-30,0,30,60].map(a=>`<ellipse cx="150" cy="350" rx="22" ry="52" fill="${a?"#f7a6b8":"#f48aa3"}" opacity=".85" transform="rotate(${a} 150 400)"/>`).join("")}</svg>`
+];
+function qPart(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;const p=u?LRC()[u[6]][1]:"道前基礎";return Math.max(0,CARD_PARTS.indexOf(p))}
+function qCat(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;return u?LRC()[u[6]][0]:""}
+/* 一張法語卡：背景（依四部）＋金框＋編號＋法類＋師父原話＋角色＋出處 */
+function qCard(q,k,o){o=o||{};const pi=qPart(q);const who=tileWho(q[3]||"jie");const mini=o.mini;
+  return `<div class="fcard p${pi} ${mini?"mini":""}" ${mini?`data-act="q-open" data-k="${k}" role="button" tabindex="0" aria-label="第 ${k+1} 張法語卡"`:""}>
+    <div class="fc-art" aria-hidden="true">${CARD_ART[pi]}</div><div class="fc-frame" aria-hidden="true"></div>
+    <div class="fc-head"><span class="fc-no num">No.${String(k+1).padStart(3,"0")}</span><span class="fc-cat">${esc(qCat(q))}</span></div>
+    <p class="fc-q">${mini?esc(q[0].length>26?q[0].slice(0,26)+"…":q[0]):"「"+esc(q[0])+"」"}</p>
+    <span class="fc-char" aria-hidden="true">${charInner(who,q[2]||"happy")}</span>
+    ${mini?"":`<div class="fc-foot"><span class="fc-src">${esc(qSource(q))}</span>${qUnit(q)!=null?`<button class="fc-go" data-act="q-listen" data-k="${k}">▶ 聽這一段</button>`:""}</div>`}
+  </div>`}
+function qBack(k,mini){return `<div class="fcard back ${mini?"mini":""}" aria-hidden="true"><div class="fc-back-art"><svg viewBox="0 0 64 64"><path d="M32 6c6 10 13 15 13 24a13 13 0 0 1-26 0c0-9 7-14 13-24z" fill="#ffd36b" stroke="#fff" stroke-width="2"/><rect x="24" y="40" width="16" height="16" rx="3" fill="#fff5e4"/></svg></div>${k!=null?`<span class="fc-no num">No.${String(k+1).padStart(3,"0")}</span>`:""}<span class="fc-back-t">燈燈相續</span></div>`}
 function drawCard(free){const Q=QS();if(!Q.length)return;const got=S.qcards||{};
   const fresh=Q.map((q,i)=>i).filter(i=>!got[i]);const pool=fresh.length?fresh:Q.map((q,i)=>i);const k=pool[Math.floor(Math.random()*pool.length)];
   if(free){const d=ensureDay(today());d.qfree=k}else S.spent=(S.spent||0)+CARD_COST;
@@ -1395,23 +1450,36 @@ function drawCard(free){const Q=QS();if(!Q.length)return;const got=S.qcards||{};
   const L=document.getElementById("layer");
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qd-h"><div class="panel">
     <span class="eyebrow">${free?"今天戒、定、慧都做了，送你一張":"用 "+CARD_COST+" 滴燈油換一張"}${isNew?"・新卡！":"・已經有了"}</span><h2 id="qd-h" class="sr">法語卡</h2>
-    ${qCard(Q[k],k)}
+    <div class="flip" id="qdFlip"><div class="flip-in">${qBack(null)}${qCard(Q[k],k)}</div></div>
     <div class="btns"><button class="btn primary" id="qdOk">收進法語集</button>${availOil()>=CARD_COST?`<button class="btn" id="qdMore">再抽一張（${CARD_COST} 滴）</button>`:""}</div>
     <p class="mini-note">法語集 ${Object.keys(S.qcards).length}／${Q.length} 張・可用燈油 ${availOil()} 滴</p></div></div>`;
   document.getElementById("qdOk").onclick=()=>{L.innerHTML="";render()};
-  const m=document.getElementById("qdMore");if(m)m.onclick=()=>drawCard(false)}
+  const m=document.getElementById("qdMore");if(m)m.onclick=()=>drawCard(false);
+  const f=document.getElementById("qdFlip");setTimeout(()=>f&&f.classList.add("on"),450)}
 function openQuote(k){const Q=QS();const q=Q[k];if(!q)return;const L=document.getElementById("layer");
-  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qo-h"><div class="panel"><span class="eyebrow">法語集・${esc(S.qcards[k]||"")}</span><h2 id="qo-h" class="sr">法語卡</h2>${qCard(q,k)}
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qo-h"><div class="panel"><span class="eyebrow">集卡冊・${esc(S.qcards[k]||"")} 收集</span><h2 id="qo-h" class="sr">法語卡</h2>${qCard(q,k)}
     <div class="btns"><button class="btn primary" id="qoX">關閉</button></div></div></div>`;
   document.getElementById("qoX").onclick=()=>{L.innerHTML=""}}
 function checkFreeCard(){if(!dayAllDone||route!=="today"||document.querySelector("#layer .sheet")||!QS().length)return;const d=day(today());if(d&&d.qfree!=null)return;drawCard(true)}
+let albumPart=-1;
+function vAlbum(){const Q=QS();const got=S.qcards||{};const n=Object.keys(got).length;const a=availOil();
+  const chips=[[-1,"全部"],...CARD_PARTS.map((p,i)=>[i,p])].map(([i,l])=>`<button class="${albumPart===i?"on":""}" data-act="album-part" data-v="${i}">${l}</button>`).join("");
+  const groups=CARD_PARTS.map((p,pi)=>{if(albumPart>=0&&albumPart!==pi)return "";const ks=Q.map((q,k)=>k).filter(k=>qPart(Q[k])===pi);if(!ks.length)return "";
+    const own=ks.filter(k=>got[k]).length;
+    return `<section class="section"><div class="row between"><span class="eyebrow">${p}</span><span class="mini-note num">${own}／${ks.length}</span></div>
+      <div class="album-grid">${ks.map(k=>got[k]?qCard(Q[k],k,{mini:true}):qBack(k,true)).join("")}</div></section>`}).join("");
+  return `<header class="hero wide subhead"><a class="back" href="#progress">‹ 燈</a><div class="date">法語集</div><h1>集卡冊</h1><p class="sub">師父講廣論的原話，一共 ${Q.length} 張。已收集 ${n} 張。</p></header>
+  <section class="section"><div class="card has-tr">${sticker(tileWho("jie"),"love","tr","抽一張？")}<p class="meta">可用燈油 <b class="num">${a}</b> 滴・${CARD_COST} 滴換一張・某天戒定慧都做了送一張</p>
+    <div class="btns"><button class="btn primary" data-act="q-draw" ${a>=CARD_COST?"":"disabled"}>${a>=CARD_COST?`抽一張（${CARD_COST} 滴）`:`還差 ${CARD_COST-a} 滴`}</button></div></div></section>
+  <div class="seg album-seg" role="group" aria-label="依部篩選">${chips}</div>
+  ${groups}`}
 function vCards(){const Q=QS();if(!Q.length)return "";const got=S.qcards||{};const n=Object.keys(got).length;const a=availOil();
-  const cells=Q.map((q,k)=>got[k]?`<button class="qmini" data-act="q-open" data-k="${k}"><span>「${esc(q[0].slice(0,14))}${q[0].length>14?"…":""}」</span></button>`:`<span class="qmini lock" aria-hidden="true">？</span>`).join("");
   return `<section class="section"><div class="row between"><span class="eyebrow">法語集</span><span class="mini-note num">${n}／${Q.length} 張</span></div>
   <div class="card has-tr">${sticker(tileWho("jie"),"love","tr","抽一張？")}
     <p class="meta">師父講廣論的原話。用 ${CARD_COST} 滴燈油換一張；某天戒、定、慧都做了，送你一張。沒抽過的會先出來。<br>可用燈油 <b class="num">${a}</b> 滴（解鎖主題看的是累積燈油，抽卡不會影響）。</p>
     <div class="btns"><button class="btn primary" data-act="q-draw" ${a>=CARD_COST?"":"disabled"}>${a>=CARD_COST?`抽一張（${CARD_COST} 滴）`:`還差 ${CARD_COST-a} 滴`}</button></div>
-    ${n?`<details class="qset"><summary>翻翻法語集</summary><div class="qgrid">${cells}</div></details>`:""}
+    ${n?`<div class="album-peek">${Object.keys(got).sort((x,y)=>got[y]<got[x]?-1:1).slice(0,3).map(k=>qCard(Q[+k],+k,{mini:true})).join("")}</div>`:""}
+    <div class="btns"><a class="btn" href="#album">打開集卡冊 ›</a></div>
   </div></section>`}
 function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=[...THEMES].reverse().find(t=>t.cost<=o);const cur=curTheme();
   const pct=next?Math.round((o-prev.cost)/(next.cost-prev.cost)*100):100;
@@ -1517,6 +1585,7 @@ document.addEventListener("click",e=>{
       b.setAttribute("aria-pressed",vgFlip[i]);b.innerHTML=vgFlip[i]?`<b>${esc(c.t)}</b><span>${esc(c.d)}</span>${c.m?`<small>比喻：${esc(c.m)}</small>`:""}`:`<b>${esc(c.t)}</b><small>點一下翻面</small>`;break}
     case "vg-quiz": openVgQuiz();break;
     case "q-draw": if(availOil()>=CARD_COST)drawCard(false);break;
+    case "album-part": albumPart=+b.dataset.v;render();break;
     case "q-open": openQuote(+b.dataset.k);break;
     case "q-listen": {const q=QS()[+b.dataset.k];const i=q?qUnit(q):null;if(i!=null){document.getElementById("layer").innerHTML="";const u=LRA()[i];const cat=LRC()[u[6]];Audio_.unlock();LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i)})}break}
     case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("毗婆舍那已開啟");break;
@@ -1932,7 +2001,7 @@ const Scene=(()=>{
 })();
 
 /* ================= 啟動 ================= */
-function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)||SUBS.includes(h)?h:"today";render();scrollTo(0,0)}
+function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)||SUBS.includes(h)||h==="album"?h:"today";render();scrollTo(0,0)}
 addEventListener("hashchange",onHash);
 onHash();
 askPersist();
