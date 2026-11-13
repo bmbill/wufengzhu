@@ -33,6 +33,7 @@ APP_READ = {
     "為利": "為wei4", "為明天": "為wei4", "更長": "長chang2", "入行論": "行xing2", "苦行": "行xing2", "惡行": "行xing2",
     "覺知": "覺jue2", "感覺": "覺jue2", "正知": "正zheng4", "還是": "還hai2", "還在": "還hai2", "還會": "還hai2",
     "止住修": "住zhu4", "要破的": "要yao4",
+    "了脫": "了liao3", "為了": "為wei4", "還清楚": "還hai2",
 }
 PRON = load_read(); PRON.update(APP_READ)
 

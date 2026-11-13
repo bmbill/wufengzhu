@@ -144,6 +144,23 @@ body[data-theme="moon"] .lp-n{filter:none}
 body.playing .toast{bottom:calc(210px + env(safe-area-inset-bottom,0px))}
 body.playing #app{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))}
 body.in-session .lplayer{visibility:hidden}
+/* 研討式聽講 */
+.lp-seg{font-size:11px;color:var(--pl-sub);white-space:nowrap;flex:none}
+.lp-study{display:flex;flex-direction:column;gap:6px;padding:6px 0 4px;border-top:1px solid var(--pl-line)}
+.lp-study textarea{min-height:52px;font-size:14px}
+.lp-q{font-weight:700;font-size:14px}
+.passes{display:flex;gap:6px;flex-wrap:wrap}
+.pd{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--mute);padding:3px 10px 3px 3px;border-radius:999px;background:rgba(43,35,80,.05)}
+.pd b{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(43,35,80,.1);font-family:var(--f-num);font-size:11px}
+.pd.on{color:var(--ink)}.pd.on b{background:var(--jade);color:#fff}
+.pd.cur{background:rgba(255,173,31,.22);color:var(--ink);font-weight:700}.pd.cur b{background:var(--gold)}
+.beadrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.beads{display:flex;align-items:center;gap:4px;position:relative;padding:2px 0}
+.beads::before{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;background:rgba(43,35,80,.15)}
+.beads i{position:relative;width:9px;height:9px;border-radius:50%;background:#fff;border:1.5px solid rgba(43,35,80,.25)}
+.beads i.on{width:15px;height:15px;background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,173,31,.25)}
+.lk-inline{background:none;border:0;padding:0;color:var(--coral);font:inherit;text-decoration:underline;cursor:pointer}
+.note-b{margin-left:6px;font-size:11px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:0 6px;color:var(--mute);vertical-align:1px}
 /* 主題收藏 */
 .oilbar{display:flex;align-items:center;gap:12px}
 .oil-drop{width:44px;height:44px;flex:none}
@@ -275,7 +292,8 @@ body.in-session::before{background:transparent}
 <canvas id="gl" aria-hidden="true"></canvas>
 <div id="app"></div>
 <div id="lplayer" class="lplayer" hidden role="region" aria-label="聽講播放器">
-  <div class="lp-top"><div class="lp-t"><span class="lp-n num" id="lpN"></span><span class="lp-title" id="lpTitle"></span></div><button class="lp-x" id="lpClose" aria-label="關閉播放器">✕</button></div>
+  <div class="lp-top"><div class="lp-t"><span class="lp-n num" id="lpN"></span><span class="lp-title" id="lpTitle"></span><span class="lp-seg" id="lpSeg"></span></div><button class="lp-x" id="lpClose" aria-label="關閉播放器">✕</button></div>
+  <div id="lpStudy" class="lp-study" hidden></div>
   <input type="range" id="lpSeek" min="0" max="1000" value="0" aria-label="播放進度">
   <div class="lp-row"><span class="num lp-time" id="lpTime">0:00 / 0:00</span>
     <div class="lp-ctl"><button id="lpRepeat" class="lp-ico" aria-pressed="false" aria-label="重複播放（每次間隔 5 秒）" title="重複播放"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg></button><button id="lpPlay" class="lp-play" aria-label="播放">▶</button><button id="lpRate" class="num" aria-label="播放速度">1×</button></div>
@@ -386,9 +404,9 @@ const THEMES=[
   {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢，和八隻手忙不停的小章魚八八。",
    zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"}}
 ];
-const OIL_RULES="上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）";
+const OIL_RULES="上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1";
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2}
-  o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
+  for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
 const unlocked=th=>oil()>=th.cost;
 const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
 const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
@@ -594,11 +612,7 @@ CPS.push(
 );
 function vipSection(d){const q=vqueue();const w=weekNo(today());const hw=vheardInWeek(w);const n=q[0];const vs=vstage();const key="v"+n;
   return `<section class="section" aria-labelledby="h-vip"><div class="row between"><span class="eyebrow" id="h-vip">第二章・毗缽舍那</span><span class="mini-note num">本週 ${hw}/${S.vpace||1} 講</span></div>
-  ${n?`<div class="card ${hw<(S.vpace||1)?"hot":""} has-tr">${sticker("zz","think","tr","往深處看")}
-    <div class="lect"><span class="n">毗缽舍那・第 ${n} 講</span><span class="title">${esc(vipTitle(n))}</span></div>
-    <div class="btns"><button class="btn primary" data-act="listen" data-ch="v" data-n="${n}">▶ ${(S.lpos||{})[key]?"接著聽（"+fmtT(S.lpos[key])+"）":"在這裡聽"}</button><button class="btn" data-act="heard" data-ch="v" data-n="${n}">我聽完了</button></div>
-    <p class="mini-note">約 ${Math.round(((VIP()[n])||[0,0])[1]/60)} 分鐘・<a href="${vipUrl(n)}" target="_blank" rel="noopener">看全文（大慈恩網站）</a></p></div>`
-   :`<div class="card calm"><h3>目前的 ${vipNums().length} 講都聽完了</h3><p class="meta">老師還在講，網站每週會自動加入新的一講。</p></div>`}
+  ${lectureCard("v")}
   <div class="card"><div class="task"><button class="check ${d.vthink?"on":""}" data-act="vthink" aria-label="觀察修${d.vthink?"，已完成":""}">${d.vthink?"✓":"○"}</button>
     <div style="min-width:0"><div class="t">觀察修・5 分鐘 <span class="tag">${vs.n}・${esc(vs.name)}</span></div><div class="d">${esc(vs.focus)}</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="vthink">${d.vthink?"再做一次":"開始"}</button></div></div></div></div>
   </section>`}
@@ -617,9 +631,107 @@ function vList(){const isV=listFilter==="vip"&&S.vipOn;const nums=isV?vipNums():
   const btn=(v,l)=>`<button class="${(listFilter===v||(!S.vipOn&&v==="intro"&&listFilter==="vip"))?"on":""}" data-act="lf" data-v="${v}">${l}</button>`;
   return `<section class="section"><div class="row between"><span class="eyebrow">講次清單</span><div class="seg" style="width:${S.vipOn?260:180}px;max-width:100%" role="group" aria-label="篩選講次">${btn("intro","入門線")}${btn("all","奢摩他")}${S.vipOn?btn("vip","毗缽舍那"):""}</div></div>
   <div class="card"><p class="mini-note">點標題就能播放；點右邊的圓圈可以標記已聽／未聽。</p><div class="list">${nums.map(n=>{const on=!!H[n];const title=isV?vipTitle(n):LECT[n-1];
-    return `<div class="li ${on?"done":""}"><span class="no">${String(n).padStart(3,"0")}</span><span class="tt"><button class="lk" data-act="listen" data-ch="${ch}" data-n="${n}">${esc(title)}</button>${!isV&&INTRO.includes(n)&&listFilter==="all"?' <span class="tag gold">入門</span>':""}</span><button class="dot ${on?"on":""}" data-act="toggle" data-ch="${ch}" data-n="${n}" aria-label="第 ${n} 講${on?"已聽，點一下改成未聽":"未聽，點一下標記已聽"}">${on?"✓":""}</button></div>`}).join("")}</div></div></section>`}
+    return `<div class="li ${on?"done":""}"><span class="no">${String(n).padStart(3,"0")}</span><span class="tt"><button class="lk" data-act="listen" data-ch="${ch}" data-n="${n}">${esc(title)}</button>${(S.notes||{})[noteKey(n,ch)]?`<button class="note-b" data-act="notes" data-key="${noteKey(n,ch)}">筆記</button>`:""}${!isV&&INTRO.includes(n)&&listFilter==="all"?' <span class="tag gold">入門</span>':""}</span><button class="dot ${on?"on":""}" data-act="toggle" data-ch="${ch}" data-n="${n}" aria-label="第 ${n} 講${on?"已聽，點一下改成未聽":"未聽，點一下標記已聽"}">${on?"✓":""}</button></div>`}).join("")}</div></div></section>`}
 
-function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false,vipOn:false,vheard:{},vpace:1,vipOffered:false}}
+/* ================= 研討式聽講（參考真如老師《如何研討廣論》） ================= */
+/* 一講聽三遍：①分段聽清楚 ②聽出新的 ③體會心意。聽前發心，聽後回答問題，之後第 1、3、7 天回想。 */
+const PASS_NAME=["分段聽清楚","聽出新的","體會心意"];
+const PASS_DESC=[
+  "第 1 遍・分段聽清楚：每 5 分鐘停一下，用一句話說這段在講什麼。先把原文和理路聽清楚，不急著想生活例子。",
+  "第 2 遍・聽出新的：整講再聽一次。第一遍的驚訝過去了，這次聽聽看，有什麼是上次沒聽到的。",
+  "第 3 遍・體會心意：再聽一次，一邊聽一邊想：老師講這一講，是想教給我什麼？"];
+const PRE_SAY=[
+  "聽法之前，先發心：我不是為了現在心情好一點，而是為了了脫自己和一切眾生的生死，來聽這一講。",
+  "把自己當作小學生。不要滿足上一次聽到的，這一次，要聽到上一次沒有聽到的。",
+  "想一想師長的恩德：如果沒有師長這樣一字一句講給我們，我們連聽到的機會都沒有。帶著感恩的心來聽。"];
+const SEG_SAY="這一段聽完了。用一句話說說看，這段在講什麼？";
+const END_SAY="這一講聽完了。趁印象還清楚，回答下面幾個問題。";
+const SEG_LEN=300;
+/* 每一講在整串念珠（次第）中的位置 */
+const SECS={s:[[1,9,"總說・止觀勝利"],[10,18,"止觀自性"],[19,25,"須雙修止觀"],[26,31,"先止後觀"],[32,35,"修止資糧"],[36,41,"威儀・滅懈怠"],[42,59,"修止所緣"],[60,71,"正念・座時"],[72,99,"沉掉・五過八斷"],[100,108,"四神足"],[109,119,"九住心"],[120,136,"得止的標準"],[137,153,"依止趣道"]],
+  v:[[1,7,"唯止不足"],[8,21,"了不了義"],[22,27,"中觀師的分類"],[28,46,"趣入真實性的次第"],[47,53,"辨識所破"],[54,72,"破太過・中觀勝法"],[73,92,"有無與有無自性"],[93,9999,"之後的課程"]]};
+const noteKey=(n,ch)=>(ch==="v"?"v":"s")+n;
+function beads(n,ch){const secs=SECS[ch==="v"?"v":"s"];const cur=secs.find(s=>n>=s[0]&&n<=s[1]);
+  return `<div class="beadrow"><div class="beads" aria-hidden="true">${secs.map(s=>`<i class="${s===cur?"on":""}"></i>`).join("")}</div><span class="mini-note">這講在：${esc(cur?cur[2]:"")}</span></div>`}
+function focusLecture(ch){const isV=ch==="v";const H=isV?(S.vheard||{}):S.heard;const t=today();let best=null;const skip=S.skipDeep||{};
+  for(const n in H){const k=H[n];const key=noteKey(n,ch);const p=((S.notes||{})[key]||{}).p||[];
+    if(daysBetween(k,t)<=7&&p.length<3&&!skip[key]&&(!best||k>best[1]))best=[Number(n),k]}
+  if(best)return best[0];const q=isV?vqueue():queue();return q[0]||null}
+function lectureCard(ch){const isV=ch==="v";const n=focusLecture(ch);const w=weekNo(today());
+  const hw=isV?vheardInWeek(w):heardInWeek(w);const goal=isV?(S.vpace||1):S.pace;
+  if(!n)return isV?`<div class="card calm"><h3>目前的 ${vipNums().length} 講都聽完了</h3><p class="meta">老師還在講，網站每週會自動加入新的一講。</p></div>`:`<div class="card calm"><h3>153 講全部聽完了</h3><p>到「檢核」頁做最後的檢核。</p></div>`;
+  const key=noteKey(n,ch);const p=(((S.notes||{})[key]||{}).p||[]).length;const heardIt=isV?!!(S.vheard||{})[n]:!!S.heard[n];
+  const pass=Math.min(p+1,3);const title=isV?vipTitle(n):LECT[n-1];const mins=Math.round(((isV?VIP()[n]:(window.LECT_AUDIO||{})[n])||[0,0])[1]/60);
+  const pos=(S.lpos||{})[isV?"v"+n:n];const deep=heardIt&&p<3;
+  const stk=deep?sticker(isV?"zz":"an","think","tr","再聽一遍"):hw>=goal?sticker("an","happy","tr","聽完了！"):sticker(isV?"zz":"an","think","tr",isV?"往深處看":"這週聽這講");
+  return `<div class="card ${!heardIt&&hw<goal?"hot":""} has-tr">${stk}
+    <div class="lect"><span class="n">${isV?"毗缽舍那・":""}第 ${n} 講 ${!isV?(INTRO.includes(n)?'<span class="tag gold">入門線</span>':'<span class="tag">完整線</span>'):""}</span><span class="title">${esc(title)}</span></div>
+    ${beads(n,ch)}
+    <div class="passes" role="img" aria-label="這講聽了 ${p} 遍，共 3 遍">${PASS_NAME.map((nm,i)=>`<span class="pd ${i<p?"on":""} ${i===p&&p<3?"cur":""}"><b>${i<p?"✓":i+1}</b>${nm}</span>`).join("")}</div>
+    <div class="btns"><button class="btn primary" data-act="study" data-ch="${ch}" data-n="${n}">▶ 第 ${pass} 遍：${PASS_NAME[pass-1]}</button><button class="btn" data-act="listen" data-ch="${ch}" data-n="${n}">${pos?"接著聽（"+fmtT(pos)+"）":"直接聽"}</button>${heardIt?"":`<button class="btn ghost" data-act="heard" data-ch="${ch}" data-n="${n}">我聽完了</button>`}</div>
+    <p class="mini-note">約 ${mins} 分鐘・<a href="${isV?vipUrl(n):lurl(n)}" target="_blank" rel="noopener">看全文（大慈恩網站）</a>${deep?`・<button class="lk-inline" data-act="skip-deep" data-key="${key}">先聽下一講</button>`:""}</p>
+  </div>`}
+function notesBody(key){const nt=(S.notes||{})[key]||{};const rows=[];(nt.seg||[]).forEach((s,i)=>{if(s)rows.push([`第 ${i+1} 段`,s])});
+  [["zong","這講要成立什麼"],["xie","我心裡不同的想法"],["moved","最打動我的一句"],["neu","第 2 遍多聽到的"],["xin","老師想教我的"],["life","用在生活裡"]].forEach(([k,l])=>{if(nt[k])rows.push([l,nt[k]])});
+  return rows.length?`<div class="steps">${rows.map(([l,s])=>`<div class="tip"><span class="mini-note">${esc(l)}</span><br>${esc(s)}</div>`).join("")}</div>`:`<p class="meta">這講還沒有寫筆記。</p>`}
+function keyInfo(key){const ch=key[0]==="v"?"v":"s";const n=Number(key.slice(1));return {ch,n,title:ch==="v"?vipTitle(n):LECT[n-1],label:(ch==="v"?"毗缽舍那・":"")+`第 ${n} 講`}}
+let revOpen=null;
+function reviewCard(){const t=today();const N=S.notes||{};const R=S.rev||{};
+  for(const key in N){const p=N[key].p||[];if(!p.length)continue;const age=daysBetween(p[0],t);
+    for(const [iv,until] of [[1,2],[3,6],[7,13]]){if(age>=iv&&age<=until&&!R[key+"@"+iv]){const k=keyInfo(key);const open=revOpen===key;
+      return `<section class="section"><div class="card has-tl">${sticker("an","think","tl","還記得嗎？")}<span class="eyebrow">回想一下・聽完第 ${age} 天</span>
+        <h3>${esc(k.label)}・${esc(k.title)}</h3>
+        <p>${open?"對照一下你寫的筆記：":"先不要看筆記，在心裡想一想：這講在講什麼？要成立什麼？想好了再翻開。"}</p>
+        ${open?notesBody(key)+`<div class="btns"><button class="btn primary small" data-act="rev-ok" data-key="${key}" data-iv="${iv}">記得</button><button class="btn small" data-act="rev-forgot" data-key="${key}" data-iv="${iv}">有點忘了，再聽一遍</button></div>`
+              :`<div class="btns"><button class="btn primary small" data-act="rev-open" data-key="${key}">想好了，翻開筆記</button></div>`}
+      </div></section>`}}}
+  return ""}
+function openNotes(key){const k=keyInfo(key);const p=(((S.notes||{})[key]||{}).p||[]).length;const L=document.getElementById("layer");
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nt-h"><div class="panel">${sticker("zz","gentle","tr","你的筆記")}
+    <span class="eyebrow">${esc(k.label)}・聽了 ${p} 遍</span><h2 id="nt-h">${esc(k.title)}</h2>${notesBody(key)}
+    <div class="btns"><button class="btn primary" id="ntRe">再聽一遍</button><button class="btn ghost" id="ntX">關閉</button></div></div></div>`;
+  document.getElementById("ntX").onclick=()=>{L.innerHTML=""};document.getElementById("ntRe").onclick=()=>{L.innerHTML="";Study.start(k.n,k.ch)}}
+const Study={
+  start(n,ch){const key=noteKey(n,ch);const p=(((S.notes||{})[key]||{}).p||[]).length;const pass=Math.min(p+1,3);const isV=ch==="v";const title=isV?vipTitle(n):LECT[n-1];
+    const L=document.getElementById("layer");
+    L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="st-h"><div class="panel">${sticker("zz","gentle","tr","聽前發心")}
+      <span class="eyebrow">${isV?"毗缽舍那":"奢摩他"}・第 ${n} 講・第 ${pass} 遍</span><h2 id="st-h">${esc(title)}</h2>${beads(n,ch)}
+      <p class="meta">${esc(PASS_DESC[pass-1])}</p><p class="quote">${esc(PRE_SAY[pass-1])}</p>
+      <div class="btns"><button class="btn primary" id="stGo">開始第 ${pass} 遍</button><button class="btn ghost" id="stX">取消</button></div>
+      <p class="mini-note">「十分鐘的帶子你反覆地聽，你會發現就漏很多。」——真如老師《如何研討廣論》</p></div></div>`;
+    document.getElementById("stX").onclick=()=>{L.innerHTML=""};
+    document.getElementById("stGo").onclick=async()=>{Audio_.unlock();Voice.unlock();L.innerHTML="";
+      LP.open(n,ch,{study:{pass,key,seg:0,segEnd:SEG_LEN},noplay:true});LP.$("lpSeg").textContent="聽前發心…";
+      await Voice.speak(PRE_SAY[pass-1]);if(LP.study&&LP.n===n&&LP.ch===ch){LP.$("lpSeg").textContent=pass===1?"第 1 段":`第 ${pass} 遍・${PASS_NAME[pass-1]}`;LP.play()}}},
+  note(){S.notes=S.notes||{};const k=LP.study.key;S.notes[k]=S.notes[k]||{};return S.notes[k]},
+  segPause(){const s=LP.study;const box=LP.$("lpStudy");const k=s.seg;const old=(this.note().seg||[])[k]||"";Audio_.bell(true);
+    box.innerHTML=`<label class="lp-q" for="lpSegTxt">第 ${k+1} 段在講什麼？用一句話說說看</label><textarea id="lpSegTxt" rows="2" placeholder="例如：止觀都要修，就像看壁畫，燈要亮又要沒有風。">${esc(old)}</textarea>
+      <div class="btns"><button class="btn small" id="lpSegRe">重聽這段</button><button class="btn primary small" id="lpSegNext">下一段</button></div>`;
+    box.hidden=false;Voice.speak(SEG_SAY);
+    LP.$("lpSegRe").onclick=()=>{Voice.stop();box.hidden=true;LP.a.currentTime=Math.max(0,s.segEnd-SEG_LEN);LP.play()};
+    LP.$("lpSegNext").onclick=()=>{Voice.stop();this.saveSeg(k,LP.$("lpSegTxt").value.trim());s.seg++;s.segEnd+=SEG_LEN;box.hidden=true;LP.$("lpSeg").textContent=`第 ${s.seg+1} 段`;LP.play()}},
+  saveSeg(k,txt){const nt=this.note();nt.seg=nt.seg||[];if(txt)nt.seg[k]=txt;persist()},
+  finish(){const s=LP.study;if(!s)return;const box=LP.$("lpStudy");let last="";if(!box.hidden&&LP.$("lpSegTxt"))last=LP.$("lpSegTxt").value.trim();
+    if(last)this.saveSeg(s.seg,last);LP.study=null;box.hidden=true;LP.close();Audio_.bell();Voice.speak(END_SAY);this.after(s)},
+  after(s){const k=keyInfo(s.key);const nt=(S.notes||{})[s.key]||{};const L=document.getElementById("layer");
+    const Q={1:[["seglast",`最後一段（第 ${s.seg+1} 段）在講什麼？`,"一句話就好"],["zong","這一講要成立什麼？用什麼來證明？","例如：要先修止再修觀，引《入行論》「故應先求止」"],["xie","我心裡有沒有不承許、相反的想法？","例如：其實我覺得放鬆一點就好（善緩即善修）"],["moved","哪一句最打動你？","抄下那句話，或用自己的話寫"]],
+      2:[["neu","這一遍多聽到什麼？（跟上一遍比）","例如：上次沒注意到，老師特別說了……"]],
+      3:[["xin","老師講這一講，想教給我什麼？","體會老師的心意"],["life","如果要用在生活裡，是哪一件事？","最後才想這一題"]]}[s.pass];
+    L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="af-h"><form class="panel" id="aff">${sticker("zz","cheer","tr",`第 ${s.pass} 遍完成`)}
+      <span class="eyebrow">${esc(k.label)}・第 ${s.pass} 遍・${PASS_NAME[s.pass-1]}</span><h2 id="af-h">${esc(k.title)}</h2>
+      ${Q.map(([id,q,ph])=>`<label class="eyebrow" for="af-${id}">${esc(q)}</label><textarea id="af-${id}" placeholder="${esc(ph)}">${esc(id==="seglast"?"":(nt[id]||""))}</textarea>`).join("")}
+      ${(nt.seg||[]).length||nt.zong?`<details><summary>之前寫的筆記</summary>${notesBody(s.key)}</details>`:""}
+      <div class="btns"><button class="btn primary" type="submit">儲存</button><button class="btn ghost" type="button" id="afX">不寫了</button></div></form></div>`;
+    const save=write=>{S.notes=S.notes||{};const n=S.notes[s.key]=S.notes[s.key]||{};
+      if(write)Q.forEach(([id])=>{const v=document.getElementById("af-"+id).value.trim();if(!v)return;if(id==="seglast"){n.seg=n.seg||[];n.seg[s.seg]=v}else n[id]=v});
+      n.p=n.p||[];n.p.push(today());let msg=`第 ${s.pass} 遍聽完了`;
+      if(k.ch==="v"){S.vheard=S.vheard||{};if(!S.vheard[k.n]){S.vheard[k.n]=today();msg+="，這講已點亮，燈油 +3"}}else if(!S.heard[k.n]){S.heard[k.n]=today();msg+="，這講已點亮，燈油 +3"}
+      if(n.p.length>1)msg+="，燈油 +1";if(S.lpos)delete S.lpos[k.ch==="v"?"v"+k.n:k.n];
+      persist();L.innerHTML="";render();toast(msg)};
+    document.getElementById("afX").onclick=()=>save(false);document.getElementById("aff").onsubmit=e=>{e.preventDefault();save(true)}}
+};
+
+function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false,vipOn:false,vheard:{},vpace:1,vipOffered:false,notes:{},rev:{},skipDeep:{}}}
 let S=blank(), DAYS={};
 try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.state){S=Object.assign(blank(),o.state);DAYS=o.days||{}}}}catch(e){}
 const store={ok:true,persisted:false};
@@ -738,6 +850,7 @@ function vToday(){
   </header>
   ${co.length?`<section class="section" aria-label="提醒">${co.map(c=>{const hot=c.tone==="hot";const st_=hot?sticker("zz",c.zm,"tr","好消息！"):sticker("an",c.q[0],"tr",MINI[c.q[0]]||"");
     return `<div class="card ${c.tone} has-tr" role="status">${st_}<h3>${esc(c.title)}</h3><p>${esc(c.body)}</p>${c.acts.length?`<div class="btns">${c.acts.map(([l,a],i)=>`<button class="btn ${i===0?"primary":""} small" data-act="${a}">${esc(l)}</button>`).join("")}</div>`:""}</div>`}).join("")}</section>`:""}
+  ${reviewCard()}
   <section class="section" aria-labelledby="h-must">
     <div class="row between"><span class="eyebrow" id="h-must">今日任務・必做</span><span class="mini-note num">${Math.min(done,need)}/${need}</span></div>
     <div class="card has-tr">${done>=need?sticker("zz","cheer","tr","點亮了！"):sticker("zz","fight","tr",done?"再一座！":"一起坐！")}${sitCards}
@@ -746,13 +859,7 @@ function vToday(){
   </section>
   <section class="section" aria-labelledby="h-listen">
     <div class="row between"><span class="eyebrow" id="h-listen">本週聽講・止觀初探</span><span class="mini-note num">本週 ${hw}/${S.pace} 講</span></div>
-    ${nextL?`<div class="card ${hw<S.pace?"hot":""} has-tr">${hw>=S.pace?sticker("an","happy","tr","聽完了！"):sticker("an","think","tr","這週聽這講")}
-      <div class="lect"><span class="n">第 ${nextL} 講 ${INTRO.includes(nextL)?'<span class="tag gold">入門線</span>':'<span class="tag">完整線</span>'}</span><span class="title">${esc(LECT[nextL-1])}</span></div>
-      <p class="meta">${hw>=S.pace?"本週目標完成了。想多聽一講也可以，不想也沒關係。":"按「在這裡聽」，下面會出現播放列，切換頁面也不會停。"}</p>
-      <div class="btns"><button class="btn primary" data-act="listen" data-n="${nextL}">▶ ${(S.lpos||{})[nextL]?"接著聽（"+fmtT(S.lpos[nextL])+"）":"在這裡聽"}</button><button class="btn" data-act="heard" data-n="${nextL}">我聽完了</button></div>
-      <p class="mini-note">約 ${Math.round(((window.LECT_AUDIO||{})[nextL]||[0,0])[1]/60)} 分鐘・<a href="${lurl(nextL)}" target="_blank" rel="noopener">看全文（大慈恩網站）</a></p>
-      ${q[1]?`<p class="mini-note">下一講：第 ${q[1]} 講・${esc(LECT[q[1]-1])}</p>`:""}
-    </div>`:`<div class="card calm"><h3>153 講全部聽完了</h3><p>到「檢核」頁做最後的檢核。</p></div>`}
+    ${lectureCard("s")}
   </section>
   ${S.vipOn?vipSection(d):""}
   <section class="section" aria-labelledby="h-opt">
@@ -905,6 +1012,12 @@ document.addEventListener("click",e=>{
     case "set-vpace": S.vpace=Number(b.dataset.v);go();break;
     case "lf": listFilter=b.dataset.v;render();break;
     case "listen": LP.open(Number(b.dataset.n),b.dataset.ch||"s");break;
+    case "study": Study.start(Number(b.dataset.n),b.dataset.ch||"s");break;
+    case "skip-deep": S.skipDeep=S.skipDeep||{};S.skipDeep[b.dataset.key]=true;go();break;
+    case "rev-open": revOpen=b.dataset.key;render();break;
+    case "rev-ok": S.rev=S.rev||{};S.rev[b.dataset.key+"@"+b.dataset.iv]="ok";revOpen=null;go();toast("很好，記得很清楚");break;
+    case "rev-forgot": {S.rev=S.rev||{};S.rev[b.dataset.key+"@"+b.dataset.iv]="forgot";revOpen=null;persist();render();const k=keyInfo(b.dataset.key);Study.start(k.n,k.ch);break}
+    case "notes": openNotes(b.dataset.key);break;
     case "theme": {const th=THEMES.find(x=>x.id===b.dataset.id);if(th&&unlocked(th)){S.theme=th.id;go();toast(`換上「${th.name}」`)}else if(th)toast(`還差 ${th.cost-oil()} 滴燈油`);break}
     case "leave": ensureDay(t).leave=true;persist(t);render();toast("今天請假，好好休息");break;
     case "unleave": if(DAYS[t])delete DAYS[t].leave;persist(t);render();break;
@@ -1029,7 +1142,7 @@ const Voice={web:("speechSynthesis" in window),cur:null,mode:null,
 if(Voice.web){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}}
 /* 列出所有引導詞（產生錄音用）：在瀏覽器主控台執行 allVoiceLines() */
 function allVoiceLines(){
-  const set=new Set([...MERITS,...TEST_SAY,CHECK_SAY,VIP_INTRO,VIP_MID,VIP_END]);const keep={stage:S.stage,obj:S.obj};
+  const set=new Set([...MERITS,...TEST_SAY,CHECK_SAY,VIP_INTRO,VIP_MID,VIP_END,...PRE_SAY,SEG_SAY,END_SAY]);const keep={stage:S.stage,obj:S.obj};
   const grab=steps=>steps.forEach(s=>(s.fns||[]).forEach(f=>{if(f.text)set.add(f.text)}));
   ["mini","alert","night","vip"].forEach(k=>grab(Session.build(k)));
   VSTAGES.forEach(v=>v.prompts.forEach(x=>set.add(x)));
@@ -1042,29 +1155,32 @@ function showCap(text){const c=document.getElementById("cap");if(c)c.textContent
 /* ================= 聽講播放列（直接播大慈恩的 Podcast 音檔） ================= */
 const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
   $:id=>document.getElementById(id),
-  open(n,ch="s"){const isV=ch==="v";const info=isV?VIP()[n]:(window.LECT_AUDIO||{})[n];if(!info){window.open(isV?vipUrl(n):lurl(n),"_blank","noopener");return}
+  open(n,ch="s",opt){const isV=ch==="v";const info=isV?VIP()[n]:(window.LECT_AUDIO||{})[n];if(!info){window.open(isV?vipUrl(n):lurl(n),"_blank","noopener");return}
+    this.study=(opt&&opt.study)||null;this.$("lpStudy").hidden=true;this.$("lpSeg").textContent="";
     if(this.n!==n||this.ch!==ch){this.n=n;this.ch=ch;this.key=isV?"v"+n:n;this.a.src=info[0];this.a.preload="metadata";this.pending=(S.lpos||{})[this.key]||0;this.$("lpDone").hidden=true}
+    if(this.study){this.pending=0;try{this.a.currentTime=0}catch(e){}}
     const ttl=isV?vipTitle(n):LECT[n-1];this.$("lpN").textContent=isV?`毗缽舍那 ${n}`:`第 ${n} 講`;this.$("lpTitle").textContent=ttl;
     this.$("lplayer").hidden=false;document.body.classList.add("playing");
     this.a.playbackRate=S.lrate||1;this.$("lpRate").textContent=(S.lrate||1)+"×";
     if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:`${isV?"毗缽舍那 ":"第 "}${n}${isV?"":" 講"}・${ttl}`,artist:"真如老師・廣論止觀初探",album:"無風燭",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
-    this.play()},
+    if(opt&&opt.noplay){const a=this.a;a.muted=true;const pr=a.play();if(pr&&pr.then)pr.then(()=>{a.pause();a.muted=false}).catch(()=>{a.muted=false})}else this.play()},
   startRepeat(){this.cancelRepeat();let s=5;const tick=()=>{if(s<=0){this.cancelRepeat();this.a.currentTime=0;this.play();return}this.$("lpTime").textContent=`${s} 秒後重播…`;s--;this.rt=setTimeout(tick,1000)};tick()},
   cancelRepeat(){clearTimeout(this.rt);this.rt=null},
   play(){const p=this.a.play();if(p&&p.catch)p.catch(e=>{if(e&&e.name==="NotAllowedError")toast("請再按一次播放")})},
-  toggle(){if(this.a.paused)this.play();else this.a.pause()},
+  toggle(){if(this.study&&!this.$("lpStudy").hidden){const b=this.$("lpSegNext");if(b){b.click();return}}if(this.a.paused)this.play();else this.a.pause()},
   skip(s){if(isFinite(this.a.duration))this.a.currentTime=Math.min(this.a.duration,Math.max(0,this.a.currentTime+s))},
   ui(){const a=this.a,d=a.duration||0,t=a.currentTime||0;if(!this.rt)this.$("lpTime").textContent=`${fmtT(t)} / ${fmtT(d)}`;if(!this.seeking)this.$("lpSeek").value=d?Math.round(t/d*1000):0;
     this.$("lpPlay").textContent=a.paused?"▶":"❚❚";this.$("lpPlay").setAttribute("aria-label",a.paused?"播放":"暫停");
-    if(d&&t/d>.9&&!this.heardNow())this.$("lpDone").hidden=false;
+    if(this.study&&this.study.pass===1&&d&&!a.muted){const s=this.study;if(t>s.segEnd+3){s.seg=Math.floor(t/SEG_LEN);s.segEnd=(s.seg+1)*SEG_LEN;this.$("lpSeg").textContent=`第 ${s.seg+1} 段`}else if(!a.paused&&t>=s.segEnd&&t<d-20&&this.$("lpStudy").hidden){a.pause();Study.segPause()}}
+    if(d&&t/d>.9&&!this.heardNow()&&!this.study)this.$("lpDone").hidden=false;
     if(Date.now()-this.saved>5000&&t>5){this.saved=Date.now();S.lpos=S.lpos||{};S.lpos[this.key]=Math.floor(t);persist()}},
-  close(){this.cancelRepeat();this.a.pause();if(this.n&&this.a.currentTime>5){S.lpos=S.lpos||{};S.lpos[this.key]=Math.floor(this.a.currentTime);persist()}this.$("lplayer").hidden=true;document.body.classList.remove("playing");render()},
+  close(){this.cancelRepeat();this.study=null;this.$("lpStudy").hidden=true;this.$("lpSeg").textContent="";this.a.pause();if(this.n&&this.a.currentTime>5){S.lpos=S.lpos||{};S.lpos[this.key]=Math.floor(this.a.currentTime);persist()}this.$("lplayer").hidden=true;document.body.classList.remove("playing");render()},
   heardNow(){return this.ch==="v"?!!(S.vheard||{})[this.n]:!!S.heard[this.n]},
   done(){const n=this.n;if(!n)return;if(this.ch==="v"){S.vheard=S.vheard||{};S.vheard[n]=today()}else S.heard[n]=today();if(S.lpos)delete S.lpos[this.key];persist();this.$("lpDone").hidden=true;render();toast(`${this.ch==="v"?"毗缽舍那":""}第 ${n} 講已點亮，燈油 +3`)},
   init(){const a=this.a;
     a.addEventListener("loadedmetadata",()=>{if(this.pending&&this.pending<a.duration-10)a.currentTime=this.pending;this.pending=0;this.ui()});
     ["timeupdate","play","pause"].forEach(ev=>a.addEventListener(ev,()=>this.ui()));
-    a.addEventListener("ended",()=>{this.ui();if(!this.heardNow()){this.$("lpDone").hidden=false;if(!S.lrepeat)toast("聽完了！按「聽完了」點亮這一講")}if(S.lrepeat)this.startRepeat()});
+    a.addEventListener("ended",()=>{if(this.study){Study.finish();return}this.ui();if(!this.heardNow()){this.$("lpDone").hidden=false;if(!S.lrepeat)toast("聽完了！按「聽完了」點亮這一講")}if(S.lrepeat)this.startRepeat()});
     a.addEventListener("play",()=>this.cancelRepeat());
     a.addEventListener("error",()=>{if(this.n)toast("音檔載入失敗，可以改到大慈恩網站聽")});
     this.$("lpPlay").onclick=()=>this.toggle();
