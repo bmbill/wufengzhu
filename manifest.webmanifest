@@ -1,7 +1,7 @@
 {
-  "name": "無風燭・奢摩他練習",
-  "short_name": "無風燭",
-  "description": "廣論奢摩他個人練習：聽止觀初探、語音引導上座、檢核與進度追蹤。",
+  "name": "燈燈相續・廣論聽聞與實修",
+  "short_name": "燈燈相續",
+  "description": "菩提道次第廣論的聽聞與實修，照戒定慧次第學習。",
   "lang": "zh-Hant",
   "start_url": "./",
   "scope": "./",
@@ -10,8 +10,15 @@
   "background_color": "#ece6ff",
   "theme_color": "#ece6ff",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
