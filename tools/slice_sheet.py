@@ -4,6 +4,8 @@
   python tools/slice_sheet.py 大圖.png 主題代號
   主題代號：dawn（晨光）、lotus（蓮池）、elephant（調象）、moon（月夜）、forest（山林）、ocean（海洋）
   前兩列（8 格）是引導者，後兩列（8 格）是學員。
+  python tools/slice_sheet.py 大圖.png dawn --layout wise    第三個角色的 4×2 大圖（8 格）
+  python tools/slice_sheet.py 大圖.png moon --layout trio    三個角色畫在同一張 4×4
 
 大圖的格子順序（由左到右、由上到下）照 LAYOUT。背景是透明的就直接用；
 是純色（白色或淡色）的，會從每格的邊緣往內把背景去掉（角色要有深色粗外框，才不會被吃掉）。
@@ -17,6 +19,15 @@ LAYOUT = ["guide-happy", "guide-cheer", "guide-calm", "guide-gentle",
           "guide-think", "guide-love", "guide-wow", "guide-fight",
           "learner-happy", "learner-sleepy", "learner-distracted", "learner-confused",
           "learner-think", "learner-sit", "learner-cheer", "learner-sad"]
+# 第三個角色（首頁「慧」那格）：晨光、蓮池、調象另外補一張 4×2（8 格）
+WISE = ["wise-happy", "wise-think", "wise-wow", "wise-gentle",
+        "wise-cheer", "wise-calm", "wise-love", "wise-fight"]
+# 月夜、山林、海洋：一張 4×4 畫齊三個角色（引導者 5、學員 6、第三個角色 5）
+TRIO = ["guide-happy", "guide-cheer", "guide-calm", "guide-gentle",
+        "guide-think", "learner-happy", "learner-sleepy", "learner-distracted",
+        "learner-confused", "learner-sit", "learner-sad", "wise-happy",
+        "wise-think", "wise-wow", "wise-gentle", "wise-cheer"]
+LAYOUTS = {"pair": LAYOUT, "wise": WISE, "trio": TRIO}
 THEMES = ["dawn", "lotus", "elephant", "moon", "forest", "ocean"]
 KEY = (255, 0, 255, 255)
 
@@ -96,11 +107,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("image")
     ap.add_argument("theme", choices=THEMES)
-    ap.add_argument("--rows", type=int, default=4)
+    ap.add_argument("--layout", choices=list(LAYOUTS), default="pair",
+                    help="pair＝引導者＋學員各 8 格（4×4）；wise＝第三個角色 8 格（4×2）；trio＝三個角色一張（4×4）")
+    ap.add_argument("--rows", type=int, default=0, help="列數；不填就依版型（pair、trio 是 4，wise 是 2）")
     ap.add_argument("--cols", type=int, default=4)
     ap.add_argument("--tol", type=int, default=38, help="去背的顏色容許度，背景沒去乾淨就調大，角色被吃掉就調小")
     ap.add_argument("--inset", type=float, default=0.0, help="每格往內縮的比例（大圖格子之間有框線時用，例如 0.02）")
     a = ap.parse_args()
+    lay = LAYOUTS[a.layout]
+    a.rows = a.rows or (2 if a.layout == "wise" else 4)
 
     src = Image.open(a.image).convert("RGBA")
     W, H = src.size
@@ -110,7 +125,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     cw, ch = W / a.cols, H / a.rows
     tiles = []
-    for i, name in enumerate(LAYOUT[: a.rows * a.cols]):
+    for i, name in enumerate(lay[: a.rows * a.cols]):
         r, c = divmod(i, a.cols)
         ix, iy = cw * a.inset, ch * a.inset
         box = (int(c * cw + ix), int(r * ch + iy), int((c + 1) * cw - ix), int((r + 1) * ch - iy))

@@ -265,7 +265,7 @@ details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;padding:4px 
 .themes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .th{border:2px solid transparent;background:rgba(255,255,255,.7);border-radius:18px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;min-width:0}
 .th .pv{width:100%;height:52px;display:flex;justify-content:center;gap:2px}
-.th .pv img,.th .pv svg{width:50px;height:50px;object-fit:contain}
+.th .pv img,.th .pv svg{width:40px;height:40px;object-fit:contain}
 .th small.who{color:var(--ink);font-size:11px}
 .th b{font-family:var(--f-display);font-size:15px}
 .th small{font-size:11px;color:var(--mute)}
@@ -275,6 +275,7 @@ details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;padding:4px 
 .unlock-art .sticker{width:96px;height:96px}
 .sheet .panel .unlock-art .sticker.tl{top:0;left:14%;right:auto}
 .sheet .panel .unlock-art .sticker.tr{top:0;right:14%}
+.sheet .panel .unlock-art .sticker.bc{top:6px;left:50%;transform:translateX(-50%)}
 /* 角色貼圖（像 LINE 主題，疊在卡片邊角） */
 .card{position:relative}
 .sticker{position:absolute;width:70px;height:70px;pointer-events:none;z-index:2}
@@ -489,21 +490,23 @@ const COUNT_SAY="接下來數呼吸。一吸一呼算一次，在心裡默數，
 /* 每個主題是一對不同的角色：zz＝引導者、an＝學員。
    圖檔放 chars/<主題>/guide-<表情>.png、learner-<表情>.png（用 tools/slice_sheet.py 從 ChatGPT 的 4×4 大圖切出來），
    chars/files.js 會列出每個主題有哪些圖；沒有圖的就用下面畫的簡單版本。 */
-const MOODS={zz:["happy","cheer","calm","gentle","think","love","wow","fight"],an:["happy","sleepy","distracted","confused","think","sit","cheer","sad"]};
-const ROLE_FILE={zz:"guide",an:"learner"};
+const MOODS={zz:["happy","cheer","calm","gentle","think","love","wow","fight"],an:["happy","sleepy","distracted","confused","think","sit","cheer","sad"],hu:["happy","think","wow","gentle","cheer","calm","love","fight"]};
+/* 某個表情沒有圖時，先找相近的表情（一張大圖只畫了部分表情的主題用） */
+const MOOD_NEAR={love:["happy","cheer"],wow:["cheer","happy"],fight:["cheer","happy"],calm:["gentle","sit","happy"],gentle:["calm","happy"],think:["confused","gentle","happy"],cheer:["happy","wow"],sleepy:["sad","sit","happy"],distracted:["confused","think","happy"],confused:["think","distracted","happy"],sit:["calm","think","happy"],sad:["sleepy","confused","happy"]};
+const ROLE_FILE={zz:"guide",an:"learner",hu:"wise"};
 const THEMES=[
-  {id:"dawn",name:"晨光",cost:0,desc:"蠟燭精靈燭燭，陪著跟你一樣剛開始學的小安。",
-   zz:{name:"燭燭",kind:"candle"},an:{name:"小安",kind:"kid"}},
-  {id:"lotus",name:"蓮池",cost:15,desc:"蓮花精靈蓮蓮，陪著老是跳來跳去的小青蛙蛙蛙，練習把心安住。",
-   zz:{name:"蓮蓮",kind:"lotus"},an:{name:"蛙蛙",kind:"frog"}},
-  {id:"elephant",name:"調象",cost:40,desc:"廣論的調象喻：用正念的繩子把心象繫在所緣上，用正知的鉤子調伏它。阿念帶著小象象寶一起練。",
-   zz:{name:"阿念",kind:"keeper"},an:{name:"象寶",kind:"elephant"}},
-  {id:"moon",name:"月夜",cost:80,desc:"安安靜靜的月兔玉玉，和總是衝來衝去的小流星咻咻。",
-   zz:{name:"玉玉",kind:"rabbit"},an:{name:"咻咻",kind:"star"}},
-  {id:"forest",name:"山林",cost:130,desc:"看得清清楚楚的貓頭鷹明明，和什麼都想抱回家的松鼠囤囤。",
-   zz:{name:"明明",kind:"owl"},an:{name:"囤囤",kind:"squirrel"}},
-  {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢，和八隻手忙不停的小章魚八八。",
-   zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"}}
+  {id:"dawn",name:"晨光",cost:0,desc:"蠟燭精靈燭燭，陪著跟你一樣剛開始學的小安；螢火蟲亮亮，小小的光照亮腳下的路。",
+   zz:{name:"燭燭",kind:"candle"},an:{name:"小安",kind:"kid"},hu:{name:"亮亮",kind:"firefly"}},
+  {id:"lotus",name:"蓮池",cost:15,desc:"蓮花精靈蓮蓮，陪著老是跳來跳去的小青蛙蛙蛙，練習把心安住；蜻蜓晶晶的大眼睛，什麼都看得清清楚楚。",
+   zz:{name:"蓮蓮",kind:"lotus"},an:{name:"蛙蛙",kind:"frog"},hu:{name:"晶晶",kind:"dragonfly"}},
+  {id:"elephant",name:"調象",cost:40,desc:"廣論的調象喻：用正念的繩子把心象繫在所緣上，用正知的鉤子調伏它。阿念帶著小象象寶一起練，阿知拿著鉤子，看得出心象跑到哪裡。",
+   zz:{name:"阿念",kind:"keeper"},an:{name:"象寶",kind:"elephant"},hu:{name:"阿知",kind:"knower"}},
+  {id:"moon",name:"月夜",cost:80,desc:"安安靜靜的月兔玉玉，和總是衝來衝去的小流星咻咻；滿月圓圓照亮夜路。",
+   zz:{name:"玉玉",kind:"rabbit"},an:{name:"咻咻",kind:"star"},hu:{name:"圓圓",kind:"fullmoon"}},
+  {id:"forest",name:"山林",cost:130,desc:"守規矩又溫柔的小鹿鹿鹿、什麼都想抱回家的松鼠囤囤，和看得清清楚楚的貓頭鷹明明。",
+   zz:{name:"鹿鹿",kind:"deer"},an:{name:"囤囤",kind:"squirrel"},hu:{name:"明明",kind:"owl"}},
+  {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢、八隻手忙不停的小章魚八八，和深海裡自己會發光的燈籠魚小燈。",
+   zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"},hu:{name:"小燈",kind:"lantern"}}
 ];
 const OIL_RULES="每日聽聞一段 +2・聞法勝利 +1・法類印章 +10・上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1";
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2;if(d.hb)o+=1}
@@ -512,9 +515,11 @@ const unlocked=th=>oil()>=th.cost;
 const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
 const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
 const nm=(who,theme)=>themeOf(theme||curTheme())[who].name;
+/* 首頁戒、定、慧三格各配一個角色（預設：引導者＝戒、學習者＝定、第三個角色＝慧；主題可以自己改） */
+const tileWho=(k,theme)=>(themeOf(theme||curTheme()).tiles||{jie:"zz",ding:"an",hui:"hu"})[k];
 const missingImg=new Set();
-function charSrc(who,m,theme){const name=`${ROLE_FILE[who]}-${m}`;const F=window.CHAR_FILES||{};
-  if(F[theme]&&F[theme].includes(name)){const src=`chars/${theme}/${name}.png`;if(!missingImg.has(src))return src}return null}
+function charSrc(who,m,theme){const F=(window.CHAR_FILES||{})[theme];if(!F)return null;
+  for(const mm of [m,...(MOOD_NEAR[m]||[]),...MOODS[who]]){const name=`${ROLE_FILE[who]}-${mm}`;if(F.includes(name)){const src=`chars/${theme}/${name}.png`;if(!missingImg.has(src))return src}}return null}
 function charInner(who,mood,theme){const m=MOODS[who].includes(mood)?mood:MOODS[who][0];const th=theme||curTheme();const src=charSrc(who,m,th);
   return src?`<img src="${src}" alt="" data-who="${who}" data-mood="${m}" data-th="${th}" onerror="avaFail(this)">`:faceSVG(who,m,th)}
 function avaFail(img){missingImg.add(img.getAttribute("src"));const s=document.createElement("span");s.innerHTML=faceSVG(img.dataset.who,img.dataset.mood,img.dataset.th);img.replaceWith(s.firstChild)}
@@ -541,6 +546,17 @@ const KIND={
     face:`<circle cx="31" cy="36" r="19" fill="#f3b07c" ${O}/><ellipse cx="31" cy="44" rx="9" ry="6" fill="#ffe7cf"/>`},
   turtle:{back:`<ellipse cx="32" cy="54" rx="24" ry="11" fill="#5aa774" ${O}/><path d="M18 52l7-6h14l7 6" fill="none" stroke="#2b2350" stroke-width="1.5"/>`,
     face:`<circle cx="32" cy="34" r="18" fill="#a9dbb3" ${O}/>`},
+  firefly:{back:`<ellipse cx="14" cy="26" rx="10" ry="6" fill="#e8f1ff" ${O} transform="rotate(-25 14 26)"/><ellipse cx="50" cy="26" rx="10" ry="6" fill="#e8f1ff" ${O} transform="rotate(25 50 26)"/><path d="M26 15q-4-9-9-9M38 15q4-9 9-9" stroke="#2b2350" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+    face:`<circle cx="32" cy="32" r="17" fill="#5b4b8a" ${O}/><circle cx="32" cy="32" r="13" fill="#7d6bb0"/>`,front:'<ellipse cx="32" cy="56" rx="10" ry="7" fill="#fff38a" stroke="#2b2350" stroke-width="2"/><ellipse cx="32" cy="56" rx="15" ry="11" fill="#fff38a" opacity=".35"/>'},
+  dragonfly:{back:`<ellipse cx="11" cy="22" rx="11" ry="5" fill="#d8f4ff" ${O} transform="rotate(-15 11 22)"/><ellipse cx="53" cy="22" rx="11" ry="5" fill="#d8f4ff" ${O} transform="rotate(15 53 22)"/><ellipse cx="11" cy="32" rx="10" ry="4.5" fill="#d8f4ff" ${O} transform="rotate(10 11 32)"/><ellipse cx="53" cy="32" rx="10" ry="4.5" fill="#d8f4ff" ${O} transform="rotate(-10 53 32)"/>`,
+    face:`<circle cx="32" cy="34" r="17" fill="#6fd0c4" ${O}/><circle cx="24" cy="31" r="8" fill="#e9fffb" ${O}/><circle cx="40" cy="31" r="8" fill="#e9fffb" ${O}/>`},
+  knower:{back:'',face:`<circle cx="32" cy="36" r="21" fill="#ffe1c7" ${O}/><path d="M11 34q0-21 21-21t21 21q-6-10-21-11q-15 1-21 11z" fill="#4a3a73"/><path d="M14 22l6 10M50 22l-6 10" stroke="#4a3a73" stroke-width="5" stroke-linecap="round"/>`,
+    front:'<path d="M50 62V46q0-6 6-6q5 0 5 5" fill="none" stroke="#c98a4b" stroke-width="3.5" stroke-linecap="round"/>'},
+  fullmoon:{back:'<circle cx="32" cy="34" r="29" fill="#fff6c9" opacity=".55"/>',face:`<circle cx="32" cy="34" r="22" fill="#fff1a8" ${O}/><circle cx="20" cy="24" r="3" fill="#f3e08a"/><circle cx="44" cy="46" r="2.5" fill="#f3e08a"/>`},
+  deer:{back:`<path d="M20 16l-4-10M16 10l-6 0M44 16l4-10M48 10l6 0" stroke="#a0703f" stroke-width="3" stroke-linecap="round"/><ellipse cx="12" cy="30" rx="8" ry="4.5" fill="#d9a066" ${O} transform="rotate(-20 12 30)"/><ellipse cx="52" cy="30" rx="8" ry="4.5" fill="#d9a066" ${O} transform="rotate(20 52 30)"/>`,
+    face:`<circle cx="32" cy="36" r="19" fill="#e6b07a" ${O}/><ellipse cx="32" cy="45" rx="9" ry="6" fill="#fff0dc"/><circle cx="24" cy="26" r="2" fill="#fff"/><circle cx="40" cy="27" r="1.6" fill="#fff"/>`},
+  lantern:{back:'<path d="M32 15q2-9 10-11" stroke="#2b2350" stroke-width="2" fill="none"/><circle cx="43" cy="4" r="4" fill="#fff38a" stroke="#2b2350" stroke-width="1.5"/><path d="M50 36l12-8v16z" fill="#6c7fd8" stroke="#2b2350" stroke-width="2" stroke-linejoin="round"/>',
+    face:`<ellipse cx="30" cy="36" rx="22" ry="18" fill="#8ea6ff" ${O}/>`},
   octopus:{face:`<path d="M12 40a20 22 0 0 1 40 0z" fill="#ff9fb2" ${O}/><circle cx="32" cy="32" r="20" fill="#ff9fb2" ${O}/>`,
     front:'<path d="M14 50q3 8 8 4M24 52q2 9 7 5M38 52q2 9 7 4M48 50q4 7 8 2" fill="none" stroke="#ff7f99" stroke-width="4" stroke-linecap="round"/>'}
 };
@@ -590,9 +606,9 @@ function checkUnlock(){if(!S.onboarded||Session.on||document.querySelector("#lay
   const nw=THEMES.find(t=>t.cost>0&&unlocked(t)&&!S.seenThemes.includes(t.id));if(!nw)return;S.seenThemes.push(nw.id);persist();
   const L=document.getElementById("layer");
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ul-h"><div class="panel unlock">
-    <div class="unlock-art">${sticker("zz","wow","tl",nw.zz.name,nw.id)}${sticker("an","cheer","tr",nw.an.name,nw.id)}</div>
+    <div class="unlock-art">${sticker("zz","wow","tl",nw.zz.name,nw.id)}${sticker("hu","happy","bc",nw.hu.name,nw.id)}${sticker("an","cheer","tr",nw.an.name,nw.id)}</div>
     <span class="eyebrow">燈油累積到 ${nw.cost} 滴</span><h2 id="ul-h">解鎖新主題「${esc(nw.name)}」！</h2>
-    <p class="meta">新夥伴「${esc(nw.zz.name)}」和「${esc(nw.an.name)}」來陪你了。${esc(nw.desc)}</p>
+    <p class="meta">新夥伴「${esc(nw.zz.name)}」「${esc(nw.an.name)}」和「${esc(nw.hu.name)}」來陪你了。${esc(nw.desc)}</p>
     <div class="btns"><button class="btn primary" data-ul="use" data-id="${nw.id}">換上「${esc(nw.name)}」</button><button class="btn" data-ul="later">晚點再說</button></div></div></div>`;
   L.onclick=e=>{const b=e.target.closest("[data-ul]");if(!b)return;if(b.dataset.ul==="use"){S.theme=b.dataset.id;persist()}L.innerHTML="";L.onclick=null;render()}}
 /* 每一階的日常對話（依日期輪替） */
@@ -741,13 +757,13 @@ function vgSection(){const St=VGS();if(!St.length)return "";const cur=vgStep();
       :`<button class="vgc ${on?"on":""}" data-act="vg-flip" data-i="${i}" aria-pressed="${on}">${on?`<b>${esc(c.t)}</b><span>${esc(c.d)}</span>${c.m?`<small>比喻：${esc(c.m)}</small>`:""}`:`<b>${esc(c.t)}</b><small>點一下翻面</small>`}</button>`}).join("");
   const Q=(window.VG_QUIZ||[]).filter(x=>x.s<=cur);const got=S.vquiz||{};const ok=Q.filter(x=>got[(window.VG_QUIZ||[]).indexOf(x)]).length;
   return `<section class="section"><span class="eyebrow">毗缽舍那的次第地圖</span>
-    <div class="card has-tr">${sticker("zz","think","tr","你在這裡")}<p class="meta">依照你聽到的講次，目前在第 ${cur+1} 步。後面的步驟老師還在講，可以先讀原文。</p>
+    <div class="card has-tr">${sticker(tileWho("hui"),"think","tr","你在這裡")}<p class="meta">依照你聽到的講次，目前在第 ${cur+1} 步。後面的步驟老師還在講，可以先讀原文。</p>
       <div class="vg-map">${map}</div>
       <details class="vg-cmp"><summary>止和觀，差在哪裡？</summary><table><thead><tr><th></th><th>奢摩他（止）</th><th>毗缽舍那（觀）</th></tr></thead><tbody>${cmp}</tbody></table></details></div></section>
   <section class="section"><div class="row between"><span class="eyebrow">詞卡</span><span class="mini-note">比喻只取一分，記得對照原文</span></div>
     <div class="vg-cards">${cards}</div></section>
   <section class="section"><span class="eyebrow">小測驗</span>
-    <div class="card has-tr">${sticker("an","happy","tr","考考你")}<p class="meta">已解鎖 ${Q.length} 題，答對過 ${ok} 題。每題第一次答對，燈油 +1。</p>
+    <div class="card has-tr">${sticker(tileWho("hui"),"wow","tr","考考你")}<p class="meta">已解鎖 ${Q.length} 題，答對過 ${ok} 題。每題第一次答對，燈油 +1。</p>
       <div class="btns"><button class="btn primary" data-act="vg-quiz" ${Q.length?"":"disabled"}>${ok<Q.length?"來三題":"再練三題"}</button></div></div></section>
   <section class="section"><span class="eyebrow">下座後</span>
     <div class="card"><div class="steps">${(window.VG_LIFE||[]).map(([t,d])=>`<div class="tip"><b>${esc(t)}</b><br>${esc(d)}</div>`).join("")}</div>
@@ -756,7 +772,7 @@ function openVgQuiz(){const all=window.VG_QUIZ||[];const cur=vgStep();const got=
   const pool=all.map((x,i)=>i).filter(i=>all[i].s<=cur);if(!pool.length)return;
   const fresh=pool.filter(i=>!got[i]),old=pool.filter(i=>got[i]);const sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
   const pick=sh(fresh).concat(sh(old)).slice(0,3);let k=0,score=0;const L=document.getElementById("layer");
-  const show=()=>{if(k>=pick.length){L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qz-h"><div class="panel">${sticker("zz",score===pick.length?"cheer":"gentle","tr",score===pick.length?"全對！":"再接再厲")}
+  const show=()=>{if(k>=pick.length){L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qz-h"><div class="panel">${sticker(tileWho("hui"),score===pick.length?"cheer":"gentle","tr",score===pick.length?"全對！":"再接再厲")}
       <h2 id="qz-h">答對 ${score}／${pick.length} 題</h2><p class="meta">答錯的題目，下次還會出現。也可以回頭看看次第地圖裡的原文。</p><div class="btns"><button class="btn primary" id="qzOk">好</button></div></div></div>`;
       document.getElementById("qzOk").onclick=()=>{L.innerHTML="";render()};return}
     const i=pick[k],x=all[i];
@@ -771,7 +787,7 @@ function openVgQuiz(){const all=window.VG_QUIZ||[];const cur=vgStep();const got=
 function vipNotes(){const out=[];Object.keys(DAYS).sort().reverse().forEach(k=>{(DAYS[k].vnotes||[]).slice().reverse().forEach(x=>out.push([k,x]))});
   return out.length?`<div class="steps">${out.slice(0,5).map(([k,x])=>`<div class="tip"><span class="mini-note num">${k.slice(5)}・第 ${x.s} 階</span><br>${esc(x.t)}</div>`).join("")}</div>`:`<p class="meta">做完觀察修寫下的一句話，會出現在這裡。</p>`}
 function openVipNote(){const L=document.getElementById("layer");const vs=vstage();
-  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="vn-h"><form class="panel" id="vnf">${sticker("zz","think","tr","看到什麼？")}
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="vn-h"><form class="panel" id="vnf">${sticker(tileWho("hui"),"think","tr","看到什麼？")}
     <h2 id="vn-h">觀察筆記</h2><p class="meta">用一句話寫下剛剛觀察到的。不用寫得很對，寫下真實看到的就好。</p>
     <label class="eyebrow" for="vnt">這次的觀察（${esc(vs.name)}）</label><textarea id="vnt" placeholder="例如：被唸的時候，心裡那個「我」好像很硬、很需要被保護。"></textarea>
     <div class="btns"><button class="btn primary" type="submit">儲存</button><button class="btn ghost" type="button" id="vnx">不寫了</button></div></form></div>`;
@@ -1238,17 +1254,17 @@ function vToday(){
       sub:lcat?`${lcat[1]}・${lcat[0]}`:"道前基礎到四攝全部聽完了",
       chips:chip(`今日聽聞 ${ldt}/${lpace} 段`,jieOk)+chip("睡前反省",!!d.night),
       pct:L.length?ldone/L.length:0,pctLabel:`師父南普陀廣論 ${ldone}/${L.length} 段`,
-      stk:sticker("zz",jieOk?"cheer":"gentle","tr",jieOk?"聽完了！":"先發心")}),
+      stk:sticker(tileWho("jie"),jieOk?"cheer":"gentle","tr",jieOk?"聽完了！":"先發心")}),
     homeTile({k:"ding",href:"ding",glyph:"定",eb:"定・增上定學",title:"奢摩他",
       sub:`上座第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}`,
       chips:chip(sneed>1?`上座 ${Math.min(sdone,sneed)}/${sneed}`:"上座",dingOk)+chip(`止觀初探 本週 ${hw}/${S.pace} 講`,hw>=S.pace)+(co.length?`<span class="tchip warn">${co.length} 則提醒</span>`:""),
       pct:heardCount()/TOTAL,pctLabel:`止觀初探 ${heardCount()}/${TOTAL} 講`,
-      stk:sticker("an",dingOk?"happy":"sit","tr",dingOk?"坐完了！":"一起坐")}),
+      stk:sticker(tileWho("ding"),dingOk?"happy":"sit","tr",dingOk?"坐完了！":"一起坐")}),
     homeTile({k:"hui",href:"hui",glyph:"慧",eb:"慧・增上慧學",title:"聽聞毗婆舍那",
       sub:S.vipOn?`觀察修第 ${vstage().n} 階・${vstage().name}`:"還沒開啟，點進去看看",
       chips:S.vipOn?chip(`本週 ${vhw}/${S.vpace||1} 講`,vhw>=(S.vpace||1))+chip("觀察修",!!d.vthink):"",
       pct:S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,pctLabel:S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}/${vipNums().length} 講`:"第二章",
-      stk:sticker("zz","think","tr",S.vipOn?"往深處看":"")})];
+      stk:sticker(tileWho("hui"),"think","tr",S.vipOn?"往深處看":"")})];
   return `
   <header class="hero">
     <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
@@ -1303,7 +1319,7 @@ function vDing(){
   </section>`}
 function vHui(){const d=day(today())||{};
   if(!S.vipOn)return subHead("慧・增上慧學","聽聞毗婆舍那","真如老師《止觀初探・毗缽舍那》與觀察修。")+`
-  <section class="section"><div class="card has-tr">${sticker("zz","think","tr","往深處看")}
+  <section class="section"><div class="card has-tr">${sticker(tileWho("hui"),"think","tr","往深處看")}
     <h3>還沒開啟</h3><p>奢摩他是「止住修」：安住在所緣上、不分析；毗缽舍那是「觀察修」：用正理去思惟、去觀察。廣論說，生起無我正見的聞思不必等到得止，所以隨時可以開始；奢摩他的上座照常。</p>
     <p class="meta">開啟後，這裡會有毗缽舍那的聽講（老師還在講，目前 ${vipNums().length} 講，每週自動更新）和每天選做的「觀察修 5 分鐘」。</p>
     <div class="btns"><button class="btn primary" data-act="vip-on">開啟毗婆舍那</button></div></div></section>`;
@@ -1356,7 +1372,7 @@ function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=
   <div class="card has-tr">${sticker("zz","love","tr","收集中")}
     <div class="oilbar"><svg class="oil-drop" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4c6 9 14 16 14 25a14 14 0 0 1-28 0c0-9 8-16 14-25z" fill="#ffad1f" stroke="#2b2350" stroke-width="2"/><ellipse cx="17" cy="28" rx="3" ry="5" fill="#fff" opacity=".6"/></svg>
       <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴燈油</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
-    <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner("zz","happy",t.id)}${charInner("an","happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${esc(t.zz.name)}＆${esc(t.an.name)}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
+    <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner(tileWho("jie",t.id),"happy",t.id)}${charInner(tileWho("ding",t.id),"happy",t.id)}${charInner(tileWho("hui",t.id),"happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${esc(t.zz.name)}＆${esc(t.an.name)}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
     <p class="mini-note">${OIL_RULES}</p>
   </div></section>`}
 let openCp=null;
