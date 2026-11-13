@@ -185,9 +185,9 @@ def main():
             merged.append({"q": r[0], "p0": r[1], "p1": r[2], "t0": r[3], "cat": cat})
         if switch is not None:
             cur_cat = target_next
-        # 卷首的續講：超過 1 分鐘就自成一段（標「續」），太長的會在後面再切；短的照舊接在上一段後面播
+        # 卷首的續講：超過 2.5 分鐘就自成一段（標「續」），太長的會在後面再切；短的照舊接在上一段後面播
         if carry_first:
-            if merged and merged[0]["t0"] >= 60:
+            if merged and merged[0]["t0"] >= 150:
                 pq = units[carry_to]
                 units.append([v, pq[1].split(chr(10))[0][:40] + "（續）", 0.0, round(merged[0]["t0"], 1), 0, carry_first, pq[6], 0, 1])
             else:
@@ -242,6 +242,14 @@ def main():
             u.append("%s（%s）" % (base, m.group(1) if m else "續"))
         else:
             u.append(topic_of(u[1]))
+    # 人工（AI 讀講解後）寫的主題與目標：tools/lr_topics.json；有的段落覆蓋自動主題，並加上第 11 欄「目標」
+    tp = os.path.join(ROOT, "tools", "lr_topics.json")
+    TOP = json.load(open(tp, encoding="utf-8")) if os.path.exists(tp) else {}
+    for u in units:
+        m = TOP.get("%d.%d" % (u[0], u[4]))
+        if m:
+            u[9] = m[0]
+            u.append(m[1])
     # 法類目錄
     cats = []
     for idx, u in enumerate(units):
@@ -254,7 +262,7 @@ def main():
             ci += 1
         u[6] = ci
     js = ("/* 燈燈相續・戒：師父南普陀廣論（大慈恩 B000027）每日一段的索引，由 tools/build_lamrim.py 產生。\n"
-          "   LR_CATS=[法類,部,第一段索引]；LR=[卷,廣論原文,開始秒,結束秒,講解段落起,講解段落迄,法類索引,續卷講解段落數,是否為同一原文的後續講解,主題] */\n"
+          "   LR_CATS=[法類,部,第一段索引]；LR=[卷,廣論原文,開始秒,結束秒,講解段落起,講解段落迄,法類索引,續卷講解段落數,是否為同一原文的後續講解,主題,目標（可能沒有）] */\n"
           "window.LR_CATS=" + json.dumps(cats, ensure_ascii=False, separators=(",", ":")) + ";\n"
           "window.LR=" + json.dumps(units, ensure_ascii=False, separators=(",", ":")) + ";\n")
     open(os.path.join(ROOT, "lamrim.js"), "w", encoding="utf-8").write(js)
