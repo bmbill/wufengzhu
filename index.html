@@ -182,6 +182,8 @@ body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
 .goal{font-size:13.5px;line-height:1.6;background:rgba(34,180,141,.09);border-left:3px solid rgba(34,180,141,.55);border-radius:10px;padding:7px 10px;margin:8px 0 0;color:var(--ink)}
 .goal b{display:block;font-size:11px;letter-spacing:.08em;color:#0f7a5e;margin-bottom:1px}
 .lrmode{margin:6px 0 2px}
+.catsel{display:flex;align-items:center;gap:8px;margin:8px 0 2px}
+.catsel select{flex:1;min-width:0;font:inherit;font-size:15px;color:var(--ink);background:var(--card);border:1px solid rgba(43,35,80,.14);border-radius:12px;padding:8px 10px}
 .flow{margin:10px 0 4px;padding-left:22px;font-size:14px;line-height:1.6}.flow li{margin:3px 0}.flow b{margin-right:6px}
 .goalchk{border:0;padding:0;margin:10px 0 4px;display:grid;gap:8px}
 .goalchk label{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;font-size:14px;line-height:1.55;background:var(--card-2);border-radius:12px;padding:8px 10px}
@@ -825,7 +827,11 @@ const lrTopic=i=>{const u=LRA()[i];return (u&&u[9])||(u?u[1].split("\n")[0].slic
 const lrGoal=i=>`聽完能用自己的話說出：「${lrTopic(i)}」這段原文在講什麼，師父怎麼解釋、舉了什麼例子。`;
 const catGoal=c=>LR_GOAL[LRC()[c][0]]||"";
 /* 聽聞模式：順序／自選／隨機 */
-const LR_MODES=[["seq","順序"],["pick","自選"],["rand","隨機"]];
+const LR_MODES=[["seq","法類順序"],["pick","自選"],["rand","隨機"]];
+/* 法類順序：選一個法類，在法類裡照順序聽 */
+function lrCatCur(){const C=LRC();if(S.lrCat!=null&&C[S.lrCat])return S.lrCat;const i=lrNext();return i!=null?LRA()[i][6]:0}
+function lrSeqNext(){const c=lrCatCur();const D=lrDone();for(let i=LRC()[c][2];i<catEnd(c);i++)if(!D[LRID(i)])return i;return null}
+function setLrCat(v){S.lrCat=Number(v);S.lrMode="seq";persist();render();toast(`照順序聽「${LRC()[S.lrCat][0]}」`)}
 const lrMode=()=>S.lrMode||"seq";
 function lrCur(){const L=LRA();if(!L.length)return null;const D=lrDone();const m=lrMode();S.lr=S.lr||{pos:null,done:{}};
   if(m==="pick"){const i=S.lr.pick!=null?lrIndex(S.lr.pick):null;return i}
@@ -833,7 +839,7 @@ function lrCur(){const L=LRA();if(!L.length)return null;const D=lrDone();const m
     if(i==null||D[LRID(i)]){const left=[];for(let k=0;k<L.length;k++)if(!D[LRID(k)])left.push(k);
       i=left.length?left[Math.floor(Math.random()*left.length)]:Math.floor(Math.random()*L.length);S.lr.rand={d:today(),id:LRID(i)};persist()}
     return i}
-  return lrNext()}
+  return lrSeqNext()}
 function unitPlan(i){const L=LRA(),u=L[i],nx=L[i+1];const lastOfVol=!nx||nx[0]!==u[0];
   const plan=[[u[0],u[2],lastOfVol?null:u[3]]];
   if(u[7]&&nx&&nx[0]===u[0]+1)plan.push([u[0]+1,0,nx[2]]);
@@ -844,8 +850,10 @@ function hbIdx(){const H=window.HB||[];return H.length?(daysBetween(S.start,toda
 function goalBox(label,text){return `<div class="goal"><b>${esc(label)}</b>${esc(text)}</div>`}
 function lrSection(){const L=LRA();if(!L.length)return "";const m=lrMode();const i=lrCur();const pace=S.lrPace||1;const dt=lrDoneToday();
   const modes=`<div class="seg lrmode" role="group" aria-label="聽聞模式">${LR_MODES.map(([v,l])=>`<button class="${m===v?"on":""}" data-act="lr-mode" data-v="${v}" aria-pressed="${m===v}">${l}</button>`).join("")}</div>`;
-  const head=`<div class="row between"><span class="eyebrow" id="h-lr">今日聽聞・戒</span><span class="mini-note num">今天 ${dt}/${pace} 段</span></div>${modes}`;
+  const cc=lrCatCur();const catSel=m==="seq"?`<label class="catsel"><span class="mini-note">法類</span><select onchange="setLrCat(this.value)" aria-label="選法類">${PARTS.map(p=>`<optgroup label="${p}">${LRC().map((c,ci)=>c[1]===p?`<option value="${ci}" ${ci===cc?"selected":""}>${esc(c[0])}（${lrDoneIn(ci)}/${catLen(ci)}）</option>`:"").join("")}</optgroup>`).join("")}</select></label>`:"";
+  const head=`<div class="row between"><span class="eyebrow" id="h-lr">今日聽聞・戒</span><span class="mini-note num">今天 ${dt}/${pace} 段</span></div>${modes}${catSel}`;
   if(i==null&&m==="pick")return `<section class="section" aria-labelledby="h-lr">${head}<div class="card has-tr">${sticker("zz","think","tr","想聽哪段？")}<h3>自選：挑一段來聽</h3><p class="meta">照廣論的法類找，或找班上正在研討的地方。選好之後，聽完會自動接著下一段。</p><div class="btns"><button class="btn primary" data-act="lr-pick-open">選一段</button></div></div></section>`;
+  if(i==null&&m==="seq"){const nx=cc+1<LRC().length?cc+1:null;return `<section class="section" aria-labelledby="h-lr">${head}<div class="card calm has-tr">${sticker("zz","cheer","tr","聽完了！")}<h3>「${esc(LRC()[cc][0])}」全部聽完了</h3><p class="meta">可以在上面換一個法類，或接著聽下一個法類。</p>${nx!=null?`<div class="btns"><button class="btn primary" data-act="lr-jump" data-c="${nx}">接著聽「${esc(LRC()[nx][0])}」</button></div>`:""}</div></section>`}
   if(i==null)return `<section class="section">${head}<div class="card calm"><h3>廣論道前基礎到四攝，全部聽完了</h3><p class="meta">可以改用「隨機」或「自選」再聽一輪；到進度頁看看你的印章簿。</p></div></section>`;
   const u=L[i];const c=u[6];const cat=LRC()[c];const mins=Math.max(1,Math.round(planSec(i)/60));const met=dt>=pace;const done=!!lrDone()[LRID(i)];
   const parts=PARTS.map(p=>`<span class="${p===cat[1]?"on":""}">${p}</span>`).join("");
@@ -945,11 +953,11 @@ function triSection(){const L=LRA();const D=lrDone();const nd=Object.keys(D).len
     <div class="tri-row"><b class="tri-k">定</b><div style="min-width:0;flex:1"><div class="t">奢摩他・上座第 ${st.n} 階「${esc(st.name)}」</div><div class="mini-note">止觀初探 ${heardCount()}／${TOTAL} 講</div></div></div>
     <div class="tri-row"><b class="tri-k">慧</b><div style="min-width:0;flex:1"><div class="t">毗缽舍那</div><div class="mini-note">${S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}／${vipNums().length} 講・觀察修第 ${vstage().n} 階`:"還沒開啟（到「調整」頁開啟第二章）"}</div></div></div>
   </div></section>`}
-function lrAdjust(){const C=LRC();if(!C.length)return "";const i=lrNext();const cur=i!=null?LRA()[i][6]:-1;
+function lrAdjust(){const C=LRC();if(!C.length)return "";const cur=lrCatCur();
   return `<section class="section"><span class="eyebrow">戒・每日聽聞</span>
     <div class="card"><span class="mini-note">每天聽幾段（一段約 3～5 分鐘，前面加約 2 分鐘聞法勝利）</span>
     <div class="seg" role="group" aria-label="每天聽幾段">${[[1,"1 段"],[2,"2 段"],[3,"3 段"]].map(([v,l])=>`<button class="${(S.lrPace||1)===v?"on":""}" data-act="set-lrpace" data-v="${v}">${l}</button>`).join("")}</div>
-    <details><summary>跳到班上的進度（目前：${esc(cur>=0?C[cur][0]:"全部完成")}）</summary><div class="steps">${C.map((c,ci)=>`<div class="stp ${ci===cur?"cur":""}"><b>${ci+1}</b><span>${esc(c[0])}<span class="mini-note" style="display:block">${esc(c[1])}・${catLen(ci)} 段・已聽 ${lrDoneIn(ci)}</span></span><button class="btn small" data-act="lr-jump" data-c="${ci}">從這裡聽</button></div>`).join("")}</div></details>
+    <details><summary>選法類（目前：${esc(C[cur][0])}）</summary><div class="steps">${C.map((c,ci)=>`<div class="stp ${ci===cur?"cur":""}"><b>${ci+1}</b><span>${esc(c[0])}<span class="mini-note" style="display:block">${esc(c[1])}・${catLen(ci)} 段・已聽 ${lrDoneIn(ci)}</span></span><button class="btn small" data-act="lr-jump" data-c="${ci}">從這裡聽</button></div>`).join("")}</div></details>
     <p class="mini-note">跳過去以後，前面沒聽的段落仍保留，之後可以回來補。聽完一個法類的所有段落，會在印章簿蓋一個章。</p></div></section>`}
 
 function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false,vipOn:false,vheard:{},vpace:1,vipOffered:false,notes:{},rev:{},skipDeep:{},lr:{pos:null,done:{}},lrPace:1,stamps:{},lrMode:"seq",lrVer:2}}
@@ -1300,11 +1308,11 @@ document.addEventListener("click",e=>{
     case "rev-forgot": {S.rev=S.rev||{};S.rev[b.dataset.key+"@"+b.dataset.iv]="forgot";revOpen=null;persist();render();const k=keyInfo(b.dataset.key);if(k.ch==="L")openHear(k.n);else Study.start(k.n,k.ch);break}
     case "notes": openNotes(b.dataset.key);break;
     case "lr-go": openHear(Number(b.dataset.i));break;
-    case "lr-mode": {const v=b.dataset.v;S.lrMode=v;persist();render();if(v==="pick"&&(!S.lr||S.lr.pick==null))openLrPick();else toast(v==="seq"?"照廣論次第往下聽":v==="rand"?"每次隨機一段沒聽過的":"自選模式");break}
+    case "lr-mode": {const v=b.dataset.v;S.lrMode=v;persist();render();if(v==="pick"&&(!S.lr||S.lr.pick==null))openLrPick();else toast(v==="seq"?"選一個法類，照順序聽":v==="rand"?"每次隨機一段沒聽過的":"自選模式");break}
     case "lr-pick-open": openLrPick();break;
     case "lr-reroll": {S.lr=S.lr||{pos:null,done:{}};S.lr.rand=null;persist();render();break}
     case "lr-text": openLrText(Number(b.dataset.i));break;
-    case "lr-jump": {const c=Number(b.dataset.c);S.lr=S.lr||{pos:null,done:{}};S.lr.pos=LRID(LRC()[c][2]);S.lrMode="seq";persist();location.hash="#jie";render();toast(`從「${LRC()[c][0]}」開始聽`);break}
+    case "lr-jump": {const c=Number(b.dataset.c);S.lr=S.lr||{pos:null,done:{}};S.lr.pos=LRID(LRC()[c][2]);S.lrCat=c;S.lrMode="seq";persist();location.hash="#jie";render();toast(`從「${LRC()[c][0]}」開始聽`);break}
     case "set-lrpace": S.lrPace=Number(b.dataset.v);go();break;
     case "theme": {const th=THEMES.find(x=>x.id===b.dataset.id);if(th&&unlocked(th)){S.theme=th.id;go();toast(`換上「${th.name}」`)}else if(th)toast(`還差 ${th.cost-oil()} 滴燈油`);break}
     case "leave": ensureDay(t).leave=true;persist(t);render();toast("今天請假，好好休息");break;
