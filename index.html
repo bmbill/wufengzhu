@@ -176,6 +176,26 @@ body.in-session .lplayer{visibility:hidden}
 .tri{gap:14px}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
+body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
+/* 戒：主題、目標、模式、自選 */
+.lr-topic{font-family:var(--f-display);font-size:20px;margin:4px 0 2px;line-height:1.35}
+.goal{font-size:13.5px;line-height:1.6;background:rgba(34,180,141,.09);border-left:3px solid rgba(34,180,141,.55);border-radius:10px;padding:7px 10px;margin:8px 0 0;color:var(--ink)}
+.goal b{display:block;font-size:11px;letter-spacing:.08em;color:#0f7a5e;margin-bottom:1px}
+.lrmode{margin:6px 0 2px}
+.flow{margin:10px 0 4px;padding-left:22px;font-size:14px;line-height:1.6}.flow li{margin:3px 0}.flow b{margin-right:6px}
+.goalchk{border:0;padding:0;margin:10px 0 4px;display:grid;gap:8px}
+.goalchk label{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;font-size:14px;line-height:1.55;background:var(--card-2);border-radius:12px;padding:8px 10px}
+.goalchk input{width:20px;height:20px;margin:2px 0 0;accent-color:#22b48d}
+.goalchk b{display:block;font-size:12px;color:#0f7a5e}
+.pick-list{max-height:58vh;overflow:auto;margin:8px -4px;padding:0 4px}
+.pick-cat{border-bottom:1px solid rgba(43,35,80,.08)}
+.pick-cat summary{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 2px;cursor:pointer}
+.pick-units{display:grid;gap:4px;padding:0 0 10px}
+.pick-u{display:grid;grid-template-columns:30px 1fr;gap:8px;text-align:left;border:0;background:var(--card-2);border-radius:10px;padding:8px;font:inherit;color:var(--ink);cursor:pointer}
+.pick-u.cur{outline:2px solid var(--coral)}
+.pick-u.ok .pk-m{color:#0f7a5e;font-weight:700}
+.pk-m{font-family:var(--f-num);color:var(--mute);text-align:center}
+.pk-t{font-size:14px;line-height:1.45}.pk-t small{display:block;color:var(--mute);font-size:11px}
 /* 首頁三大塊 */
 .tiles{gap:16px}
 .tile{position:relative;display:grid;grid-template-columns:58px minmax(0,1fr) 16px;gap:12px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid rgba(255,255,255,.8);border-radius:var(--r);padding:16px 14px;box-shadow:var(--shadow);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);margin-top:14px;transition:transform .15s}
@@ -799,51 +819,94 @@ const lrDone=()=>(S.lr&&S.lr.done)||{};
 function lrDoneIn(c){const D=lrDone();let n=0;for(let i=LRC()[c][2];i<catEnd(c);i++)if(D[LRID(i)])n++;return n}
 function lrNext(){const L=LRA(),D=lrDone();const pos=(S.lr&&S.lr.pos!=null&&lrIndex(S.lr.pos))||0;for(let i=pos;i<L.length;i++)if(!D[LRID(i)])return i;return null}
 function lrDoneToday(){const D=lrDone(),t=today();let n=0;for(const k in D)if(D[k]===t)n++;return n}
+/* 各法類要達到的目標（聽完可以自我檢核） */
+const LR_GOAL={"皈敬頌":"對造論的宗大師和傳承祖師生起恭敬，知道這部論是從佛一路傳下來的。","造者殊勝":"知道阿底峽尊者的功德，對作者生起信心，信得過這個教授。","教授殊勝":"明白四種殊勝：一切聖言都是一個人成佛的教授，不再把經論看成互相矛盾的東西。","聽聞軌理":"知道聽聞的勝利，並且真的用斷三過、具六想的心來聽法。","說法軌理":"知道說法的勝利和應有的心態，將來分享法時不為名利。","完結軌理":"知道講聽完了要怎麼結行，把善根迴向。","親近善士":"知道善知識的德相，以及怎麼以意樂、加行親近，對師長生起信心和念恩。","修習軌理":"知道一座修怎麼做（前行、正行、結行），分得清止住修和觀察修。","暇滿":"認得暇滿人身的意義大、極難得，生起「不要空過」的心。","道次引導":"知道三士道的次第，以及為什麼一定要從共下士道開始。","念死無常":"生起「一定會死、何時死不定、死時只有法有用」的心，不再把今生當成永遠。","三惡趣苦":"思惟惡趣的苦，生起怖畏，想要找救護。","皈依三寶":"知道為什麼皈依、皈依的對象和學處，對三寶生起真正的依靠。","深信業果":"生起對業果的定解：業決定、業增長廣大、未造不遇、已造不失，進而斷惡修善。","皈敬":"知道中士道的開頭在禮敬什麼，為思惟苦集做準備。","希求解脫":"認得什麼是真正的解脫，生起想要出離生死的心。","思惟苦諦":"思惟生死總苦、別苦，知道三界都是苦，生起出離心。","思惟集諦":"認得煩惱和業怎樣讓我們流轉生死，找到苦的根源。","十二緣起":"從十二緣起看清生死輪轉的次第，出離心更穩固。","除邪分別":"破除「在家也能解脫、出家不必要」等邪見，知道戒的重要。","解脫正道":"知道解脫的道是什麼（戒定慧三學），尤其要珍重持戒。","入大乘門":"知道大乘的門是菩提心，為什麼要發菩提心。","菩提心次第":"知道七因果、自他相換的修法，一步步生起菩提心。","儀軌受法":"知道發心儀軌和守護發心的學處。","學菩薩行":"知道發心以後要學六度四攝，以及為什麼要學。","布施波羅蜜":"知道布施的體性、種類和修法，練習捨心。","持戒波羅蜜":"知道三聚淨戒，對持戒生起歡喜和珍惜。","忍辱波羅蜜":"知道瞋恚的過患和三種忍，遇到逆境時能想起來用。","精進波羅蜜":"知道懈怠的種類和對治，生起對善法的歡喜心。","靜慮波羅蜜":"知道靜慮的體性和修法（詳見奢摩他）。","般若波羅蜜":"知道智慧的重要，為什麼方便和智慧不能分開。","四攝法":"知道布施、愛語、利行、同事四攝，學著成熟他人。"};
+const lrTopic=i=>{const u=LRA()[i];return (u&&u[9])||(u?u[1].split("\n")[0].slice(0,18):"")};
+const lrGoal=i=>`聽完能用自己的話說出：「${lrTopic(i)}」這段原文在講什麼，師父怎麼解釋、舉了什麼例子。`;
+const catGoal=c=>LR_GOAL[LRC()[c][0]]||"";
+/* 聽聞模式：順序／自選／隨機 */
+const LR_MODES=[["seq","順序"],["pick","自選"],["rand","隨機"]];
+const lrMode=()=>S.lrMode||"seq";
+function lrCur(){const L=LRA();if(!L.length)return null;const D=lrDone();const m=lrMode();S.lr=S.lr||{pos:null,done:{}};
+  if(m==="pick"){const i=S.lr.pick!=null?lrIndex(S.lr.pick):null;return i}
+  if(m==="rand"){const r=S.lr.rand;let i=r&&r.d===today()?lrIndex(r.id):null;
+    if(i==null||D[LRID(i)]){const left=[];for(let k=0;k<L.length;k++)if(!D[LRID(k)])left.push(k);
+      i=left.length?left[Math.floor(Math.random()*left.length)]:Math.floor(Math.random()*L.length);S.lr.rand={d:today(),id:LRID(i)};persist()}
+    return i}
+  return lrNext()}
 function unitPlan(i){const L=LRA(),u=L[i],nx=L[i+1];const lastOfVol=!nx||nx[0]!==u[0];
   const plan=[[u[0],u[2],lastOfVol?null:u[3]]];
   if(u[7]&&nx&&nx[0]===u[0]+1)plan.push([u[0]+1,0,nx[2]]);
   return plan}
 const planSec=i=>{const u=LRA()[i];const nx=LRA()[i+1];return (u[3]-u[2])+(u[7]&&nx&&nx[0]===u[0]+1?nx[2]:0)};
-function hbToday(){const H=window.HB||[];return H.length?H[daysBetween(S.start,today())%H.length]:null}
-function lrSection(){const L=LRA();if(!L.length)return "";const i=lrNext();const pace=S.lrPace||1;const dt=lrDoneToday();
-  if(i==null)return `<section class="section"><div class="card calm"><h3>廣論道前基礎到四攝，全部聽完了</h3><p class="meta">到進度頁看看你的印章簿。</p></div></section>`;
-  const u=L[i];const c=u[6];const cat=LRC()[c];const mins=Math.max(1,Math.round(planSec(i)/60));const met=dt>=pace;
+/* 聞法勝利：每天輪一小段（約 2 分鐘）；同一天聽第二段時換下一小段 */
+function hbIdx(){const H=window.HB||[];return H.length?(daysBetween(S.start,today())+lrDoneToday())%H.length:null}
+function goalBox(label,text){return `<div class="goal"><b>${esc(label)}</b>${esc(text)}</div>`}
+function lrSection(){const L=LRA();if(!L.length)return "";const m=lrMode();const i=lrCur();const pace=S.lrPace||1;const dt=lrDoneToday();
+  const modes=`<div class="seg lrmode" role="group" aria-label="聽聞模式">${LR_MODES.map(([v,l])=>`<button class="${m===v?"on":""}" data-act="lr-mode" data-v="${v}" aria-pressed="${m===v}">${l}</button>`).join("")}</div>`;
+  const head=`<div class="row between"><span class="eyebrow" id="h-lr">今日聽聞・戒</span><span class="mini-note num">今天 ${dt}/${pace} 段</span></div>${modes}`;
+  if(i==null&&m==="pick")return `<section class="section" aria-labelledby="h-lr">${head}<div class="card has-tr">${sticker("zz","think","tr","想聽哪段？")}<h3>自選：挑一段來聽</h3><p class="meta">照廣論的法類找，或找班上正在研討的地方。選好之後，聽完會自動接著下一段。</p><div class="btns"><button class="btn primary" data-act="lr-pick-open">選一段</button></div></div></section>`;
+  if(i==null)return `<section class="section">${head}<div class="card calm"><h3>廣論道前基礎到四攝，全部聽完了</h3><p class="meta">可以改用「隨機」或「自選」再聽一輪；到進度頁看看你的印章簿。</p></div></section>`;
+  const u=L[i];const c=u[6];const cat=LRC()[c];const mins=Math.max(1,Math.round(planSec(i)/60));const met=dt>=pace;const done=!!lrDone()[LRID(i)];
   const parts=PARTS.map(p=>`<span class="${p===cat[1]?"on":""}">${p}</span>`).join("");
-  return `<section class="section" aria-labelledby="h-lr"><div class="row between"><span class="eyebrow" id="h-lr">今日聽聞・戒</span><span class="mini-note num">今天 ${dt}/${pace} 段</span></div>
-  <div class="card ${met?"":"hot"} has-tr">${sticker("zz",met?"cheer":"gentle","tr",met?"今天聽完了！":"先發心再聽")}
+  const extra=m==="pick"?`<button class="btn" data-act="lr-pick-open">換一段</button>`:m==="rand"?`<button class="btn" data-act="lr-reroll">換一段</button>`:"";
+  return `<section class="section" aria-labelledby="h-lr">${head}
+  <div class="card ${met?"":"hot"} has-tr">${sticker("zz",met?"cheer":"gentle","tr",met?"今天聽完了！":"先聞法勝利")}
     <div class="partline" aria-label="目前在${esc(cat[1])}">${parts}</div>
-    <div class="lect"><span class="n">${esc(cat[0])}・第 ${i-cat[2]+1}／${catLen(c)} 段・南普陀第 ${u[0]} 卷</span>
+    <div class="lect"><span class="n">${esc(cat[0])}・第 ${i-cat[2]+1}／${catLen(c)} 段・南普陀第 ${u[0]} 卷${done?"・聽過了":""}</span>
+    <h3 class="lr-topic">${esc(lrTopic(i))}</h3>
     <p class="root">${u[8]?'<span class="mini-note">（承上一段原文，師父繼續講解）</span><br>':""}${esc(u[1])}</p></div>
+    ${goalBox("這段的目標",lrGoal(i))}${goalBox(cat[0]+"・法類目標",catGoal(c))}
     <div class="bar" aria-label="${esc(cat[0])}已聽 ${lrDoneIn(c)} 段"><i style="width:${lrDoneIn(c)/catLen(c)*100}%"></i></div>
-    <div class="btns"><button class="btn primary" data-act="lr-go" data-i="${i}">▶ 聞法勝利・開始聽</button><button class="btn" data-act="lr-text" data-i="${i}">看師父講解</button></div>
-    <p class="mini-note">約 ${mins} 分鐘・師父南普陀廣論${met?"・今天的目標完成了，想多聽一段也可以":""}</p>
+    <div class="btns"><button class="btn primary" data-act="lr-go" data-i="${i}">▶ 聞法勝利・開始聽</button><button class="btn" data-act="lr-text" data-i="${i}">看師父講解</button>${extra}</div>
+    <p class="mini-note">先聽約 2 分鐘的聞法勝利，停 10 秒思惟，再接著聽這段（約 ${mins} 分鐘）${met?"・今天的目標完成了，想多聽一段也可以":""}</p>
   </div></section>`}
-/* 聽前：聞法勝利 */
-function openHear(i){const L=document.getElementById("layer");const hb=hbToday();const u=LRA()[i];const cat=LRC()[u[6]];
+/* 自選：照法類挑一段 */
+function openLrPick(){const L=document.getElementById("layer");const C=LRC();const cur=lrCur();const curC=cur!=null?LRA()[cur][6]:-1;
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pk-h"><div class="panel">${sticker("zz","think","tr","想聽哪段？")}
+    <span class="eyebrow">自選</span><h2 id="pk-h">挑一段來聽</h2><p class="meta">點開法類，選一段。聽完以後會自動接著下一段。✓ 是聽過的。</p>
+    <div class="pick-list">${C.map((c,ci)=>`<details class="pick-cat" data-c="${ci}" ${ci===curC?"open":""}><summary><b>${esc(c[0])}</b><span class="mini-note">${esc(c[1])}・${catLen(ci)} 段・已聽 ${lrDoneIn(ci)}</span></summary><div class="pick-units"></div></details>`).join("")}</div>
+    <div class="btns"><button class="btn ghost" id="pkX">關閉</button></div></div></div>`;
+  const fill=det=>{const box=det.querySelector(".pick-units");if(box.childElementCount)return;const ci=+det.dataset.c;const D=lrDone();let s="";
+    for(let k=C[ci][2];k<catEnd(ci);k++){const u=LRA()[k];const ok=!!D[LRID(k)];s+=`<button class="pick-u ${ok?"ok":""} ${k===cur?"cur":""}" data-k="${k}"><span class="pk-m">${ok?"✓":k-C[ci][2]+1}</span><span class="pk-t">${esc(lrTopic(k))}<small>第 ${u[0]} 卷・約 ${Math.max(1,Math.round(planSec(k)/60))} 分</small></span></button>`}
+    box.innerHTML=s;if(cur!=null){const c=box.querySelector(".cur");if(c)c.scrollIntoView({block:"center"})}};
+  L.querySelectorAll(".pick-cat").forEach(det=>{if(det.open)fill(det);det.addEventListener("toggle",()=>{if(det.open)fill(det)})});
+  L.querySelector(".pick-list").addEventListener("click",e=>{const b=e.target.closest(".pick-u");if(!b)return;const k=+b.dataset.k;
+    S.lrMode="pick";S.lr=S.lr||{pos:null,done:{}};S.lr.pick=LRID(k);persist();L.innerHTML="";render();toast(`選好了：${lrTopic(k)}`)});
+  document.getElementById("pkX").onclick=()=>{L.innerHTML=""}}
+/* 聽前：先聽聞法勝利（約 2 分鐘）→ 停 10 秒思惟 → 正式段落；聞法勝利不能跳過 */
+function openHear(i){const L=document.getElementById("layer");const H=window.HB||[];const hi=hbIdx();const hb=hi!=null?H[hi]:null;const u=LRA()[i];const cat=LRC()[u[6]];
+  const mins=Math.max(1,Math.round(planSec(i)/60));
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hb-h"><div class="panel">${sticker("zz","gentle","tr","聞法勝利")}
-    <span class="eyebrow">聽法之前・思惟聞法勝利</span><h2 id="hb-h">今天的聞法勝利</h2>
-    ${hb?`<p class="root">${esc(hb[0])}</p><div class="btns"><button class="btn small" id="hbPlay">▶ 聽師父講這段</button></div>`:""}
-    <p class="quote">${esc(PRE_SAY[0])}</p>
-    <p class="meta">接著要聽：${esc(cat[0])}・南普陀第 ${u[0]} 卷，約 ${Math.max(1,Math.round(planSec(i)/60))} 分鐘。</p>
-    <div class="btns"><button class="btn primary" id="hbGo">發心完成，開始聽</button><button class="btn ghost" id="hbX">取消</button></div></div></div>`;
+    <span class="eyebrow">聽法之前・聞法勝利（${hi+1}／${H.length}）</span><h2 id="hb-h">${esc(hb?hb[2]:"聞法勝利")}</h2>
+    ${hb?`<p class="root">${esc(hb[0])}</p>${goalBox("聞法勝利的目標",hb[3])}`:""}
+    <ol class="flow"><li><b>聞法勝利</b>約 2 分鐘・師父講</li><li><b>停 10 秒</b>思惟剛才聽到的勝利，發心</li><li><b>${esc(lrTopic(i))}</b>${esc(cat[0])}・約 ${mins} 分鐘</li></ol>
+    <div class="btns"><button class="btn primary" id="hbGo">▶ 開始</button><button class="btn ghost" id="hbX">取消</button></div></div></div>`;
   document.getElementById("hbX").onclick=()=>{L.innerHTML=""};
-  if(hb)document.getElementById("hbPlay").onclick=()=>{Audio_.unlock();LP.openPlan({key:"HB",label:"聞法勝利",title:hb[0].slice(0,20),plan:hb[1]})};
-  document.getElementById("hbGo").onclick=async()=>{Audio_.unlock();Voice.unlock();L.innerHTML="";const t=today();const d=ensureDay(t);if(!d.hb){d.hb=true;persist(t)}
-    LP.openPlan({key:"L"+LRID(i),label:cat[0],title:u[1].split("\n")[0].slice(0,24),plan:unitPlan(i),noplay:true,onEnd:()=>openLrAfter(i)});
-    LP.$("lpSeg").textContent="聽前發心…";await Voice.speak(PRE_SAY[0]);if(LP.mode==="plan"&&LP.key==="L"+LRID(i)){LP.$("lpSeg").textContent="";LP.play()}}}
-/* 聽完：一句話 */
-function openLrAfter(i){const L=document.getElementById("layer");const u=LRA()[i];const cat=LRC()[u[6]];const nt=(S.notes||{})["L"+LRID(i)]||{};
+  const main=()=>{LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i),onEnd:()=>openLrAfter(i,hi)})};
+  document.getElementById("hbGo").onclick=()=>{Audio_.unlock();L.innerHTML="";
+    if(!hb){main();return}
+    LP.openPlan({key:"HB",label:"聞法勝利",title:hb[2],plan:hb[1],noRepeat:true,onEnd:()=>{const t=today();const d=ensureDay(t);if(!d.hb){d.hb=true;persist(t)}
+      LP.gap(10,"思惟剛才的聞法勝利，發心",main)}})}}
+/* 聽完：對照目標，一句話 */
+function openLrAfter(i,hi){const L=document.getElementById("layer");const u=LRA()[i];const cat=LRC()[u[6]];const nt=(S.notes||{})["L"+LRID(i)]||{};const hb=hi!=null?(window.HB||[])[hi]:null;
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="la-h"><form class="panel" id="laf">${sticker("zz","cheer","tr","聽完了！")}
-    <span class="eyebrow">${esc(cat[0])}・南普陀第 ${u[0]} 卷</span><h2 id="la-h">這段在講什麼？</h2>
+    <span class="eyebrow">${esc(cat[0])}・南普陀第 ${u[0]} 卷</span><h2 id="la-h">${esc(lrTopic(i))}</h2>
     <p class="root">${esc(u[1])}</p>
+    <fieldset class="goalchk"><legend class="eyebrow">有沒有達到目標？</legend>
+      ${hb?`<label><input type="checkbox" id="la-g1"><span><b>聞法勝利</b>${esc(hb[3])}</span></label>`:""}
+      <label><input type="checkbox" id="la-g2"><span><b>這一段</b>${esc(lrGoal(i))}</span></label>
+      <p class="mini-note">打不了勾也沒關係，按「再聽一次」，這次聽上一次沒聽到的。</p></fieldset>
     <label class="eyebrow" for="la-one">用自己的話，一句說這段原文在講什麼</label><textarea id="la-one" placeholder="先把原文和師父的理路聽清楚，不急著想生活例子">${esc(nt.one||"")}</textarea>
     <label class="eyebrow" for="la-moved">哪一句最打動你？（選填）</label><textarea id="la-moved" placeholder="抄下師父的話，或用自己的話寫">${esc(nt.moved||"")}</textarea>
     <div class="btns"><button class="btn primary" type="submit">儲存，點亮這一段</button><button class="btn" type="button" id="laRe">再聽一次</button><button class="btn ghost" type="button" id="laX">不寫了</button></div></form></div>`;
   const save=write=>{S.notes=S.notes||{};const id=LRID(i);const n=S.notes["L"+id]=S.notes["L"+id]||{};
     if(write){const a=document.getElementById("la-one").value.trim(),b=document.getElementById("la-moved").value.trim();if(a)n.one=a;if(b)n.moved=b}
+    const g1=document.getElementById("la-g1"),g2=document.getElementById("la-g2");n.g=[g1?g1.checked:null,g2.checked];
     n.p=n.p||[];n.p.push(today());S.lr=S.lr||{pos:null,done:{}};S.lr.done=S.lr.done||{};const first=!S.lr.done[id];S.lr.done[id]=today();
+    if(lrMode()==="pick"&&i+1<LRA().length)S.lr.pick=LRID(i+1);
     persist(today());L.innerHTML="";render();toast(first?"這段點亮了，燈油 +2":"記下了");checkStamp(u[6])};
-  document.getElementById("laX").onclick=()=>save(false);document.getElementById("laRe").onclick=()=>{L.innerHTML="";LP.openPlan({key:"L"+LRID(i),label:cat[0],title:u[1].split("\n")[0].slice(0,24),plan:unitPlan(i),onEnd:()=>openLrAfter(i)})};
+  document.getElementById("laX").onclick=()=>save(false);document.getElementById("laRe").onclick=()=>{L.innerHTML="";LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i),onEnd:()=>openLrAfter(i,hi)})};
   document.getElementById("laf").onsubmit=e=>{e.preventDefault();save(true)}}
 /* 看師父講解（逐字稿向大慈恩讀取） */
 async function openLrText(i){const L=document.getElementById("layer");const u=LRA()[i];const cat=LRC()[u[6]];
@@ -884,19 +947,24 @@ function triSection(){const L=LRA();const D=lrDone();const nd=Object.keys(D).len
   </div></section>`}
 function lrAdjust(){const C=LRC();if(!C.length)return "";const i=lrNext();const cur=i!=null?LRA()[i][6]:-1;
   return `<section class="section"><span class="eyebrow">戒・每日聽聞</span>
-    <div class="card"><span class="mini-note">每天聽幾段（一段約 2～8 分鐘）</span>
+    <div class="card"><span class="mini-note">每天聽幾段（一段約 3～5 分鐘，前面加約 2 分鐘聞法勝利）</span>
     <div class="seg" role="group" aria-label="每天聽幾段">${[[1,"1 段"],[2,"2 段"],[3,"3 段"]].map(([v,l])=>`<button class="${(S.lrPace||1)===v?"on":""}" data-act="set-lrpace" data-v="${v}">${l}</button>`).join("")}</div>
     <details><summary>跳到班上的進度（目前：${esc(cur>=0?C[cur][0]:"全部完成")}）</summary><div class="steps">${C.map((c,ci)=>`<div class="stp ${ci===cur?"cur":""}"><b>${ci+1}</b><span>${esc(c[0])}<span class="mini-note" style="display:block">${esc(c[1])}・${catLen(ci)} 段・已聽 ${lrDoneIn(ci)}</span></span><button class="btn small" data-act="lr-jump" data-c="${ci}">從這裡聽</button></div>`).join("")}</div></details>
     <p class="mini-note">跳過去以後，前面沒聽的段落仍保留，之後可以回來補。聽完一個法類的所有段落，會在印章簿蓋一個章。</p></div></section>`}
 
-function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false,vipOn:false,vheard:{},vpace:1,vipOffered:false,notes:{},rev:{},skipDeep:{},lr:{pos:null,done:{}},lrPace:1,stamps:{}}}
+function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false,vipOn:false,vheard:{},vpace:1,vipOffered:false,notes:{},rev:{},skipDeep:{},lr:{pos:null,done:{}},lrPace:1,stamps:{},lrMode:"seq",lrVer:2}}
 let S=blank(), DAYS={};
 try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.state){S=Object.assign(blank(),o.state);DAYS=o.days||{}}}}catch(e){}
+/* 戒的段落切細（最長 12 分 → 3～5 分）：聽過的舊段落，所涵蓋的新小段都算聽過 */
+function lrMigrate(){const O=window.LR_OLD;if(!O||(S.lrVer||1)>=2)return;const D=(S.lr&&S.lr.done)||{};const add={};
+  for(const id in D){const o=O[id];if(!o)continue;const v=+id.split(".")[0];const a=o[0]<o[1]?o[0]:0,z=o[0]<o[1]?o[1]:1e9;for(const u of LRA())if(u[0]===v&&u[4]<z&&u[5]>a){const k=u[0]+"."+u[4];if(!D[k])add[k]=D[id]}}
+  Object.assign(D,add);S.lrVer=2;if(Object.keys(D).length){S.lr.done=D;persist()}}
 const store={ok:true,persisted:false};
 function persist(){
   S.updatedAt=Date.now();
   try{localStorage.setItem(KEY,JSON.stringify({state:S,days:DAYS}));store.ok=true}catch(e){store.ok=false}
 }
+lrMigrate();
 async function askPersist(){try{if(navigator.storage&&navigator.storage.persist){store.persisted=await navigator.storage.persisted()||await navigator.storage.persist()}}catch(e){}}
 function lastBackupNote(){if(!S.lastBackup)return "還沒備份過。";const d=daysBetween(S.lastBackup,today());return d===0?"今天備份過。":`上次備份是 ${d} 天前（${S.lastBackup}）。`}
 
@@ -976,7 +1044,7 @@ function render(){
   else if(route==="ding") app.innerHTML=vDing();
   else if(route==="hui") app.innerHTML=vHui();
   else app.innerHTML=vToday();
-  Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb");
+  document.body.classList.toggle("sub",SUBS.includes(route));Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
   else checkUnlock();
@@ -1000,7 +1068,7 @@ function homeTile(o){return `<a class="tile tile-${o.k}" href="#${o.href}">${o.s
 function vToday(){
   const t=today();const d=day(t)||{sits:[]};const st=stage();const w=weekNo(t);const dt=new Date();
   // 戒
-  const L=LRA();const li=lrNext();const lcat=li!=null?LRC()[L[li][6]]:null;const ldt=lrDoneToday();const lpace=S.lrPace||1;const ldone=Object.keys(lrDone()).length;
+  const L=LRA();const li=lrCur();const lcat=li!=null?LRC()[L[li][6]]:null;const ldt=lrDoneToday();const lpace=S.lrPace||1;const ldone=Object.keys(lrDone()).length;
   const jieOk=ldt>=lpace;
   // 定
   const sdone=(d.sits||[]).length,sneed=S.sits;const hw=heardInWeek(w);const co=coach();const dingOk=sdone>=sneed;
@@ -1232,8 +1300,11 @@ document.addEventListener("click",e=>{
     case "rev-forgot": {S.rev=S.rev||{};S.rev[b.dataset.key+"@"+b.dataset.iv]="forgot";revOpen=null;persist();render();const k=keyInfo(b.dataset.key);if(k.ch==="L")openHear(k.n);else Study.start(k.n,k.ch);break}
     case "notes": openNotes(b.dataset.key);break;
     case "lr-go": openHear(Number(b.dataset.i));break;
+    case "lr-mode": {const v=b.dataset.v;S.lrMode=v;persist();render();if(v==="pick"&&(!S.lr||S.lr.pick==null))openLrPick();else toast(v==="seq"?"照廣論次第往下聽":v==="rand"?"每次隨機一段沒聽過的":"自選模式");break}
+    case "lr-pick-open": openLrPick();break;
+    case "lr-reroll": {S.lr=S.lr||{pos:null,done:{}};S.lr.rand=null;persist();render();break}
     case "lr-text": openLrText(Number(b.dataset.i));break;
-    case "lr-jump": {const c=Number(b.dataset.c);S.lr=S.lr||{pos:null,done:{}};S.lr.pos=LRID(LRC()[c][2]);persist();location.hash="#today";render();toast(`從「${LRC()[c][0]}」開始聽`);break}
+    case "lr-jump": {const c=Number(b.dataset.c);S.lr=S.lr||{pos:null,done:{}};S.lr.pos=LRID(LRC()[c][2]);S.lrMode="seq";persist();location.hash="#jie";render();toast(`從「${LRC()[c][0]}」開始聽`);break}
     case "set-lrpace": S.lrPace=Number(b.dataset.v);go();break;
     case "theme": {const th=THEMES.find(x=>x.id===b.dataset.id);if(th&&unlocked(th)){S.theme=th.id;go();toast(`換上「${th.name}」`)}else if(th)toast(`還差 ${th.cost-oil()} 滴燈油`);break}
     case "leave": ensureDay(t).leave=true;persist(t);render();toast("今天請假，好好休息");break;
@@ -1392,11 +1463,15 @@ const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
     this.pi=i;this.partT0=pt[1];this.partT1=pt[2]==null?Infinity:pt[2];
     if(this.a.src!==src){this.pending=pt[1];this.a.src=src;this.a.preload="auto"}else{try{this.a.currentTime=pt[1]}catch(e){}}
     this.a.playbackRate=S.lrate||1;if(autoplay)this.play()},
-  nextPart(){const o=this.po;if(!o)return;if(this.pi+1<o.plan.length){this.loadPart(this.pi+1,true);return}this.a.pause();if(S.lrepeat){this.startRepeat();return}const cb=o.onEnd;if(cb){o.onEnd=null;cb()}},
+  nextPart(){const o=this.po;if(!o)return;if(this.pi+1<o.plan.length){this.loadPart(this.pi+1,true);return}this.a.pause();if(S.lrepeat&&!o.noRepeat){this.startRepeat();return}const cb=o.onEnd;if(cb){o.onEnd=null;cb()}},
   startRepeat(){this.cancelRepeat();let s=5;const tick=()=>{if(s<=0){this.cancelRepeat();if(this.mode==="plan")this.loadPart(0,true);else{this.a.currentTime=0;this.play()}return}this.$("lpTime").textContent=`${s} 秒後重播…`;s--;this.rt=setTimeout(tick,1000)};tick()},
-  cancelRepeat(){clearTimeout(this.rt);this.rt=null},
+  cancelRepeat(){clearTimeout(this.rt);this.rt=null;this.gapCb=null},
+  /* 兩段之間停幾秒（聞法勝利 → 正式段落）；停的時候按播放就直接開始 */
+  gap(sec,msg,cb){this.cancelRepeat();let s=sec;this.gapCb=cb;this.$("lpSeg").textContent=msg;this.$("lpPlay").textContent="▶";
+    const tick=()=>{if(!this.gapCb)return;if(s<=0){this.endGap();return}this.$("lpTime").textContent=`${s} 秒後播放正式段落…`;s--;this.rt=setTimeout(tick,1000)};tick()},
+  endGap(){const cb=this.gapCb;if(!cb)return;clearTimeout(this.rt);this.rt=null;this.gapCb=null;this.$("lpSeg").textContent="";cb()},
   play(){const p=this.a.play();if(p&&p.catch)p.catch(e=>{if(e&&e.name==="NotAllowedError")toast("請再按一次播放")})},
-  toggle(){if(this.study&&!this.$("lpStudy").hidden){const b=this.$("lpSegNext");if(b){b.click();return}}if(this.a.paused)this.play();else this.a.pause()},
+  toggle(){if(this.gapCb){this.endGap();return}if(this.study&&!this.$("lpStudy").hidden){const b=this.$("lpSegNext");if(b){b.click();return}}if(this.a.paused)this.play();else this.a.pause()},
   skip(s){if(isFinite(this.a.duration))this.a.currentTime=Math.min(this.a.duration,Math.max(0,this.a.currentTime+s))},
   ui(){const a=this.a,d=a.duration||0,t=a.currentTime||0;
     if(this.mode==="plan"){const p0=this.partT0||0,p1=Math.min(this.partT1,d||Infinity),len=isFinite(p1)?Math.max(1,p1-p0):1,rel=Math.max(0,t-p0);
@@ -1417,7 +1492,7 @@ const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
     a.addEventListener("loadedmetadata",()=>{if(this.pending&&this.pending<a.duration-10)a.currentTime=this.pending;this.pending=0;this.ui()});
     ["timeupdate","play","pause"].forEach(ev=>a.addEventListener(ev,()=>this.ui()));
     a.addEventListener("ended",()=>{if(this.mode==="plan"){this.nextPart();return}if(this.study){Study.finish();return}this.ui();if(!this.heardNow()){this.$("lpDone").hidden=false;if(!S.lrepeat)toast("聽完了！按「聽完了」點亮這一講")}if(S.lrepeat)this.startRepeat()});
-    a.addEventListener("play",()=>this.cancelRepeat());
+    a.addEventListener("play",()=>{if(!this.gapCb)this.cancelRepeat()});
     a.addEventListener("error",()=>{if(this.n||this.mode==="plan")toast("音檔載入失敗，可以改到大慈恩網站聽")});
     this.$("lpPlay").onclick=()=>this.toggle();
     const rp=this.$("lpRepeat");rp.setAttribute("aria-pressed",!!S.lrepeat);rp.onclick=()=>{S.lrepeat=!S.lrepeat;rp.setAttribute("aria-pressed",S.lrepeat);if(!S.lrepeat)this.cancelRepeat();persist();toast(S.lrepeat?"重複播放：聽完隔 5 秒再從頭聽":"不重複播放")};
@@ -1510,7 +1585,7 @@ const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0
     const pb=document.getElementById("ovPause");pb.onclick=()=>{this.paused=!this.paused;pb.textContent=this.paused?"繼續":"暫停";if(this.paused)Voice.pause();else Voice.resume()};
   },
   setStep(s,i,n){const el=document.getElementById("ov-step");if(el&&s.label)el.textContent=s.label;document.querySelectorAll("#prog i").forEach((x,j)=>x.classList.toggle("on",j<=i))},
-  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="progress"?"lamps":"orb")}
+  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb")}
 };
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Session.on){Session.abortF=true}});
 

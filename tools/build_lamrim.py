@@ -21,7 +21,7 @@ API = "https://cdn.amec.amrtf.org/volume/B000027/%d"
 UA = {"User-Agent": "Mozilla/5.0 (dengdeng lamrim index)"}
 CACHE_DIR = os.path.join(ROOT, "tools", "cache", "nanputuo")
 LAST_LR = 284          # 第 285 卷起是《略論》止觀淺釋，屬於「定、慧」
-MIN_SEC, MAX_SEC = 180, 720
+MIN_SEC, MAX_SEC, PIECE = 180, 330, 270   # 每段約 3～5 分鐘
 
 # 法類（照廣論次第）：名稱、所屬部
 CATS = [
@@ -79,6 +79,36 @@ def cats_of(kp):
     return names
 
 
+KEPAN = re.compile(r"^(第[一二三四五六七八九十]+|初|今初|今當|此中分|此分|分[二三四五六]|[一二三四五六七八九十]、)")
+CITE = re.compile(r"^(?:如|又|亦如|即此|此|故)?《([^》]{1,12})》(?:中)?(?:亦|又)?(?:云|說|中說)")
+
+
+def clip(t, n=18):
+    t = t.strip("「」『』。，；：、 ")
+    return t if len(t) <= n else t[:n] + "…"
+
+
+def topic_of(q):
+    lines = [l.strip() for l in q.split("\n") if l.strip()]
+    for l in lines[:4]:
+        if KEPAN.match(l) and len(l) <= 40:
+            t = re.split(r"[。；]", l)[0]
+            return clip(re.sub(r"者$", "", t), 22)
+    for l in lines[:3]:
+        if len(l) <= 23 and re.search(r"者。?$", l):
+            return clip(re.sub(r"者。?$", "", l), 22)
+    l = lines[0] if lines else ""
+    m = CITE.match(l)
+    if m:
+        body = l[m.end():].lstrip("：「 ")
+        return "《%s》：%s" % (m.group(1), clip(re.split(r"[，。；]", body)[0], 12))
+    parts = [p for p in re.split(r"[，。；：！？]", l) if p]
+    t = parts[0] if parts else l
+    if len(t) < 6 and len(parts) > 1:
+        t = t + "，" + parts[1]
+    return clip(t)
+
+
 def main():
     vols = list(range(1, LAST_LR + 1))
     with ThreadPoolExecutor(10) as ex:
@@ -98,8 +128,13 @@ def main():
         first = next((i for i, (k, _, t) in enumerate(ps) if k and t), None)
         if first is None:
             continue
-        if carry_to is not None and first > 0 and any(t for k, t, x in ps[:first] if not k and t is not None):
-            units[carry_to][7] = first
+        # 整卷都是上一段原文的續講（例如第 5 卷）：最後一段被標成原文、後面沒有講解
+        if first >= len(ps) - 1 and carry_to is not None:
+            pq = units[carry_to]
+            units.append([v, pq[1].split(chr(10))[0][:40] + "（續）", 0.0, float(dur), 0, len(ps), pq[6], 0, 1])
+            carry_to = len(units) - 1
+            continue
+        carry_first = first if (carry_to is not None and first > 0 and any(t for k, t, x in ps[:first] if not k and t is not None)) else 0
         # 收集原文段：[原文文字, 講解起, 講解迄, 開始秒]
         raw = []
         i = first
@@ -150,6 +185,13 @@ def main():
             merged.append({"q": r[0], "p0": r[1], "p1": r[2], "t0": r[3], "cat": cat})
         if switch is not None:
             cur_cat = target_next
+        # 卷首的續講：超過 1 分鐘就自成一段（標「續」），太長的會在後面再切；短的照舊接在上一段後面播
+        if carry_first:
+            if merged and merged[0]["t0"] >= 60:
+                pq = units[carry_to]
+                units.append([v, pq[1].split(chr(10))[0][:40] + "（續）", 0.0, round(merged[0]["t0"], 1), 0, carry_first, pq[6], 0, 1])
+            else:
+                units[carry_to][7] = carry_first
         for x, m in enumerate(merged):
             t1 = merged[x + 1]["t0"] if x + 1 < len(merged) else float(dur)
             units.append([v, m["q"], round(m["t0"], 1), round(t1, 1), m["p0"], m["p1"], m["cat"], 0])
@@ -175,12 +217,12 @@ def main():
             continue
         ps = paras_of(data[u[0]])
         timed = [(x, ps[x][1]) for x in range(u[4], u[5]) if ps[x][1] is not None and not ps[x][0]]
-        k = int(-(-length // 540))
+        k = int(-(-length // PIECE))
         cuts = []
         for j in range(1, k):
             target = u[2] + length * j / k
             best = min(timed, key=lambda xt: abs(xt[1] - target), default=None)
-            if best and best[1] - u[2] > 150 and u[3] - best[1] > 150 and (not cuts or best[0] > cuts[-1][0] and best[1] - cuts[-1][1] > 150):
+            if best and best[1] - u[2] > 120 and u[3] - best[1] > 120 and (not cuts or best[0] > cuts[-1][0] and best[1] - cuts[-1][1] > 120):
                 cuts.append(best)
         if not cuts:
             split.append(u)
@@ -190,8 +232,16 @@ def main():
             q = u[1] if j == 0 else "%s（%s）" % (u[1].split("\n")[0][:40], NUM[j] if j < 10 else j + 1)
             split.append([u[0], q, round(bounds[j][1], 1), round(bounds[j + 1][1], 1),
                           bounds[j][0] if j else u[4], bounds[j + 1][0], u[6], u[7] if j == len(bounds) - 2 else 0,
-                          1 if j else 0])
+                          1 if j else (u[8] if len(u) > 8 else 0)])
     units = [x if len(x) == 9 else x + [0] for x in split]
+    # 每段的主題（從原文自動摘出：科判句優先，其次是引文出處或第一句）
+    for x, u in enumerate(units):
+        if u[8]:
+            base = units[x - 1][9].split("（")[0] if x else topic_of(u[1])
+            m = re.search(r"（([一二三四五六七八九十\d]+)）$", u[1])
+            u.append("%s（%s）" % (base, m.group(1) if m else "續"))
+        else:
+            u.append(topic_of(u[1]))
     # 法類目錄
     cats = []
     for idx, u in enumerate(units):
@@ -204,7 +254,7 @@ def main():
             ci += 1
         u[6] = ci
     js = ("/* 燈燈相續・戒：師父南普陀廣論（大慈恩 B000027）每日一段的索引，由 tools/build_lamrim.py 產生。\n"
-          "   LR_CATS=[法類,部,第一段索引]；LR=[卷,廣論原文,開始秒,結束秒,講解段落起,講解段落迄,法類索引,續卷講解段落數,是否為同一原文的後續講解] */\n"
+          "   LR_CATS=[法類,部,第一段索引]；LR=[卷,廣論原文,開始秒,結束秒,講解段落起,講解段落迄,法類索引,續卷講解段落數,是否為同一原文的後續講解,主題] */\n"
           "window.LR_CATS=" + json.dumps(cats, ensure_ascii=False, separators=(",", ":")) + ";\n"
           "window.LR=" + json.dumps(units, ensure_ascii=False, separators=(",", ":")) + ";\n")
     open(os.path.join(ROOT, "lamrim.js"), "w", encoding="utf-8").write(js)
