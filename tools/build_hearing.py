@@ -65,6 +65,7 @@ def write_js():
     fx = lambda v, t: t if t is None else FIX.get("%d:%g" % (v, t), t)   # 聲音對位校準過的切點（calib_hearing.py）
     for c in C:
         c["plan"] = [[v, fx(v, s), fx(v, e)] for v, s, e in c["plan"]]
+        c["plan"] = [x for x in c["plan"] if x[2] is None or x[2] - x[1] >= 2] or c["plan"]   # 校準後幾乎沒長度的片段不要
     out, lastq = [], ""
     for c, (topic, goal) in zip(C, M):
         q = "\n".join(c["q"]) or lastq
