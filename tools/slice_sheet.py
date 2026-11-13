@@ -27,7 +27,12 @@ TRIO = ["guide-happy", "guide-cheer", "guide-calm", "guide-gentle",
         "guide-think", "learner-happy", "learner-sleepy", "learner-distracted",
         "learner-confused", "learner-sit", "learner-sad", "wise-happy",
         "wise-think", "wise-wow", "wise-gentle", "wise-cheer"]
-LAYOUTS = {"pair": LAYOUT, "wise": WISE, "trio": TRIO}
+# 三個角色一張，但第一個角色只畫了 4 格、第二個畫了 7 格（例如山林）
+TRIO47 = ["guide-happy", "guide-cheer", "guide-calm", "guide-gentle",
+          "learner-think", "learner-happy", "learner-sleepy", "learner-distracted",
+          "learner-confused", "learner-sit", "learner-sad", "wise-happy",
+          "wise-think", "wise-wow", "wise-gentle", "wise-cheer"]
+LAYOUTS = {"pair": LAYOUT, "wise": WISE, "trio": TRIO, "trio47": TRIO47}
 THEMES = ["dawn", "lotus", "elephant", "moon", "forest", "ocean"]
 KEY = (255, 0, 255, 255)
 
