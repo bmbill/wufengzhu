@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>無風燭</title>
+<meta name="description" content="廣論奢摩他個人練習：每週聽止觀初探、每天語音引導上座、檢核與進度追蹤。">
+<meta name="theme-color" content="#ece6ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="無風燭">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=Outfit:wght@300;500;700&display=swap">
+<style>
+/* Layout: one-column phone app over a fixed WebGL scene (a little 3D candle + drifting sparkles); bottom tab bar; dialogue strips with two characters; session overlay turns to night. Palette: dawn sky (lavender → apricot), plum ink, saffron/coral/mint accents. */
+:root{
+  --bg1:#ece6ff;
+  --bg2:#ffe6d2;
+  --ink:#2b2350;
+  --mute:#6c6490;
+  --faint:#a39cc0;
+  --gold:#ffad1f;
+  --coral:#ff7a59;
+  --jade:#22b48d;
+  --sky:#6c8cff;
+  --rose:#ff6f91;
+  --paper:#fffaf6;
+  --card:rgba(255,255,255,.74);
+  --card-2:rgba(255,255,255,.94);
+  --line:rgba(43,35,80,.12);
+  --night:#16123a;
+  --moon:#f4eedf;
+  --f-display:"LXGW WenKai TC","Noto Serif TC","PingFang TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"Outfit","Noto Sans TC",system-ui,sans-serif;
+  --r:22px;
+  --shadow:0 8px 28px rgba(43,35,80,.09);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg1)}
+html,body{margin:0;color:var(--ink)}
+body{background:linear-gradient(175deg,var(--bg1) 0%,#f6e8f6 45%,var(--bg2) 100%) fixed;font-family:var(--f-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+img{max-width:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg1)}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+#app{position:relative;z-index:1;max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(100px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;text-wrap:balance;margin:0}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--coral)}
+:focus-visible{outline:2.5px solid var(--sky);outline-offset:2px;border-radius:8px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+.hero{min-height:36vh;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:10px;padding-right:34%}
+.hero.wide{padding-right:0;min-height:26vh}
+.hero .date{font-family:var(--f-num);letter-spacing:.12em;font-size:12px;color:var(--mute);text-transform:uppercase}
+.hero h1{font-size:32px;line-height:1.18}
+.hero .sub{color:var(--mute);font-size:14px}
+.stagepill{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:6px;padding:5px 12px 5px 5px;border-radius:999px;background:var(--card-2);box-shadow:var(--shadow);font-size:13px;font-weight:500;white-space:nowrap}
+.stagepill b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--ink);font-family:var(--f-num);font-size:12px}
+
+.section{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--mute);font-weight:500}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.8);border-radius:var(--r);padding:16px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:var(--shadow)}
+.card.hot{background:linear-gradient(150deg,rgba(255,214,140,.55),rgba(255,255,255,.85) 60%);border-color:rgba(255,173,31,.5)}
+.card.calm{border-color:rgba(34,180,141,.35)}
+.card.warn{border-color:rgba(255,111,145,.45)}
+.card h3{font-size:19px}
+.card .meta{color:var(--mute);font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.task{display:grid;grid-template-columns:46px 1fr;gap:12px;align-items:start}
+.check{width:46px;height:46px;border-radius:16px;border:2px dashed var(--faint);display:grid;place-items:center;font-size:20px;color:var(--faint);background:rgba(255,255,255,.6)}
+.check.on{background:var(--jade);border:2px solid var(--jade);color:#fff;transform:rotate(-4deg)}
+.check.half{border-color:var(--gold);color:var(--gold)}
+.task .t{font-weight:700;font-size:16px}
+.task .d{color:var(--mute);font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1.5px solid var(--line);background:var(--card-2);border-radius:999px;padding:9px 16px;font-size:14px;line-height:1.2;transition:transform .15s ease,box-shadow .2s;text-decoration:none;color:var(--ink);display:inline-block}
+.btn:active{transform:scale(.96)}
+.btn.primary{background:var(--gold);border-color:var(--gold);font-weight:700;box-shadow:0 4px 0 #e08e00}
+.btn.primary:active{box-shadow:0 1px 0 #e08e00;transform:translateY(3px)}
+.btn.ghost{background:transparent}
+.btn.small{padding:6px 12px;font-size:13px}
+.btn[disabled]{opacity:.4}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(43,35,80,.06);color:var(--mute);white-space:nowrap;font-weight:500}
+.tag.gold{background:rgba(255,173,31,.2);color:#9a5d00}
+.tag.jade{background:rgba(34,180,141,.16);color:#0f7a5e}
+.lect{display:flex;flex-direction:column;gap:4px}
+.lect .n{font-family:var(--f-num);color:var(--coral);font-size:13px;letter-spacing:.06em;font-weight:500}
+.lect .title{font-family:var(--f-display);font-size:21px;line-height:1.3}
+.bar{height:7px;border-radius:99px;background:rgba(43,35,80,.08);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--coral),var(--gold));border-radius:99px}
+.mini-note{font-size:13px;color:var(--mute)}
+.tip{border-left:3px solid var(--gold);padding-left:10px;font-size:14px}
+.quote{font-family:var(--f-display);font-size:16px}
+.quote small{display:block;color:var(--mute);font-family:var(--f-body);font-size:12px;margin-top:2px}
+
+/* 角色對話 */
+.talk{display:flex;flex-direction:column;gap:10px}
+.say{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;align-items:end}
+.say.r{grid-template-columns:minmax(0,1fr) 62px}
+.say.r .ava{order:2}
+.ava{width:62px;height:62px;display:block;position:relative}
+.ava img,.ava svg{width:62px;height:62px;display:block;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(43,35,80,.15))}
+.ava .nm{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-size:10px;line-height:1.5;background:var(--ink);color:#fff;border-radius:999px;padding:0 7px;white-space:nowrap}
+.bubble{position:relative;background:var(--card-2);border-radius:18px 18px 18px 6px;padding:10px 13px;font-size:14.5px;box-shadow:var(--shadow);min-width:0}
+.say.r .bubble{border-radius:18px 18px 6px 18px;background:#fff1dd}
+.bubble b{font-family:var(--f-display);font-size:16px;display:block;margin-bottom:2px}
+.talk .btns{padding-left:70px}
+.pop{animation:pop .4s cubic-bezier(.3,1.6,.6,1) both}
+.pop:nth-child(2){animation-delay:.12s}.pop:nth-child(3){animation-delay:.24s}.pop:nth-child(4){animation-delay:.36s}
+@keyframes pop{from{transform:translateY(6px) scale(.92);opacity:.3}to{transform:none;opacity:1}}
+
+/* 聽講播放列 */
+.lplayer{--pl-bg:rgba(255,255,255,.94);--pl-ink:var(--ink);--pl-sub:var(--mute);--pl-acc:var(--gold);--pl-acc-ink:var(--ink);--pl-chip:rgba(43,35,80,.07);--pl-line:rgba(255,255,255,.9)}
+body[data-theme="lotus"] .lplayer{--pl-bg:#fff0f4;--pl-acc:#ff8fab;--pl-chip:rgba(255,143,171,.16);--pl-line:#ffd3df}
+body[data-theme="ocean"] .lplayer{--pl-bg:#e9faf6;--pl-acc:#2bb3e6;--pl-acc-ink:#fff;--pl-chip:rgba(43,179,230,.14);--pl-line:#c4efe4}
+body[data-theme="forest"] .lplayer{--pl-bg:#fff2e4;--pl-acc:#e8743b;--pl-acc-ink:#fff;--pl-chip:rgba(232,116,59,.14);--pl-line:#ffd9b8}
+body[data-theme="elephant"] .lplayer{--pl-bg:#eef3ff;--pl-acc:#6c8cff;--pl-acc-ink:#fff;--pl-chip:rgba(108,140,255,.14);--pl-line:#d3ddff}
+body[data-theme="moon"] .lplayer{--pl-bg:#221d52;--pl-ink:#f4eedf;--pl-sub:rgba(244,238,223,.65);--pl-acc:#ffd36b;--pl-chip:rgba(255,255,255,.1);--pl-line:rgba(255,211,107,.35)}
+.lplayer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:6;width:min(536px,calc(100% - 24px));background:var(--pl-bg);color:var(--pl-ink);border:1.5px solid var(--pl-line);border-radius:24px;padding:10px 14px;box-shadow:0 12px 30px rgba(43,35,80,.18);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;flex-direction:column;gap:4px}
+.lp-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lp-t{display:flex;gap:8px;align-items:baseline;min-width:0}
+.lp-n{color:var(--pl-acc);font-size:12px;font-weight:700;white-space:nowrap;filter:saturate(1.2) brightness(.85)}
+body[data-theme="moon"] .lp-n{filter:none}
+.lp-title{font-family:var(--f-display);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-x{background:none;border:0;color:var(--pl-sub);font-size:14px;padding:2px 4px}
+#lpSeek{width:100%;accent-color:var(--pl-acc);height:18px;margin:0}
+.lp-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lp-time{font-size:12px;color:var(--pl-sub);white-space:nowrap}
+.lp-ctl{display:flex;align-items:center;gap:8px}
+.lp-ctl button{width:42px;height:42px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:var(--pl-chip);color:var(--pl-ink);font-size:12px;font-weight:700;letter-spacing:-.02em}
+.lp-ctl .lp-ico{color:var(--pl-sub)}
+.lp-ctl button[aria-pressed="true"]{background:var(--pl-acc);color:var(--pl-acc-ink)}
+.lp-ctl .lp-play{background:var(--pl-acc);color:var(--pl-acc-ink);font-size:15px}
+.lplayer .btn.primary{background:var(--pl-acc);border-color:var(--pl-acc);color:var(--pl-acc-ink);box-shadow:none}
+body.playing .toast{bottom:calc(210px + env(safe-area-inset-bottom,0px))}
+body.playing #app{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))}
+body.in-session .lplayer{visibility:hidden}
+/* 主題收藏 */
+.oilbar{display:flex;align-items:center;gap:12px}
+.oil-drop{width:44px;height:44px;flex:none}
+.oil-v{font-family:var(--f-num);font-size:30px;font-weight:500;line-height:1}
+.themes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.th{border:2px solid transparent;background:rgba(255,255,255,.7);border-radius:18px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;min-width:0}
+.th .pv{width:100%;height:52px;display:flex;justify-content:center;gap:2px}
+.th .pv img,.th .pv svg{width:50px;height:50px;object-fit:contain}
+.th small.who{color:var(--ink);font-size:11px}
+.th b{font-family:var(--f-display);font-size:15px}
+.th small{font-size:11px;color:var(--mute)}
+.th.on{border-color:var(--gold);background:#fff}
+.th.lock .pv{filter:grayscale(1) opacity(.45)}
+.unlock-art{position:relative;height:96px}
+.unlock-art .sticker{width:96px;height:96px}
+.sheet .panel .unlock-art .sticker.tl{top:0;left:14%;right:auto}
+.sheet .panel .unlock-art .sticker.tr{top:0;right:14%}
+/* 角色貼圖（像 LINE 主題，疊在卡片邊角） */
+.card{position:relative}
+.sticker{position:absolute;width:70px;height:70px;pointer-events:none;z-index:2}
+.sticker .bob{display:block;width:100%;height:100%;animation:bob 3.2s ease-in-out infinite}
+.sticker img,.sticker svg{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 5px 6px rgba(43,35,80,.2))}
+.sticker.tr{top:-34px;right:-6px;transform:rotate(7deg)}
+.sticker.tl{top:-34px;left:-8px;transform:rotate(-8deg)}
+.sticker.br{bottom:-20px;right:-8px;transform:rotate(-6deg)}
+.sticker .mini{position:absolute;top:4px;right:64px;white-space:nowrap;font-style:normal;font-size:11.5px;font-weight:700;background:#fff;color:var(--ink);border-radius:12px 12px 3px 12px;padding:2px 8px;box-shadow:0 3px 10px rgba(43,35,80,.14);transform:rotate(-7deg)}
+.sticker.tl .mini{right:auto;left:64px;border-radius:12px 12px 12px 3px;transform:rotate(8deg)}
+.sticker.br .mini{top:auto;bottom:40px}
+.card.has-tr,.card.has-tl{margin-top:18px}
+.card.has-tr>:nth-child(2){padding-right:58px}
+.card.has-tl>:nth-child(2){padding-left:58px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:var(--card);border:1px solid rgba(255,255,255,.8);border-radius:18px;padding:12px 14px;min-width:0;box-shadow:var(--shadow)}
+.stat .v{font-family:var(--f-num);font-size:28px;font-weight:500;line-height:1.1}
+.stat .v small{font-size:14px;color:var(--mute);font-weight:300}
+.stat .k{font-size:12px;color:var(--mute)}
+.lamps-space{height:40vh;display:flex;align-items:flex-end;justify-content:center;padding-top:max(20px,env(safe-area-inset-top,0px))}
+.lamps-cap{text-align:center}
+.lamps-cap .big{font-family:var(--f-num);font-size:46px;font-weight:300;line-height:1}
+.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.heat i{aspect-ratio:1;border-radius:5px;background:rgba(43,35,80,.07);max-width:100%}
+.heat i.l1{background:rgba(255,173,31,.4)}
+.heat i.l2{background:rgba(255,140,40,.75)}
+.heat i.l3{background:var(--coral)}
+.heat i.lv{background:rgba(34,180,141,.3)}
+.heat i.today{outline:2px solid var(--ink)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.issues{display:flex;flex-direction:column;gap:8px}
+.issue{display:grid;grid-template-columns:4.5em 1fr 2.2em;gap:8px;align-items:center;font-size:13px}
+.issue .bar{height:9px}
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:2.8em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);min-width:0}
+.li .no{font-family:var(--f-num);color:var(--mute);font-size:13px}
+.li .tt{min-width:0;font-size:14px}
+.li .tt .lk{background:none;border:0;padding:0;text-align:left;color:var(--ink);font:inherit;font-size:14px}
+.li.done .tt .lk{color:var(--mute)}
+.li .tt .lk::before{content:"▶ ";color:var(--coral);font-size:11px}
+.dot{width:32px;height:32px;border-radius:50%;border:2px dashed var(--faint);display:grid;place-items:center;font-size:14px;background:transparent;color:var(--faint)}
+.dot.on{background:var(--gold);border:2px solid var(--gold);color:var(--ink)}
+.seg{display:flex;background:rgba(43,35,80,.06);border-radius:999px;padding:4px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;border-radius:999px;padding:8px 6px;font-size:13px;color:var(--mute)}
+.seg button.on{background:var(--ink);color:#fff;font-weight:700}
+.steps{display:flex;flex-direction:column;gap:6px}
+.stp{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:14px;font-size:14px}
+.stp b{font-family:var(--f-num);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);font-size:12px}
+.stp.cur{background:rgba(255,173,31,.18)}
+.stp.cur b{background:var(--gold);border-color:var(--gold)}
+.stp.past b{background:var(--jade);color:#fff;border-color:var(--jade)}
+.stp .m{font-family:var(--f-num);color:var(--mute);font-size:12px}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-weight:700;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:" ＋";color:var(--mute)}
+details[open] summary::after{content:" －"}
+.faq p{margin-top:6px;font-size:14px}
+textarea,input[type=number],input[type=text]{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:14px;color:var(--ink);font:inherit;padding:10px 12px}
+textarea{min-height:72px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:14px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cp{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center}
+.cp .ic{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:rgba(43,35,80,.06);font-family:var(--f-num);color:var(--mute)}
+.cp.due .ic{background:var(--gold);color:var(--ink)}
+.cp.pass .ic{background:var(--jade);color:#fff}
+.cp.retry .ic{background:rgba(255,111,145,.2);color:#c2335a}
+.checkitem{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:14px;padding:6px 0}
+.checkitem input{width:22px;height:22px;accent-color:var(--coral);margin-top:1px}
+.remedy{font-size:13px;color:var(--mute);margin-top:2px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+nav.tabs .in{display:flex;gap:4px;max-width:520px;width:100%;background:rgba(255,255,255,.88);border-radius:24px;padding:5px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(43,35,80,.16)}
+nav.tabs a{flex:1;text-align:center;text-decoration:none;color:var(--mute);font-size:12px;padding:7px 4px;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav.tabs a .g{font-family:var(--f-display);font-size:18px;line-height:1.1}
+nav.tabs a.on{background:var(--ink);color:#fff}
+nav.tabs a .badge{position:absolute;top:4px;right:calc(50% - 22px);width:9px;height:9px;border-radius:50%;background:var(--coral)}
+
+body.in-session #app,body.in-session nav.tabs{visibility:hidden}
+body.in-session::before{background:transparent}
+.overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;color:var(--moon);padding:calc(18px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));background:linear-gradient(to bottom,rgba(22,18,58,.2),rgba(22,18,58,0) 40%,rgba(22,18,58,.85))}
+.overlay .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.overlay .label{font-size:12px;letter-spacing:.14em;color:rgba(244,238,223,.65)}
+.overlay .center{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:14px;text-align:center;padding-bottom:12px}
+.overlay .step{font-family:var(--f-display);font-size:26px}
+.overlay .cap{font-size:16px;max-width:30em;min-height:4.8em;line-height:1.7}
+.overlay .clock{font-family:var(--f-num);font-size:44px;font-weight:300;letter-spacing:.04em}
+.overlay .controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.overlay .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);color:var(--moon);box-shadow:none}
+.overlay .btn.primary{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.prog{display:flex;gap:4px;justify-content:center}
+.prog i{width:18px;height:3px;border-radius:2px;background:rgba(255,255,255,.2)}
+.prog i.on{background:var(--gold)}
+.sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center;background:rgba(43,35,80,.35)}
+.sheet .panel{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--paper);border-radius:28px 28px 0 0;padding:20px max(18px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;box-shadow:0 -10px 40px rgba(43,35,80,.2)}
+.sheet h2{font-size:26px}
+.sheet .panel{position:relative}
+.sheet .panel .sticker.tr{top:10px;right:14px}
+.sheet .panel h2{padding-right:80px}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 8px 30px rgba(43,35,80,.3)}
+.store-note{font-size:12px;color:var(--mute);text-align:center;margin-top:28px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (min-width:700px){.hero h1{font-size:40px}}
+</style>
+</head>
+<body>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="app"></div>
+<div id="lplayer" class="lplayer" hidden role="region" aria-label="聽講播放器">
+  <div class="lp-top"><div class="lp-t"><span class="lp-n num" id="lpN"></span><span class="lp-title" id="lpTitle"></span></div><button class="lp-x" id="lpClose" aria-label="關閉播放器">✕</button></div>
+  <input type="range" id="lpSeek" min="0" max="1000" value="0" aria-label="播放進度">
+  <div class="lp-row"><span class="num lp-time" id="lpTime">0:00 / 0:00</span>
+    <div class="lp-ctl"><button id="lpRepeat" class="lp-ico" aria-pressed="false" aria-label="重複播放（每次間隔 5 秒）" title="重複播放"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg></button><button id="lpPlay" class="lp-play" aria-label="播放">▶</button><button id="lpRate" class="num" aria-label="播放速度">1×</button></div>
+    <button id="lpDone" class="btn primary small" hidden>聽完了</button></div>
+</div>
+<nav class="tabs" aria-label="主選單"><div class="in" id="tabs"></div></nav>
+<div id="layer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="voice/map.js"></script>
+<script src="lectures.js"></script>
+<script src="chars/files.js"></script>
+<script>
+/* ================= 資料 ================= */
+const CN=["一","二","三","四","五","六","七","八","九","十"];
+const ser=(t,n)=>Array.from({length:n},(_,i)=>`${t}（${CN[i]}）`);
+const LECT=[
+"止觀要旨總說","止觀修持次第概要","發起精進已，意當住禪定","別學後二波羅蜜多","三乘功德皆止觀之果","無散亂心正思法義","解脫繫縛應修止觀","止觀能攝一切定","一切時中應學止觀",
+...ser("奢摩他的體性",2),"毗缽舍那的體性",...ser("依照經論認識止觀的體性",6),
+"雙修止觀的原因","由止力無動，由觀故如山","由止無動，乃能修成勝觀","修止是為了修觀","靜慮壓伏煩惱，智慧摧滅隨眠","依師多聞正修止觀","總攝須雙修之因相","先修寂止，後修勝觀","勝觀必須以寂止為因","修成寂止與勝觀的不同方法","依照清淨經論決擇止觀的次第","集論所說依觀修止之義","總攝止觀次第決定之理",
+"安住於相順的環境","少欲、知足、捨棄眾多事務","戒律清淨、捨棄欲求等分別","修止資糧極為重要",...ser("修止的身威儀",2),...ser("諸大教典中的修定方法",2),"思惟正定功德引動心意","增強修定的勇悍心力",
+"周遍所緣",...ser("淨行所緣",2),"善巧所緣","淨惑所緣","依靠具足殊勝目的所緣","破除修空性不應有所緣的見解",...ser("哪種補特伽羅應緣的淨行所緣",2),"哪種補特伽羅應緣的善巧所緣","哪種補特伽羅應緣的淨惑所緣","辨明當前此處的所緣",
+"緣佛像修三摩地","緣著什麼樣的佛像來修定",...ser("觀想佛像為所緣的要點",4),"此處所修三摩地的二種殊勝","修止的違緣與順緣",...ser("修學正念",3),"破斥「善緩即善修」之說",...ser("太急太緩難生無過三摩地",2),"堅固有力的正念極為重要","觀察安住所緣的修正念法",...ser("上座的時長",2),
+"認識掉舉","辨明昏沉與沉沒","認識沉沒","從體驗上細心覺察沉掉","沒有正知則無法覺察沉掉","生起正知的二種方法","善加辨別正念與正知的作用","思心所的作用",...ser("滅除沉沒的方法",6),...ser("滅除掉舉的方法",2),...ser("辨識產生沉掉的因",3),
+"不作行的過失","交替修習住分及明分力","離沉掉時勤奮是過失","修持令心放緩的等捨","「正斷」與「神足」的意涵","五眼與六神通的意涵",...ser("五過失與八斷行",3),...ser("修習四神足的方法",2),...ser("善來阿羅漢的故事",7),
+...ser("九住心",3),"六力成就九住心",...ser("九住心先後次第的理由",2),"總結九住心的次第",...ser("四種作意",2),...ser("總攝九住心",2),
+...ser("成就寂止的標準",10),...ser("獲得寂止的象徵",2),...ser("獲得寂止象徵的釋疑",5),
+"依靠寂止行進於勝觀","世間道與出世間道的勝觀",...ser("今生以世間道前行的四種補特伽羅",2),"奢摩他是內外道共通的基礎",...ser("生起寂止的目的",3),"修粗靜為相之道前須獲得寂止","了相作意並非第一靜慮近分定之首","依靠寂止而對欲界離欲的方法","七種作意的內涵","雙修止觀方能斷除煩惱","七種作意漸次摧壞煩惱","僅修粗靜相道不能度脫生死","修奢摩他法的經論依據","奢摩他章結頌"];
+const TOTAL=LECT.length; // 153
+const lurl=n=>`https://www.amrtf.org/zh-hant/serenity-insight-introduction-${String(n).padStart(4,"0")}`;
+const INTRO=[1,2,32,35,36,37,40,43,44,49,53,54,56,60,61,62,65,70,72,73,74,77,80,86,97,109,120,130];
+
+const STAGES=[
+ {n:1,name:"點燈",min:3,req:[],body:"brief",
+  focus:"只要做到：坐下、發心、數二十一次呼吸。",
+  main:"數完之後，不用做什麼。只是安靜地坐著，知道自己在呼吸。",
+  tip:"三分鐘就好。這一階的功課是「每天都坐下來」。"},
+ {n:2,name:"端身",min:5,req:[36,37],body:"full",
+  focus:"把毘盧八法一項一項坐對，尤其眼睛微開、呼吸無聲。",
+  main:"數完之後，安靜地坐著。發現身體歪了、肩膀聳起來了，就輕輕調回來。",
+  tip:"眼睛不要全閉，長期閉眼容易昏沉。"},
+ {n:3,name:"守息",min:8,req:[43,44],body:"brief",
+  focus:"數完二十一次以後，改成只覺知呼吸（觀息）。",
+  main:"現在不再數數字，把注意力輕輕放在鼻端，知道氣進來、氣出去。心跑掉了，發現了，就回來。",
+  tip:"不要用力吸氣，呼吸要自然、輕細。"},
+ {n:4,name:"定所緣",min:10,req:[49,53],body:"brief",needObj:true,
+  focus:"選定一個所緣（呼吸或佛像），從此不再換。",
+  main:null,
+  tip:"念頭特別多的人，廣論說「定應修息」。選定之前，可以先請教帶修的法師。"},
+ {n:5,name:"繫念",min:10,req:[60,61,62],body:"brief",check:true,
+  focus:"練正念：放上所緣後，生起「已經繫在這裡」的確定感。",
+  main:"放上所緣之後，生起「我已經繫在這裡」的確定感。不再分析，只是護持這一股力量。",
+  tip:"像用繩子把象綁在柱子上：念是繩子，所緣是柱子。"},
+ {n:6,name:"識沉掉",min:12,req:[72,73,74],body:"brief",check:true,
+  focus:"留一點點心偵察：是散了？還是變得模糊、沒力了？",
+  main:"安住在所緣上，同時留一點點心偵察：是往外散了，還是變得模糊、沒有力量了？",
+  tip:"細沉沒很像「很平靜」，其實是心力鬆了。"},
+ {n:7,name:"調沉掉",min:12,req:[77,80,86],body:"brief",check:true,
+  focus:"察覺了就馬上對治：沉時往外提，掉時往內收。",
+  main:"安住在所緣上。如果模糊沒力，就把心提起來，想佛像的光明、想暇滿難得；如果往外跑，就想無常，把心收回來。",
+  tip:"知道了卻不對治，叫「不作行」，是很大的過失。"},
+ {n:8,name:"五過八斷",min:15,req:[97],body:"brief",check:true,
+  focus:"用五過失、八斷行檢查自己；沒有沉掉時，練放緩但不放掉。",
+  main:"安住在所緣上。沒有沉掉的時候，把用力放緩一點，但不要放掉對所緣的執持。",
+  tip:"懈怠、忘所緣、沉掉、不作行、作行，這五個過失，哪一個最常出現？"},
+ {n:9,name:"九住心",min:15,req:[109,120],body:"brief",check:true,
+  focus:"大約定位自己在第幾住心；不追求身體的感受。",
+  main:"安住在所緣上。只顧好正念、正知和對治，不追求任何特別的感受。",
+  tip:"九住心不等於奢摩他，要生起輕安才算。初學多在第一到第三住心。"}
+];
+const OBJ_MAIN={
+ breath:"把注意力輕輕放在呼吸上。先數，穩了以後只覺知呼吸的進出。跑掉了，發現了，就回來。",
+ buddha:"在前方，大約眉心到肚臍之間的高度，現起一尊金色的釋迦佛，有光、有生命，慈悲地看著你。只要有大概的樣子就夠了，不求清楚，安住在上面。"
+};
+const MERITS=[
+ "修成正定，現在就能身心安樂。",
+ "得到輕安以後，心想放在哪個善所緣，就能安住在哪裡。",
+ "心不再散亂無主，惡行不容易生起，修什麼善都有力量。",
+ "依靠正定，能夠引生神通等功德，更能利益眾生。",
+ "依靠止，才能生起通達空性的觀，斬斷生死的根本。",
+ "入行論說：雖經長時修，念誦苦行等，心散亂所作，佛說無義利。",
+ "夜裡看壁畫，燈要亮，也要沒有風。止，就是那個擋風的燈罩。"
+];
+const REFUGE="諸佛正法賢聖僧，直至菩提我皈依；我以所修諸善根，為利有情願成佛。";
+const DEDICATE="願以此功德，普及於一切，我等與眾生，皆共成佛道。";
+const BODY_BRIEF="雙腿盤坐或散盤都可以。背自然挺直，不靠椅背。肩膀放鬆、放平。眼睛微微張開，往下看著鼻端的方向。舌尖輕抵上齒。";
+const BODY_FULL=["第一，雙腿：全跏趺或半跏趺，不舒服就散盤。","第二，眼睛：不要全閉，也不要張大，輕輕垂下，看著鼻端的方向。","第三，身體：不後仰，也不前傾，端正地坐。","第四，雙肩：放平，不要一高一低。","第五，頭：不抬、不低、不歪，從鼻子到肚臍成一直線。","第六，嘴唇和牙齒：自然放鬆。","第七，舌頭：輕抵上齒。","第八，呼吸：無聲、不粗、不急，輕到自己幾乎感覺不到。"];
+const BREATH_SAY="現在讓呼吸慢下來。不要用力吸，只要慢慢地呼。讓它安靜、輕柔，不出聲。";
+const COUNT_SAY="接下來數呼吸。一吸一呼算一次，在心裡默數，數到二十一。數亂了，就從一重來。數完了按「數完了」，或者等鈴聲。";
+/* ================= 角色與主題 ================= */
+/* 每個主題是一對不同的角色：zz＝引導者、an＝學員。
+   圖檔放 chars/<主題>/guide-<表情>.png、learner-<表情>.png（用 tools/slice_sheet.py 從 ChatGPT 的 4×4 大圖切出來），
+   chars/files.js 會列出每個主題有哪些圖；沒有圖的就用下面畫的簡單版本。 */
+const MOODS={zz:["happy","cheer","calm","gentle","think","love","wow","fight"],an:["happy","sleepy","distracted","confused","think","sit","cheer","sad"]};
+const ROLE_FILE={zz:"guide",an:"learner"};
+const THEMES=[
+  {id:"dawn",name:"晨光",cost:0,desc:"蠟燭精靈燭燭，陪著跟你一樣剛開始學的小安。",
+   zz:{name:"燭燭",kind:"candle"},an:{name:"小安",kind:"kid"}},
+  {id:"lotus",name:"蓮池",cost:15,desc:"蓮花精靈蓮蓮，陪著老是跳來跳去的小青蛙蛙蛙，練習把心安住。",
+   zz:{name:"蓮蓮",kind:"lotus"},an:{name:"蛙蛙",kind:"frog"}},
+  {id:"elephant",name:"調象",cost:40,desc:"廣論的調象喻：用正念的繩子把心象繫在所緣上，用正知的鉤子調伏它。阿念帶著小象象寶一起練。",
+   zz:{name:"阿念",kind:"keeper"},an:{name:"象寶",kind:"elephant"}},
+  {id:"moon",name:"月夜",cost:80,desc:"安安靜靜的月兔玉玉，和總是衝來衝去的小流星咻咻。",
+   zz:{name:"玉玉",kind:"rabbit"},an:{name:"咻咻",kind:"star"}},
+  {id:"forest",name:"山林",cost:130,desc:"看得清清楚楚的貓頭鷹明明，和什麼都想抱回家的松鼠囤囤。",
+   zz:{name:"明明",kind:"owl"},an:{name:"囤囤",kind:"squirrel"}},
+  {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢，和八隻手忙不停的小章魚八八。",
+   zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"}}
+];
+const OIL_RULES="上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5";
+function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1}
+  o+=Object.keys(S.heard).length*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
+const unlocked=th=>oil()>=th.cost;
+const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
+const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
+const nm=(who,theme)=>themeOf(theme||curTheme())[who].name;
+const missingImg=new Set();
+function charSrc(who,m,theme){const name=`${ROLE_FILE[who]}-${m}`;const F=window.CHAR_FILES||{};
+  if(F[theme]&&F[theme].includes(name)){const src=`chars/${theme}/${name}.png`;if(!missingImg.has(src))return src}return null}
+function charInner(who,mood,theme){const m=MOODS[who].includes(mood)?mood:MOODS[who][0];const th=theme||curTheme();const src=charSrc(who,m,th);
+  return src?`<img src="${src}" alt="" data-who="${who}" data-mood="${m}" data-th="${th}" onerror="avaFail(this)">`:faceSVG(who,m,th)}
+function avaFail(img){missingImg.add(img.getAttribute("src"));const s=document.createElement("span");s.innerHTML=faceSVG(img.dataset.who,img.dataset.mood,img.dataset.th);img.replaceWith(s.firstChild)}
+/* 內建的簡單角色：每種角色一個輪廓，表情共用 */
+const O='stroke="#2b2350" stroke-width="2"';
+const KIND={
+  candle:{back:'<path d="M32 3c5 8 12 12 12 20a12 12 0 0 1-24 0c0-8 7-12 12-20z" fill="#ff9a3c"/><path d="M32 11c3 5 7 8 7 13a7 7 0 0 1-14 0c0-5 4-8 7-13z" fill="#ffd36b"/>',
+    face:`<rect x="14" y="24" width="36" height="36" rx="12" fill="#fff4e4" ${O}/><path d="M14 33q9 4 18 0t18 0" fill="none" stroke="#ff7a59" stroke-width="3"/>`},
+  kid:{back:'<circle cx="32" cy="10" r="7" fill="#3a2f63"/>',face:`<circle cx="32" cy="35" r="22" fill="#ffe1c7" ${O}/><path d="M10 33q2-18 22-19q20 1 22 19q-8-9-22-9t-22 9z" fill="#3a2f63"/>`},
+  lotus:{back:[0,60,120,180,240,300].map(a=>`<ellipse cx="32" cy="18" rx="8" ry="14" fill="${a%120?"#ffc2d6":"#ff9fbf"}" ${O} transform="rotate(${a} 32 36)"/>`).join(""),
+    face:`<circle cx="32" cy="36" r="17" fill="#fff0f5" ${O}/>`},
+  frog:{back:`<circle cx="19" cy="18" r="8" fill="#8fd36b" ${O}/><circle cx="45" cy="18" r="8" fill="#8fd36b" ${O}/>`,face:`<ellipse cx="32" cy="38" rx="24" ry="19" fill="#a8e07e" ${O}/>`},
+  keeper:{back:'',face:`<circle cx="32" cy="36" r="21" fill="#ffe1c7" ${O}/><path d="M11 33q1-19 21-19t21 19q-9-7-21-7t-21 7z" fill="#2b2350"/><path d="M12 27q20-7 40 0" stroke="#ff7a59" stroke-width="4" fill="none"/>`,
+    front:'<circle cx="51" cy="53" r="7" fill="none" stroke="#c98a4b" stroke-width="3"/><circle cx="51" cy="53" r="3.5" fill="none" stroke="#c98a4b" stroke-width="2.5"/>'},
+  elephant:{back:`<ellipse cx="11" cy="36" rx="10" ry="14" fill="#b8c2ea" ${O}/><ellipse cx="53" cy="36" rx="10" ry="14" fill="#b8c2ea" ${O}/>`,face:`<circle cx="32" cy="35" r="20" fill="#cfd6f6" ${O}/>`,
+    front:`<path d="M29 43v9q0 6 6 6" fill="none" stroke="#2b2350" stroke-width="7" stroke-linecap="round"/><path d="M29 43v9q0 6 6 6" fill="none" stroke="#cfd6f6" stroke-width="4" stroke-linecap="round"/>`,noMouth:true},
+  rabbit:{back:`<ellipse cx="24" cy="12" rx="5" ry="12" fill="#fffaf2" ${O}/><ellipse cx="40" cy="12" rx="5" ry="12" fill="#fffaf2" ${O}/><ellipse cx="24" cy="13" rx="2" ry="8" fill="#ffc2d6"/><ellipse cx="40" cy="13" rx="2" ry="8" fill="#ffc2d6"/>`,
+    face:`<circle cx="32" cy="37" r="19" fill="#fffaf2" ${O}/>`},
+  star:{back:'<path d="M14 50L2 60M18 54L8 63M12 44L1 50" stroke="#ffd36b" stroke-width="3" stroke-linecap="round" opacity=".7"/>',
+    face:`<path d="M32 8l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z" fill="#ffd36b" ${O} stroke-linejoin="round"/>`},
+  owl:{back:`<path d="M14 18l4 10 8-6zM50 18l-4 10-8-6z" fill="#a87c52" ${O} stroke-linejoin="round"/>`,
+    face:`<circle cx="32" cy="36" r="21" fill="#c79a6e" ${O}/><circle cx="26" cy="34" r="7" fill="#fff4e4"/><circle cx="38" cy="34" r="7" fill="#fff4e4"/>`,front:'<path d="M30 39l2 4 2-4z" fill="#ffad1f"/>',noMouth:true},
+  squirrel:{back:`<path d="M48 58q16-6 10-26q-4-12-14-8q8 6 4 16q-2 8-6 12z" fill="#e0904a" ${O}/><path d="M18 18l3-9 6 7zM46 18l-3-9-6 7z" fill="#e0904a" ${O}/>`,
+    face:`<circle cx="31" cy="36" r="19" fill="#f3b07c" ${O}/><ellipse cx="31" cy="44" rx="9" ry="6" fill="#ffe7cf"/>`},
+  turtle:{back:`<ellipse cx="32" cy="54" rx="24" ry="11" fill="#5aa774" ${O}/><path d="M18 52l7-6h14l7 6" fill="none" stroke="#2b2350" stroke-width="1.5"/>`,
+    face:`<circle cx="32" cy="34" r="18" fill="#a9dbb3" ${O}/>`},
+  octopus:{face:`<path d="M12 40a20 22 0 0 1 40 0z" fill="#ff9fb2" ${O}/><circle cx="32" cy="32" r="20" fill="#ff9fb2" ${O}/>`,
+    front:'<path d="M14 50q3 8 8 4M24 52q2 9 7 5M38 52q2 9 7 4M48 50q4 7 8 2" fill="none" stroke="#ff7f99" stroke-width="4" stroke-linecap="round"/>'}
+};
+function faceSVG(who,mood,theme){
+  const S_="#2b2350";const k=KIND[themeOf(theme)[who].kind]||KIND.kid;
+  const eyes={happy:`<path d="M23 34q3-4 6 0M35 34q3-4 6 0" stroke="${S_}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    love:`<path d="M23 34q3-4 6 0M35 34q3-4 6 0" stroke="${S_}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    cheer:`<path d="M22 33l4 2-4 2M42 33l-4 2 4 2" stroke="${S_}" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+    calm:`<path d="M22 35q4 2 7 0M35 35q4 2 7 0" stroke="${S_}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    sit:`<path d="M22 35q4 2 7 0M35 35q4 2 7 0" stroke="${S_}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    gentle:`<circle cx="26" cy="34" r="2.6" fill="${S_}"/><circle cx="38" cy="34" r="2.6" fill="${S_}"/>`,
+    think:`<circle cx="26" cy="34" r="2.6" fill="${S_}"/><path d="M35 34h6" stroke="${S_}" stroke-width="2.4" stroke-linecap="round"/>`,
+    sleepy:`<path d="M22 35h7M35 35h7" stroke="${S_}" stroke-width="2.4" stroke-linecap="round"/>`,
+    distracted:`<circle cx="28" cy="32" r="2.6" fill="${S_}"/><circle cx="40" cy="32" r="2.6" fill="${S_}"/>`,
+    confused:`<circle cx="26" cy="34" r="2.6" fill="${S_}"/><circle cx="38" cy="33" r="3.2" fill="none" stroke="${S_}" stroke-width="2"/>`,
+    wow:`<circle cx="26" cy="33" r="3.6" fill="${S_}"/><circle cx="38" cy="33" r="3.6" fill="${S_}"/><circle cx="27.2" cy="31.8" r="1.2" fill="#fff"/><circle cx="39.2" cy="31.8" r="1.2" fill="#fff"/>`,
+    fight:`<path d="M22 30l6 2M42 30l-6 2" stroke="${S_}" stroke-width="2.2" stroke-linecap="round"/><circle cx="26" cy="35" r="2.6" fill="${S_}"/><circle cx="38" cy="35" r="2.6" fill="${S_}"/>`,
+    sad:`<path d="M22 31l6-2M42 31l-6-2" stroke="${S_}" stroke-width="2" stroke-linecap="round"/><circle cx="26" cy="35" r="2.4" fill="${S_}"/><circle cx="38" cy="35" r="2.4" fill="${S_}"/>`}[mood]||"";
+  const mouth=k.noMouth?"":({happy:`<path d="M28 41q4 4 8 0" stroke="${S_}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
+    love:`<path d="M28 41q4 4 8 0" stroke="${S_}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
+    cheer:`<path d="M27 40q5 7 10 0z" fill="#ff7a59" stroke="${S_}" stroke-width="1.8" stroke-linejoin="round"/>`,
+    fight:`<path d="M27 41q5 5 10 0z" fill="#ff7a59" stroke="${S_}" stroke-width="1.8" stroke-linejoin="round"/>`,
+    wow:`<ellipse cx="32" cy="43" rx="3" ry="3.6" fill="#ff7a59" stroke="${S_}" stroke-width="1.6"/>`,
+    sleepy:`<ellipse cx="32" cy="42" rx="2.4" ry="3" fill="${S_}"/>`,
+    confused:`<path d="M28 42q2-2 4 0t4 0" stroke="${S_}" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+    sad:`<path d="M28 44q4-4 8 0" stroke="${S_}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
+    distracted:`<path d="M29 42h7" stroke="${S_}" stroke-width="2.2" stroke-linecap="round"/>`}[mood]||`<path d="M29 41q3 2.5 6 0" stroke="${S_}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`);
+  const blush='<ellipse cx="20" cy="40" rx="3.5" ry="2" fill="#ff8fa3" opacity=".55"/><ellipse cx="44" cy="40" rx="3.5" ry="2" fill="#ff8fa3" opacity=".55"/>';
+  const extra={sleepy:'<text x="47" y="18" font-size="10" fill="#6c8cff" font-family="Outfit">z</text><text x="53" y="11" font-size="8" fill="#6c8cff" font-family="Outfit">z</text>',
+    confused:'<text x="48" y="18" font-size="14" fill="#ff7a59" font-family="Outfit" font-weight="700">?</text>',
+    distracted:'<circle cx="52" cy="14" r="4" fill="#ffd36b"/><circle cx="57" cy="7" r="2.5" fill="#ffd36b"/>',
+    cheer:'<path d="M50 10l2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1z" fill="#ffad1f"/>',
+    love:'<path d="M53 8c-2-3-6-1-5 2l5 5 5-5c1-3-3-5-5-2z" fill="#ff6f91"/>',
+    wow:'<text x="49" y="18" font-size="15" fill="#ffad1f" font-family="Outfit" font-weight="700">!</text>',
+    fight:'<text x="50" y="18" font-size="14" fill="#ff7a59" font-family="Outfit" font-weight="700">!!</text>',
+    sad:'<path d="M42 38q2 3 0 5q-2-2 0-5z" fill="#6c8cff"/>',
+    sit:'<path d="M16 60q16-7 32 0" stroke="#6c8cff" stroke-width="4" fill="none" stroke-linecap="round"/>'}[mood]||"";
+  return `<svg viewBox="0 0 64 64" aria-hidden="true">${k.back||""}${k.face}${eyes}${mouth}${blush}${k.front||""}${extra}</svg>`;
+}
+function ava(who,mood){return `<span class="ava" role="img" aria-label="${nm(who)}">${charInner(who,mood)}<span class="nm">${nm(who)}</span></span>`}
+/* 貼圖：疊在卡片邊角上的角色（pos：tr 右上、tl 左上、br 右下），mini 是旁邊的一句小話 */
+const MINI={confused:"怎麼辦？",sleepy:"好累…",happy:"耶！",think:"嗯？",distracted:"欸…",sad:"嗚…",cheer:"耶！",sit:"深呼吸"};
+function sticker(who,mood,pos,mini,theme){return `<span class="sticker ${pos||"tr"}" aria-hidden="true"><span class="bob">${charInner(who,mood,theme)}</span>${mini?`<i class="mini">${esc(mini)}</i>`:""}</span>`}
+function talk(lines,acts){return `<div class="talk">${lines.map(([who,mood,text,title])=>`<div class="say ${who==="an"?"r":""} pop">${ava(who,mood)}<div class="bubble">${title?`<b>${esc(title)}</b>`:""}${esc(text)}</div></div>`).join("")}${acts&&acts.length?`<div class="btns">${acts.map(([l,a],i)=>`<button class="btn ${i===0?"primary":""} small" data-act="${a}">${esc(l)}</button>`).join("")}</div>`:""}</div>`}
+/* 解鎖新主題時跳出慶祝 */
+function checkUnlock(){if(!S.onboarded||Session.on||document.querySelector("#layer .sheet"))return;S.seenThemes=S.seenThemes||["dawn"];
+  const nw=THEMES.find(t=>t.cost>0&&unlocked(t)&&!S.seenThemes.includes(t.id));if(!nw)return;S.seenThemes.push(nw.id);persist();
+  const L=document.getElementById("layer");
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ul-h"><div class="panel unlock">
+    <div class="unlock-art">${sticker("zz","wow","tl",nw.zz.name,nw.id)}${sticker("an","cheer","tr",nw.an.name,nw.id)}</div>
+    <span class="eyebrow">燈油累積到 ${nw.cost} 滴</span><h2 id="ul-h">解鎖新主題「${esc(nw.name)}」！</h2>
+    <p class="meta">新夥伴「${esc(nw.zz.name)}」和「${esc(nw.an.name)}」來陪你了。${esc(nw.desc)}</p>
+    <div class="btns"><button class="btn primary" data-ul="use" data-id="${nw.id}">換上「${esc(nw.name)}」</button><button class="btn" data-ul="later">晚點再說</button></div></div></div>`;
+  L.onclick=e=>{const b=e.target.closest("[data-ul]");if(!b)return;if(b.dataset.ul==="use"){S.theme=b.dataset.id;persist()}L.innerHTML="";L.onclick=null;render()}}
+/* 每一階的日常對話（依日期輪替） */
+const DIALOG={
+ 1:[[["an","happy","三分鐘？這麼短也算修行嗎？"],["zz","happy","當然算！這一階的功課只有一個：每天都坐下來。"],["an","think","那我把它排在刷牙之後。"],["zz","cheer","聰明！綁在每天一定會做的事後面，最不會忘。"]],
+    [["an","distracted","數到七就跑掉了，想到晚餐要吃什麼……"],["zz","gentle","發現跑掉了，就是正知在工作！從一重來就好。"]],
+    [["an","confused","坐下來之前要先皈依發心，為什麼？"],["zz","calm","動機決定這一座往哪裡去。為了利益大家而修定，這一座就是成佛的資糧。"]]],
+ 2:[[["an","sleepy","我閉著眼睛比較好專心耶。"],["zz","think","一開始是這樣，可是長期閉眼容易昏沉。眼睛微微張開，往鼻端的方向看。"]],
+    [["an","confused","毘盧八法好多項，記不住啦。"],["zz","happy","足、眼、身、肩、頭、唇齒、舌、息。語音會一項一項帶你，坐久了身體自然記得。"]]],
+ 3:[[["an","think","不數數字以後，怎麼知道自己有沒有專心？"],["zz","calm","知道氣進來、氣出去，就是在了。跑掉了，發現了，就回來。"]],
+    [["an","distracted","我越想讓呼吸慢一點，反而越用力。"],["zz","gentle","廣論說呼吸要「全無功用，徐徐而轉」。不用控制它，只要陪著它。"]]],
+ 4:[[["an","confused","呼吸跟佛像，我要選哪一個？"],["zz","think","念頭特別多的人，廣論說「定應修息」。常常昏沉的，可以試試佛像。先問問帶修的法師。"],["an","happy","選了就不換？"],["zz","cheer","對！還沒得止之前，一直換所緣是修止的大障礙。"]]],
+ 5:[[["an","think","正念到底是什麼感覺？"],["zz","calm","像用繩子把小象綁在柱子上。心放上所緣以後，生起「已經繫住了」的確定感，就不再東想西想。"]]],
+ 6:[[["an","happy","今天坐得好平靜，什麼念頭都沒有！"],["zz","think","那時候心還清楚、有力嗎？很平靜卻模糊，可能是細沉沒喔。"],["an","confused","原來平靜不一定是對的！"]]],
+ 7:[[["an","sleepy","又開始昏昏的了……"],["zz","cheer","把心提起來！想佛像的光明、想暇滿難得。很重的話，起來走一走、洗把臉。"]],
+    [["an","distracted","那心一直往外跑呢？"],["zz","gentle","想無常，把心往內收。口訣：沉時往外提，掉時往內收。"]]],
+ 8:[[["an","think","沒有沉也沒有掉的時候，要做什麼？"],["zz","calm","放緩用力，但不放掉所緣。這叫「捨」，是八斷行的最後一個。"]]],
+ 9:[[["an","happy","我是不是快得奢摩他了？"],["zz","gentle","九住心還不是奢摩他，要生起輕安才算。先別追求感受，顧好念、知、對治就好。"]]]
+};
+/* 依上一次下座記錄的狀況給的對話 */
+const ISSUE_TALK={
+ "昏沉":[["an","sleepy","上次坐到一半差點睡著……"],["zz","gentle","眼睛微開、背別靠、別吃太飽、早點睡。座時短一點也可以，寧可短而清楚。"]],
+ "想睡":[["an","sleepy","上次坐著坐著好想睡。"],["zz","gentle","睡不夠的時候先睡飽。坐的時候端身、眼微開，昏沉就不容易來。"]],
+ "掉舉":[["an","distracted","上次心一直跑去想好玩的事。"],["zz","gentle","被喜歡的事拉走，這叫掉舉。想一想無常，把心往內收回來。"]],
+ "散亂":[["an","distracted","上次心一直跑。"],["zz","gentle","很正常！先把數息做穩：數亂了就從一重來。念頭多的人，修息正好。"]],
+ "粗沉沒":[["an","confused","上次所緣變得好模糊，像在暗室裡。"],["zz","cheer","這是粗沉沒！把心提起來，想光明，想佛像亮亮的樣子。"]],
+ "細沉沒":[["an","happy","我上次抓到一次細沉沒！"],["zz","cheer","太棒了，這就是有力的正知！"]],
+ "很平穩":[["an","happy","上次坐得很穩。"],["zz","think","很好～也檢查一下：是清楚有力的穩，還是模糊的穩？"]],
+ "身體不適":[["an","sleepy","上次坐得身體不太舒服。"],["zz","gentle","坐得舒服最重要。腿可以散盤，不要勉強；不舒服就先休息。"]]
+};
+const CHECK_SAY="輕輕檢查一下：心還在所緣上嗎？是散了，還是沒力了？";
+const TEST_SAY=["這是語音引導的聲音。準備好了，我們就開始。","你好。我會陪你調身、調息、數呼吸，一步一步來。"];
+const ISSUES=["很平穩","掉舉","散亂","昏沉","粗沉沒","細沉沒","想睡","身體不適"];
+
+const CPS=[
+ {id:"start",name:"起步兩週",when:"開始練習滿 14 天",
+  trig:s=>daysBetween(s.start,today())>=14,
+  items:[["最近兩週，至少一半的天數有上座","把上座綁在每天一定會做的事後面（刷牙後、早餐前），座時改成 3 分鐘。做不到時用「保底一分鐘」。"],
+         ["坐的時候眼睛微開、背不靠椅背","重聽第 36、37 講，用語音引導裡的「調身」段落，一項一項對。"],
+         ["數息二十一次，大多能數完","數不完很正常。先改成數到 10 就重來，熟了再數到 21。"]]},
+ {id:"object",name:"選定所緣",when:"聽完第 49、53 講",
+  trig:s=>heardAll(s,[49,53]),
+  items:[["知道自己比較像哪一種行者（貪、瞋、癡、慢、尋思、等分、薄塵）","重聽第 49、50 講；觀察一週，上座時最大的困擾是什麼。"],
+         ["已經選定所緣，兩週內沒有換","選呼吸或佛像都可以，選了就固定。到「調整」頁設定。"],
+         ["請教過帶修的法師或班上學長","把你的觀察記錄給法師看，請他幫你確認。"]]},
+ {id:"sink",name:"認識沉掉",when:"聽完第 72、73、74、77 講",
+  trig:s=>heardAll(s,[72,73,74,77]),
+  items:[["分得出「掉舉」和「散亂」","掉舉是被喜歡的事拉走；被其他煩惱或雜事拉走叫散亂。重聽第 72 講。"],
+         ["分得出「昏沉」和「沉沒」","昏沉是身心沉重；沉沒是心力鬆了、所緣不清楚。重聽第 73、74 講。"],
+         ["上座時至少察覺過一次「細沉沒」","細沉沒很像平靜。下次覺得很平靜時，問自己：心還有力嗎？"],
+         ["記得：沉時往外提，掉時往內收","把這句寫在座位旁邊。"]]},
+ {id:"intro",name:"入門線完成",when:"聽完入門 28 講",
+  trig:s=>heardAll(s,INTRO),
+  items:[["能用自己的話說出五過失和八斷行","重聽第 97 講，試著講給同修聽。"],
+         ["最近一個月，大多數的日子有上座","先回到前一階，把座時縮短，重點放在「每天都坐」。"],
+         ["沒有把「坐得舒服」當成「修對了」","重聽第 65 講（破善緩即善修）。"]]},
+ {id:"stop",name:"得止的標準",when:"聽完第 120、130 講",
+  trig:s=>heardAll(s,[120,130]),
+  items:[["知道九住心不等於得奢摩他","要生起輕安才算。重聽第 120 講。"],
+         ["說得出輕安生起的順序","前相→心輕安→風息遍身、身輕安→身樂→心樂→激動退去才得止。重聽第 130、131 講。"],
+         ["沒有在追求身體的特別感受","有明、樂、無分別不等於證空。回到念、知、對治就好。"]]},
+ {id:"all",name:"奢摩他章圓滿",when:"聽完全部 153 講",
+  trig:s=>heardAll(s,Array.from({length:TOTAL},(_,i)=>i+1)),
+  items:[["能為別人簡要講一遍奢摩他次第","用廣論的科判，練習講給班上同修聽。"],
+         ["知道止的目的是為了生起觀","重聽第 142～144 講（生起寂止的目的）。"],
+         ["準備好接著學毘缽舍那","請教法師下一步的學習安排。"]]}
+];
+
+/* ================= 日期工具 ================= */
+const pad=n=>String(n).padStart(2,"0");
+const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>dkey(new Date());
+const parseK=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+const addDays=(k,n)=>{const d=parseK(k);d.setDate(d.getDate()+n);return dkey(d)};
+const daysBetween=(a,b)=>Math.round((parseK(b)-parseK(a))/864e5);
+const WD="日一二三四五六";
+
+/* ================= 狀態 ================= */
+const KEY="wfz-v1";
+function blank(){const t=today();return {v:1,start:t,pace:1,sits:1,stage:1,stageSince:t,obj:null,voice:true,rate:0.9,customMin:null,warmUntil:null,heard:{},cps:{},snooze:{},onboarded:false,updatedAt:0,theme:"dawn",seenThemes:["dawn"],lpos:{},lrate:1,lrepeat:false}}
+let S=blank(), DAYS={};
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.state){S=Object.assign(blank(),o.state);DAYS=o.days||{}}}}catch(e){}
+const store={ok:true,persisted:false};
+function persist(){
+  S.updatedAt=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify({state:S,days:DAYS}));store.ok=true}catch(e){store.ok=false}
+}
+async function askPersist(){try{if(navigator.storage&&navigator.storage.persist){store.persisted=await navigator.storage.persisted()||await navigator.storage.persist()}}catch(e){}}
+function lastBackupNote(){if(!S.lastBackup)return "還沒備份過。";const d=daysBetween(S.lastBackup,today());return d===0?"今天備份過。":`上次備份是 ${d} 天前（${S.lastBackup}）。`}
+
+/* ================= 衍生計算 ================= */
+const heard=(s,n)=>!!s.heard[n];
+const heardAll=(s,arr)=>arr.every(n=>s.heard[n]);
+const heardCount=()=>Object.keys(S.heard).length;
+const introCount=()=>INTRO.filter(n=>S.heard[n]).length;
+function queue(){const q=[];INTRO.forEach(n=>{if(!S.heard[n])q.push(n)});for(let n=1;n<=TOTAL;n++) if(!S.heard[n]&&!INTRO.includes(n)) q.push(n);return q}
+const day=k=>DAYS[k]||null;
+function ensureDay(k){if(!DAYS[k])DAYS[k]={sits:[]};if(!DAYS[k].sits)DAYS[k].sits=[];return DAYS[k]}
+const practiced=d=>!!d&&((d.sits&&d.sits.length>0)||d.min);
+function lastPractice(){let best=null;for(const k in DAYS) if(practiced(DAYS[k])&&(!best||k>best)) best=k;return best}
+function consistency(n=7){let done=0,total=0;const t=today();for(let i=1;i<=n;i++){const k=addDays(t,-i);if(k<S.start)continue;const d=day(k);if(d&&d.leave)continue;total++;if(practiced(d))done++}return {done,total}}
+const stage=()=>STAGES[S.stage-1];
+const warmLeft=()=>S.warmUntil&&today()<=S.warmUntil?daysBetween(today(),S.warmUntil)+1:0;
+function sitMin(){if(warmLeft())return 3;return S.customMin||stage().min}
+const weekNo=k=>Math.floor(daysBetween(S.start,k)/7);
+function heardInWeek(w){let c=0;for(const n in S.heard){const k=S.heard[n];if(k>=S.start&&weekNo(k)===w)c++}return c}
+function canAdvance(){
+  if(S.stage>=9) return {ok:false};
+  const nx=STAGES[S.stage];const miss=nx.req.filter(n=>!S.heard[n]);
+  const c=consistency();const steady=c.total>=4&&c.done>=Math.ceil(c.total*0.7);
+  const longEnough=daysBetween(S.stageSince,today())>=7;
+  return {ok:!miss.length&&steady&&longEnough&&(!nx.needObj||S.obj),miss,steady,longEnough,needObj:nx.needObj&&!S.obj,next:nx};
+}
+const snoozed=id=>S.snooze[id]&&today()<S.snooze[id];
+function cpStatus(cp){const r=S.cps[cp.id];if(r&&r.passed)return "pass";if(!cp.trig(S))return "wait";if(r&&!r.passed&&daysBetween(r.date,today())<14)return "retry";return "due"}
+
+/* ================= 教練（沒完成怎麼辦） ================= */
+function coach(){
+  const out=[];const t=today();const d=day(t);
+  if(d&&d.leave){out.push({tone:"calm",q:["sleepy","今天身體不太舒服，想休息……"],zm:"gentle",title:"今天請假中",body:"生病、出遠門、太累都可以請假。請假的日子不會算進「練習穩定度」。好好休息。",acts:[["取消請假","unleave"]]});return out}
+  const lp=lastPractice();const gap=lp?daysBetween(lp,t):null;
+  const wl=warmLeft();
+  if(wl){out.push({tone:"calm",q:["happy","我回來了！"],zm:"cheer",title:`回溫中，還有 ${wl} 天`,body:"這幾天座時只有 3 分鐘。重點是重新養成每天坐下來的習慣，回溫完會自動回到原本的座時。",acts:[]})}
+  else if(lp&&gap>=4&&!practiced(d)){out.push({tone:"warn",q:["sad","好幾天沒坐了……是不是前功盡棄了？"],zm:"gentle",title:`已經 ${gap-1} 天沒上座了`,body:"中斷很正常，不用補。先「回溫三天」：每天只坐 3 分鐘，聽講進度照常，不會被清掉。",acts:[["開始回溫三天","warm"],["今天先做保底一分鐘","mini"]]})}
+  else if(lp&&gap>=2&&!practiced(d)){out.push({tone:"calm",q:["confused","昨天沒坐到……今天要坐兩次補回來嗎？"],zm:"gentle",title:"昨天沒坐到？",body:"不用補兩座。今天照常坐一座就好。真的很忙，就做「保底一分鐘」，也算有練。",acts:[["保底一分鐘","mini"]]})}
+  const cps=CPS.filter(cp=>cpStatus(cp)==="due");
+  if(cps.length) out.push({tone:"hot",q:["think","檢核？是要考試嗎？"],zm:"happy",title:`檢核點到了：${cps[0].name}`,body:"花兩分鐘勾一勾，看看哪裡需要加強。沒過也沒關係，會告訴你怎麼補。",acts:[["去檢核","go-check"]]});
+  const a=canAdvance();
+  if(a.ok&&!snoozed("adv")&&!wl) out.push({tone:"hot",q:["happy","最近每天都有坐耶！"],zm:"cheer",title:`可以往第 ${a.next.n} 階「${a.next.name}」了`,body:`最近練習很穩，需要的講次也聽了。下一階座時 ${a.next.min} 分鐘：${a.next.focus}`,acts:[["升一階","advance"],["再穩一週","snooze-adv"]]});
+  else if(!wl&&S.stage<9&&a.steady&&a.longEnough&&(a.miss.length||a.needObj)&&!snoozed("adv-info")){
+    const parts=[];if(a.miss.length)parts.push(`先聽第 ${a.miss.join("、")} 講`);if(a.needObj)parts.push("到「調整」選定所緣");
+    out.push({tone:"calm",q:["think","我可以往上一階了嗎？"],zm:"think",title:"練習很穩，下一階快到了",body:`往第 ${a.next.n} 階「${a.next.name}」之前，還要${parts.join("，再")}。`,acts:[["知道了","snooze-adv-info"]]});
+  }
+  const c=consistency();
+  if(!wl&&S.stage>1&&c.total>=5&&c.done<=2&&daysBetween(S.stageSince,t)>=7&&!snoozed("down")&&!(gap>=4))
+    out.push({tone:"warn",q:["sleepy","最近好難坐下來……"],zm:"gentle",title:"最近比較難坐下來",body:`過去 ${c.total} 天坐了 ${c.done} 天。要不要先回到上一階，座時短一點，等穩了再往上？`,acts:[["回到上一階","down"],["先不用","snooze-down"]]});
+  const w=weekNo(t);
+  if(w>=3&&!snoozed("pace")){
+    const last=[w-1,w-2,w-3].map(heardInWeek);const avg=last.reduce((x,y)=>x+y,0)/3;
+    if(S.pace>1&&avg<S.pace*0.5) out.push({tone:"calm",q:["confused","聽講一直跟不上……"],zm:"gentle",title:"聽講的速度要不要放慢？",body:`最近三週平均每週聽 ${avg.toFixed(1)} 講，目標是 ${S.pace} 講。放慢一點也很好，穩定比快重要。`,acts:[[`改成每週 ${S.pace-1} 講`,"pace-down"],["維持","snooze-pace"]]});
+    else if(S.pace<3&&last.every(x=>x>=S.pace+1)&&c.done>=5) out.push({tone:"calm",q:["happy","我最近聽了好多講！"],zm:"happy",title:"你最近聽得比目標多",body:`連續三週都超過每週 ${S.pace} 講。要不要把目標調高一點？不調也完全可以。`,acts:[[`改成每週 ${S.pace+1} 講`,"pace-up"],["維持","snooze-pace"]]});
+  }
+  if(w>=1&&!out.length){const lw=heardInWeek(w-1);if(lw<S.pace)out.push({tone:"calm",q:["confused","上週沒聽完，要補嗎？"],zm:"gentle",title:`上週聽了 ${lw}/${S.pace} 講`,body:"不用補。這週照順序接著聽就好，進度表是排隊制，不會因為漏聽而越欠越多。",acts:[]})}
+  return out;
+}
+
+/* ================= 畫面 ================= */
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let route="today";
+const TABS=[["today","今","今日"],["progress","燈","進度"],["check","驗","檢核"],["adjust","調","調整"]];
+function renderTabs(){
+  const due=CPS.some(cp=>cpStatus(cp)==="due");
+  document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${route===id?"on":""}" aria-current="${route===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
+}
+function render(){
+  document.body.dataset.theme=curTheme();
+  renderTabs();
+  if(route==="progress") app.innerHTML=vProgress();
+  else if(route==="check") app.innerHTML=vCheck();
+  else if(route==="adjust") app.innerHTML=vAdjust();
+  else app.innerHTML=vToday();
+  Scene.setMode(route==="progress"?"lamps":"orb");
+  Scene.setLamps(S.heard);
+  if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
+  else checkUnlock();
+}
+function lastIssue(){const t=today();for(let i=0;i<5;i++){const d=day(addDays(t,-i));if(d&&d.sits&&d.sits.length){const s=d.sits[d.sits.length-1];const it=(s.i||[]).find(x=>ISSUE_TALK[x]);return it||null}}return null}
+function dailyTalk(){const n=daysBetween(S.start,today());const iss=lastIssue();
+  if(iss&&n%2===0)return ISSUE_TALK[iss];
+  const list=DIALOG[S.stage]||DIALOG[1];return list[n%list.length]}
+/* 「今天想一想」卡片上引導者說的一句話 */
+function dailyTip(){const lines=dailyTalk().filter(l=>l[0]==="zz");const l=lines[lines.length-1]||["zz","gentle",stage().tip];return [l[1],l[2]]}
+function greet(){const h=new Date().getHours();return h<5?"夜深了":h<11?"早安":h<14?"午安":h<18?"午後好":"晚上好"}
+function vToday(){
+  const t=today();const d=day(t)||{sits:[]};const st=stage();const m=sitMin();
+  const done=(d.sits||[]).length;const need=S.sits;
+  const q=queue();const w=weekNo(t);const hw=heardInWeek(w);
+  const dt=new Date();
+  const co=coach().slice(0,3);
+  const merit=MERITS[daysBetween(S.start,t)%MERITS.length];
+  let sitCards="";
+  for(let i=0;i<need;i++){
+    const on=i<done;const label=need===1?"上座":(i===0?"上座（一）":"上座（二）");
+    sitCards+=`<div class="task"><button class="check ${on?"on":(d.min&&i===0?"half":"")}" data-act="sit" aria-label="${label}${on?"，已完成":""}">${on?"✓":"○"}</button>
+    <div style="min-width:0"><div class="t">${label}・<span class="num">${m}</span> 分鐘</div><div class="d">${on?`完成：${esc(d.sits[i].m)} 分鐘${d.sits[i].i&&d.sits[i].i.length?"・"+d.sits[i].i.map(esc).join("、"):""}`:esc(st.focus)}</div>
+    ${on?"":`<div class="btns" style="margin-top:8px"><button class="btn primary" data-act="sit">開始語音引導</button><button class="btn" data-act="manual">我自己坐完了</button></div>`}</div></div>`;
+  }
+  const nextL=q[0];
+  return `
+  <header class="hero">
+    <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
+    <h1>${greet()}，<br>今天也點一盞燈。</h1>
+    <div class="stagepill"><b>${st.n}</b>第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}</div>
+  </header>
+  ${co.length?`<section class="section" aria-label="提醒">${co.map(c=>{const hot=c.tone==="hot";const st_=hot?sticker("zz",c.zm,"tr","好消息！"):sticker("an",c.q[0],"tr",MINI[c.q[0]]||"");
+    return `<div class="card ${c.tone} has-tr" role="status">${st_}<h3>${esc(c.title)}</h3><p>${esc(c.body)}</p>${c.acts.length?`<div class="btns">${c.acts.map(([l,a],i)=>`<button class="btn ${i===0?"primary":""} small" data-act="${a}">${esc(l)}</button>`).join("")}</div>`:""}</div>`}).join("")}</section>`:""}
+  <section class="section" aria-labelledby="h-must">
+    <div class="row between"><span class="eyebrow" id="h-must">今日任務・必做</span><span class="mini-note num">${Math.min(done,need)}/${need}</span></div>
+    <div class="card has-tr">${done>=need?sticker("zz","cheer","tr","點亮了！"):sticker("zz","fight","tr",done?"再一座！":"一起坐！")}${sitCards}
+      ${done<need?`<details><summary>今天真的很忙？</summary><div class="faq"><p>做「保底一分鐘」：坐直、眼睛微開、數十次呼吸。也算今天有練，只是不升階。</p><div class="btns" style="margin-top:8px"><button class="btn small" data-act="mini">${d.min?"再做一次保底":"保底一分鐘"}</button><button class="btn ghost small" data-act="leave">今天請假</button></div></div></details>`:""}
+    </div>
+  </section>
+  <section class="section" aria-labelledby="h-listen">
+    <div class="row between"><span class="eyebrow" id="h-listen">本週聽講・止觀初探</span><span class="mini-note num">本週 ${hw}/${S.pace} 講</span></div>
+    ${nextL?`<div class="card ${hw<S.pace?"hot":""} has-tr">${hw>=S.pace?sticker("an","happy","tr","聽完了！"):sticker("an","think","tr","這週聽這講")}
+      <div class="lect"><span class="n">第 ${nextL} 講 ${INTRO.includes(nextL)?'<span class="tag gold">入門線</span>':'<span class="tag">完整線</span>'}</span><span class="title">${esc(LECT[nextL-1])}</span></div>
+      <p class="meta">${hw>=S.pace?"本週目標完成了。想多聽一講也可以，不想也沒關係。":"按「在這裡聽」，下面會出現播放列，切換頁面也不會停。"}</p>
+      <div class="btns"><button class="btn primary" data-act="listen" data-n="${nextL}">▶ ${(S.lpos||{})[nextL]?"接著聽（"+fmtT(S.lpos[nextL])+"）":"在這裡聽"}</button><button class="btn" data-act="heard" data-n="${nextL}">我聽完了</button></div>
+      <p class="mini-note">約 ${Math.round(((window.LECT_AUDIO||{})[nextL]||[0,0])[1]/60)} 分鐘・<a href="${lurl(nextL)}" target="_blank" rel="noopener">看全文（大慈恩網站）</a></p>
+      ${q[1]?`<p class="mini-note">下一講：第 ${q[1]} 講・${esc(LECT[q[1]-1])}</p>`:""}
+    </div>`:`<div class="card calm"><h3>153 講全部聽完了</h3><p>到「檢核」頁做最後的檢核。</p></div>`}
+  </section>
+  <section class="section" aria-labelledby="h-opt">
+    <span class="eyebrow" id="h-opt">選做</span>
+    <div class="card has-br">${new Date().getHours()>=20?sticker("an","sleepy","br","晚安～"):sticker("an","sit","br","深呼吸")}
+      <div class="task"><button class="check ${d.breath?"on":""}" data-act="alert" aria-label="呼吸警報${d.breath?"，已完成":""}">${d.breath?"✓":"○"}</button><div><div class="t">呼吸警報・1 分鐘</div><div class="d">發現肩膀緊、喉嚨卡、心急時，跟著光慢慢呼氣。（老師的調息教授）</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="alert">開始</button></div></div></div>
+      <div class="task"><button class="check ${d.night?"on":""}" data-act="night" aria-label="睡前反省${d.night?"，已完成":""}">${d.night?"✓":"○"}</button><div><div class="t">睡前反省・3 分鐘</div><div class="d">回顧身口意、懺悔、隨喜、發願。清淨尸羅是修止最重要的資糧。</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="night">開始</button></div></div></div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="card has-tl">${sticker("zz",dailyTip()[0],"tl")}<span class="eyebrow">今天想一想</span><p class="quote">${esc(merit)}</p><p class="tip">${esc(dailyTip()[1])}</p></div>
+  </section>
+  ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
+  <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
+}
+function vProgress(){
+  const t=today();const hc=heardCount();const ic=introCount();
+  let mdays=0,mins=0,sessions=0;const ym=t.slice(0,7);
+  for(const k in DAYS){const d=DAYS[k];if(practiced(d)&&k.startsWith(ym))mdays++;(d.sits||[]).forEach(s=>{mins+=Number(s.m)||0;sessions++});if(d.min)mins+=1}
+  const cells=[];const endK=t;const startK=addDays(endK,-(83+ (6-parseK(endK).getDay())));
+  for(let i=0;i<84+(6-parseK(endK).getDay());i++){const k=addDays(startK,i);if(k>endK){cells.push(`<i style="visibility:hidden"></i>`);continue}const d=day(k);let cl="";if(d&&d.leave)cl="lv";else if(d){const n=(d.sits||[]).length;cl=n>=2?"l3":n===1?"l2":d.min?"l1":""}cells.push(`<i class="${cl} ${k===t?"today":""}" title="${k}"></i>`)}
+  const cnt={};ISSUES.forEach(x=>cnt[x]=0);let tot=0;
+  for(let i=0;i<30;i++){const d=day(addDays(t,-i));if(!d)continue;(d.sits||[]).forEach(s=>(s.i||[]).forEach(x=>{if(cnt[x]!=null){cnt[x]++;tot++}}))}
+  const maxc=Math.max(1,...Object.values(cnt));
+  const st=stage();
+  return `
+  <div class="lamps-space"><div class="lamps-cap"><div class="big num">${hc}<small style="font-size:18px;color:var(--mute)"> / ${TOTAL}</small></div><div class="mini-note">已點亮的燈（聽完的講次）</div></div></div>
+  <section class="section">
+    <div class="stats">
+      <div class="stat"><div class="v num">${ic}<small> / ${INTRO.length}</small></div><div class="k">入門線</div><div class="bar" style="margin-top:6px"><i style="width:${ic/INTRO.length*100}%"></i></div></div>
+      <div class="stat"><div class="v num">${mdays}<small> 天</small></div><div class="k">本月上座天數</div></div>
+      <div class="stat"><div class="v num">${mins}<small> 分</small></div><div class="k">累積上座時間</div></div>
+      <div class="stat"><div class="v num">${st.n}<small> / 9</small></div><div class="k">目前階段・${st.name}</div></div>
+    </div>
+  </section>
+  ${vThemes()}
+  <section class="section"><span class="eyebrow">最近十二週</span>
+    <div class="card"><div class="heat" aria-label="最近十二週的上座紀錄">${cells.join("")}</div>
+    <div class="legend"><span><i style="background:rgba(239,231,214,.07)"></i>沒坐</span><span><i style="background:rgba(243,181,68,.35)"></i>保底</span><span><i style="background:rgba(243,181,68,.7)"></i>一座</span><span><i style="background:var(--gold)"></i>兩座</span><span><i style="background:rgba(134,212,189,.25)"></i>請假</span></div></div>
+  </section>
+  <section class="section"><span class="eyebrow">上座的狀況・最近 30 天</span>
+    <div class="card">${tot?`<div class="issues">${ISSUES.map(x=>`<div class="issue"><span>${x}</span><div class="bar"><i style="width:${cnt[x]/maxc*100}%"></i></div><span class="num" style="text-align:right">${cnt[x]}</span></div>`).join("")}</div>`:`<p class="meta">每次下座記錄「掉舉、昏沉、細沉沒」等狀況，這裡就會顯示你最常遇到什麼。</p>`}</div>
+  </section>
+  <section class="section"><span class="eyebrow">九個階梯</span>
+    <div class="card"><div class="steps">${STAGES.map(s=>`<div class="stp ${s.n===S.stage?"cur":s.n<S.stage?"past":""}"><b>${s.n}</b><span>${s.name}<span class="mini-note" style="display:block">${esc(s.focus)}</span></span><span class="m">${s.min} 分</span></div>`).join("")}</div></div>
+  </section>
+  <section class="section"><div class="row between"><span class="eyebrow">講次清單</span><div class="seg" style="width:180px" role="group" aria-label="篩選講次"><button class="${listFilter==="intro"?"on":""}" data-act="lf" data-v="intro">入門線</button><button class="${listFilter==="all"?"on":""}" data-act="lf" data-v="all">全部</button></div></div>
+    <div class="card"><p class="mini-note">點右邊的圓圈可以標記已聽／未聽。順序不一定要照著走。</p><div class="list">${(listFilter==="intro"?INTRO:Array.from({length:TOTAL},(_,i)=>i+1)).map(n=>`<div class="li ${S.heard[n]?"done":""}"><span class="no">${pad(n).padStart(3,"0")}</span><span class="tt"><button class="lk" data-act="listen" data-n="${n}">${esc(LECT[n-1])}</button>${INTRO.includes(n)&&listFilter==="all"?' <span class="tag gold">入門</span>':""}</span><button class="dot ${S.heard[n]?"on":""}" data-act="toggle" data-n="${n}" aria-label="第 ${n} 講${S.heard[n]?"已聽，點一下改成未聽":"未聽，點一下標記已聽"}">${S.heard[n]?"✓":""}</button></div>`).join("")}</div></div>
+  </section>`;
+}
+let listFilter="intro";
+const fmtT=s=>{s=Math.max(0,Math.floor(s||0));return `${Math.floor(s/60)}:${pad(s%60)}`};
+function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=[...THEMES].reverse().find(t=>t.cost<=o);const cur=curTheme();
+  const pct=next?Math.round((o-prev.cost)/(next.cost-prev.cost)*100):100;
+  return `<section class="section"><span class="eyebrow">燈油與主題</span>
+  <div class="card has-tr">${sticker("zz","love","tr","收集中")}
+    <div class="oilbar"><svg class="oil-drop" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4c6 9 14 16 14 25a14 14 0 0 1-28 0c0-9 8-16 14-25z" fill="#ffad1f" stroke="#2b2350" stroke-width="2"/><ellipse cx="17" cy="28" rx="3" ry="5" fill="#fff" opacity=".6"/></svg>
+      <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴燈油</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
+    <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner("zz","happy",t.id)}${charInner("an","happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${esc(t.zz.name)}＆${esc(t.an.name)}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
+    <p class="mini-note">${OIL_RULES}</p>
+  </div></section>`}
+let openCp=null;
+function vCheck(){
+  const rows=CPS.map((cp,i)=>{const s=cpStatus(cp);const r=S.cps[cp.id];
+    const lab={pass:"通過",wait:"還沒到",due:"可以檢核",retry:"再練練"}[s];
+    const stk=s==="pass"?sticker("zz","love","tr","通過！"):s==="due"?sticker("an","think","tr","換我了？"):s==="retry"?sticker("zz","gentle","tr","慢慢來"):"";
+    return `<div class="card ${stk?"has-tr":""}">${stk}<div class="cp ${s}"><span class="ic">${s==="pass"?"✓":i+1}</span><div style="min-width:0"><div class="t" style="font-weight:700">${cp.name}</div><div class="meta">${cp.when}${r&&r.date?`・上次 ${r.date}`:""}</div></div><span class="tag ${s==="pass"?"jade":s==="due"?"gold":""}">${lab}</span></div>
+    ${s==="due"||s==="retry"||openCp===cp.id?`<div class="btns"><button class="btn ${s==="due"?"primary":""} small" data-act="cp-open" data-id="${cp.id}">${openCp===cp.id?"收起":"開始檢核"}</button></div>`:""}
+    ${openCp===cp.id?`<form data-cp="${cp.id}" class="cpform">${cp.items.map((it,j)=>`<label class="checkitem"><input type="checkbox" id="cp-${cp.id}-${j}" name="i${j}" ${r&&r.items&&r.items[j]?"checked":""}><span>${esc(it[0])}</span></label>`).join("")}<div class="btns" style="margin-top:8px"><button class="btn primary" type="submit">送出</button></div></form>`:""}
+    ${r&&!r.passed?`<div class="tip" style="margin-top:4px">要加強的地方：${cp.items.map((it,j)=>r.items&&!r.items[j]?`<div class="remedy">・${esc(it[0])} → ${esc(it[1])}</div>`:"").join("")}<div class="remedy">14 天後可以再檢核一次（${addDays(r.date,14)}）。</div></div>`:""}
+    </div>`}).join("");
+  return `<header class="hero wide"><div class="date">CHECKPOINTS</div><h1>檢核點</h1><p class="sub">不是考試，是看看哪裡需要多照顧一下。沒過的項目，會告訴你怎麼補。</p></header><section class="section">${rows}</section>`;
+}
+function vAdjust(){
+  const st=stage();const c=consistency();
+  return `<header class="hero wide"><div class="date">ADJUST</div><h1>調整進度</h1><p class="sub">照你的生活調。慢一點沒關係，穩定最重要。</p></header>
+  <section class="section"><span class="eyebrow">聽講速度（每週）</span>
+    <div class="card"><div class="seg" role="group" aria-label="每週聽幾講">${[[1,"慢慢來・1 講"],[2,"穩穩走・2 講"],[3,"精進・3 講"]].map(([v,l])=>`<button class="${S.pace===v?"on":""}" data-act="set-pace" data-v="${v}">${l}</button>`).join("")}</div>
+    <p class="mini-note">先聽入門線 28 講，再聽其他的。每週 1 講，入門線約 7 個月；2 講約 3 個半月。</p></div>
+  </section>
+  <section class="section"><span class="eyebrow">每天上座</span>
+    <div class="card"><div class="seg" role="group" aria-label="每天上座幾次">${[[1,"一座"],[2,"兩座（早晚）"]].map(([v,l])=>`<button class="${S.sits===v?"on":""}" data-act="set-sits" data-v="${v}">${l}</button>`).join("")}</div>
+    <label class="mini-note" for="cmin">每座分鐘數（空白＝照階梯建議 ${st.min} 分）</label>
+    <input type="number" id="cmin" min="1" max="60" inputmode="numeric" value="${S.customMin||""}" placeholder="${st.min}">
+    </div>
+  </section>
+  <section class="section"><span class="eyebrow">目前階段</span>
+    <div class="card"><div class="row between"><h3>第 ${st.n} 階・${st.name}</h3><span class="tag">已 ${daysBetween(S.stageSince,today())} 天</span></div><p class="meta">${esc(st.focus)}</p>
+    <p class="mini-note">過去 ${c.total} 天上座 ${c.done} 天。一般會在「需要的講次聽完＋最近一週坐了七成以上＋這一階滿 7 天」時建議往上。也可以自己調。</p>
+    <div class="btns"><button class="btn small" data-act="down" ${S.stage<=1?"disabled":""}>回到上一階</button><button class="btn small" data-act="advance-force" ${S.stage>=9?"disabled":""}>直接往下一階</button></div></div>
+  </section>
+  <section class="section"><span class="eyebrow">所緣</span>
+    <div class="card"><div class="seg" role="group" aria-label="選擇所緣">${[[null,"還沒選"],["breath","呼吸"],["buddha","佛像"]].map(([v,l])=>`<button class="${S.obj===v?"on":""}" data-act="set-obj" data-v="${v||""}">${l}</button>`).join("")}</div>
+    <p class="mini-note">念頭特別多、像跑馬場的人，廣論說「多尋思者定應修息」。散亂不嚴重、常昏沉的人，緣佛像也很好（佛像本身就是可欣境）。選定前可以先請教帶修的法師；選了以後，未得止前不要換。</p></div>
+  </section>
+  <section class="section"><span class="eyebrow">語音引導</span>
+    <div class="card"><div class="seg" role="group" aria-label="語音開關">${[[true,"開"],[false,"只顯示文字"]].map(([v,l])=>`<button class="${S.voice===v?"on":""}" data-act="set-voice" data-v="${v}">${l}</button>`).join("")}</div>
+    <div class="seg" role="group" aria-label="說話速度">${[[0.8,"慢"],[0.9,"適中"],[1.0,"一般"]].map(([v,l])=>`<button class="${S.rate===v?"on":""}" data-act="set-rate" data-v="${v}">${l}</button>`).join("")}</div>
+    <div class="btns"><button class="btn small" data-act="voice-test">試聽</button></div>
+    <p class="mini-note">${Voice.describe()}</p></div>
+  </section>
+  <section class="section"><span class="eyebrow">中斷了怎麼辦</span>
+    <div class="card faq has-tr">${sticker("an","confused","tr","中斷了…")}
+      <details><summary>沒聽講</summary><p>講次是「排隊制」，不是日期制。沒聽的就留在隊伍最前面，下次接著聽，不會越欠越多。上週沒達標也不用補。連續三週都沒達到一半，App 會問你要不要把速度放慢。</p></details>
+      <details><summary>一兩天沒上座</summary><p>不用補兩座，今天照常坐一座。很忙就做「保底一分鐘」。生病、出遠門可以按「請假」，那天不算進穩定度。</p></details>
+      <details><summary>三天以上沒上座</summary><p>做「回溫三天」：每天只坐 3 分鐘，把習慣接回來。階段和聽講進度都保留。</p></details>
+      <details><summary>有練習但沒聽講</summary><p>可以一直練。只是要升到下一階，需要先聽那一階的講次（例如第 4 階「定所緣」需要先聽第 49、53 講），因為方法要先學會再練。</p></details>
+      <details><summary>有聽講但沒練習</summary><p>聽講照常累積。但階段不會往上，因為升階要看最近一週有沒有坐到七成。如果一週坐不到三天，App 會建議退回上一階、座時短一點。</p></details>
+      <details><summary>坐不住、一直想睡</summary><p>座時縮短（上面可以自己設），寧可短而清楚，不要長而昏沉。昏沉多：眼睛微開、背別靠、別吃太飽、早點睡；坐中可以想佛像的光明。</p></details>
+    </div>
+    <div class="btns"><button class="btn small" data-act="warm">開始回溫三天</button><button class="btn small" data-act="leave">今天請假</button></div>
+  </section>
+  <section class="section"><span class="eyebrow">資料</span>
+    <div class="card"><p class="meta">進度只存在這支手機的瀏覽器裡，不會上傳到任何地方。${lastBackupNote()}</p>
+    <p class="mini-note">iPhone：用 Safari 開啟 →「分享」→「加入主畫面」，資料比較不會被系統清掉。Android：Chrome 選單 →「加到主畫面」。</p>
+    <div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button><button class="btn small" data-act="upload">從備份檔還原</button></div>
+    <div class="btns"><button class="btn small" data-act="export">複製備份文字</button><button class="btn small" data-act="import">貼上備份文字</button><button class="btn ghost small" data-act="reset">全部重來</button></div>
+    <input type="file" id="upfile" accept=".json,application/json,text/plain" hidden>
+    <div id="dataArea"></div></div>
+  </section>
+  <section class="section"><span class="eyebrow">出處</span>
+    <div class="card"><p class="mini-note">次第依《菩提道次第廣論》奢摩他章與《四家合註》；講次為真如老師《廣論止觀初探・奢摩他》（大慈恩譯經基金會）。呼吸調息參考老師疫情期間的調息教授。本工具為個人學習輔助，修持請以帶修法師的指導為準。</p></div>
+  </section>`;
+}
+
+/* ================= 動作 ================= */
+let toastT;function toast(m){let el=document.querySelector(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el)}el.textContent=m;clearTimeout(toastT);toastT=setTimeout(()=>el.remove(),2200)}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act;const t=today();
+  const go=()=>{persist();render()};
+  switch(a){
+    case "sit": if(((day(t)||{}).sits||[]).length>=S.sits&&b.classList.contains("check")){toast("今天的上座已完成");break} Session.run("sit");break;
+    case "manual": openLog({m:sitMin(),manual:true});break;
+    case "mini": Session.run("mini");break;
+    case "alert": Session.run("alert");break;
+    case "night": Session.run("night");break;
+    case "heard": S.heard[b.dataset.n]=t;persist();render();toast(`第 ${b.dataset.n} 講已點亮，燈油 +3`);break;
+    case "toggle": {const n=b.dataset.n;if(S.heard[n])delete S.heard[n];else S.heard[n]=t;go();break}
+    case "lf": listFilter=b.dataset.v;render();break;
+    case "listen": LP.open(Number(b.dataset.n));break;
+    case "theme": {const th=THEMES.find(x=>x.id===b.dataset.id);if(th&&unlocked(th)){S.theme=th.id;go();toast(`換上「${th.name}」`)}else if(th)toast(`還差 ${th.cost-oil()} 滴燈油`);break}
+    case "leave": ensureDay(t).leave=true;persist(t);render();toast("今天請假，好好休息");break;
+    case "unleave": if(DAYS[t])delete DAYS[t].leave;persist(t);render();break;
+    case "warm": S.warmUntil=addDays(t,2);go();toast("回溫三天：每天 3 分鐘");break;
+    case "advance": case "advance-force": if(S.stage<9){S.stage++;S.stageSince=t;S.customMin=null;go();toast(`進入第 ${S.stage} 階・${stage().name}`)}break;
+    case "down": if(S.stage>1){S.stage--;S.stageSince=t;S.customMin=null;go();toast(`回到第 ${S.stage} 階・${stage().name}`)}break;
+    case "snooze-adv": S.snooze.adv=addDays(t,7);go();break;
+    case "snooze-adv-info": S.snooze["adv-info"]=addDays(t,7);go();break;
+    case "snooze-down": S.snooze.down=addDays(t,7);go();break;
+    case "snooze-pace": S.snooze.pace=addDays(t,14);go();break;
+    case "pace-down": S.pace=Math.max(1,S.pace-1);S.snooze.pace=addDays(t,21);go();break;
+    case "pace-up": S.pace=Math.min(3,S.pace+1);S.snooze.pace=addDays(t,21);go();break;
+    case "go-check": location.hash="#check";break;
+    case "cp-open": openCp=openCp===b.dataset.id?null:b.dataset.id;render();break;
+    case "set-pace": S.pace=Number(b.dataset.v);go();break;
+    case "set-sits": S.sits=Number(b.dataset.v);go();break;
+    case "set-obj": S.obj=b.dataset.v||null;go();break;
+    case "set-voice": S.voice=b.dataset.v==="true";go();break;
+    case "set-rate": S.rate=Number(b.dataset.v);go();break;
+    case "voice-test": Audio_.unlock();Voice.speak(TEST_SAY[0]);break;
+    case "export": doExport();break;
+    case "import": doImport();break;
+    case "reset": doReset();break;
+    case "reset-yes": S=blank();DAYS={};persist();render();break;
+    case "download": doDownload();break;
+    case "upload": document.getElementById("upfile").click();break;
+    case "reset-no": document.getElementById("dataArea").innerHTML="";break;
+  }
+});
+function restoreFrom(txt){try{const o=JSON.parse(txt);if(!o.state)throw 0;S=Object.assign(blank(),o.state);DAYS=o.days||{};persist();render();toast("已還原")}catch(e){toast("格式不對，請用本 App 產生的備份")}}
+function doDownload(){
+  S.lastBackup=today();persist();
+  const blob=new Blob([JSON.stringify({app:"無風燭",exported:new Date().toISOString(),state:S,days:DAYS},null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`無風燭備份-${today()}.json`;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);render();toast("備份檔已下載");
+}
+document.addEventListener("change",e=>{
+  if(e.target.id==="upfile"){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>restoreFrom(r.result);r.readAsText(f);e.target.value="";return}
+  if(e.target.id==="cmin"){const v=parseInt(e.target.value,10);S.customMin=v>0&&v<=60?v:null;persist();toast(S.customMin?`每座 ${S.customMin} 分鐘`:"照階梯建議")}
+});
+document.addEventListener("submit",e=>{
+  const f=e.target.closest("form.cpform");if(!f)return;e.preventDefault();
+  const id=f.dataset.cp;const cp=CPS.find(c=>c.id===id);
+  const items=cp.items.map((_,j)=>f.querySelector(`[name=i${j}]`).checked);
+  const passed=items.every(Boolean);
+  S.cps[id]={date:today(),items,passed};openCp=null;persist();render();
+  toast(passed?`通過：${cp.name}`:"已記下要加強的地方");
+});
+function doExport(){const txt=JSON.stringify({state:S,days:DAYS});const area=document.getElementById("dataArea");
+  const done=()=>toast("備份已複製，可以貼到記事本或 LINE 給自己");
+  try{navigator.clipboard.writeText(txt).then(done,()=>{area.innerHTML=`<p class="mini-note">複製不了，請長按下面的文字全選複製：</p><textarea id="exp" readonly>${esc(txt)}</textarea>`;const t=document.getElementById("exp");t.focus();t.select()})}catch(e){area.innerHTML=`<textarea id="exp" readonly>${esc(txt)}</textarea>`}}
+function doImport(){document.getElementById("dataArea").innerHTML=`<label class="mini-note" for="imp">把之前複製的備份貼在這裡：</label><textarea id="imp"></textarea><div class="btns"><button class="btn primary small" id="impgo">還原</button></div>`;
+  document.getElementById("impgo").onclick=()=>restoreFrom(document.getElementById("imp").value)}
+function doReset(){document.getElementById("dataArea").innerHTML=`<p class="tip">確定要清掉所有紀錄、從頭開始嗎？這個動作無法復原。</p><div class="btns"><button class="btn small" data-act="reset-yes">確定，全部重來</button><button class="btn primary small" data-act="reset-no">不要</button></div>`}
+
+/* ================= 首次設定 ================= */
+function openOnboard(){
+  const L=document.getElementById("layer");
+  let pace=S.pace,sits=S.sits;
+  const draw=()=>{L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ob-h"><div class="panel">${sticker("zz","happy","tr","你好！")}
+    <span class="eyebrow">廣論・奢摩他 個人練習</span>
+    <h2 id="ob-h">無風燭</h2>
+    <p class="quote">「由止力故如無風燭，諸分別風不能動心。」<small>《修次中篇》，廣論奢摩他章引</small></p>
+    <p>我是${nm("zz")}，會陪你一步一步學奢摩他：每週聽一點真如老師的《止觀初探》，每天坐一小段，有語音帶你。從 3 分鐘開始，不趕進度；中斷了也沒關係，我會告訴你怎麼接回來。</p>
+    <div><span class="eyebrow">每週想聽幾講？</span><div class="seg" style="margin-top:6px">${[[1,"1 講（推薦）"],[2,"2 講"],[3,"3 講"]].map(([v,l])=>`<button class="${pace===v?"on":""}" data-ob="pace" data-v="${v}">${l}</button>`).join("")}</div></div>
+    <div><span class="eyebrow">每天上座幾次？</span><div class="seg" style="margin-top:6px">${[[1,"一座（推薦）"],[2,"兩座"]].map(([v,l])=>`<button class="${sits===v?"on":""}" data-ob="sits" data-v="${v}">${l}</button>`).join("")}</div></div>
+    <p class="mini-note">之後都可以在「調整」頁改。語音引導請在安靜的地方、戴耳機效果最好。</p>
+    <div class="btns"><button class="btn primary" data-ob="go">開始點燈</button><button class="btn" data-ob="test">試聽語音</button></div>
+  </div></div>`};
+  draw();
+  L.onclick=e=>{const b=e.target.closest("[data-ob]");if(!b)return;const k=b.dataset.ob;
+    if(k==="pace"){pace=Number(b.dataset.v);draw()}
+    else if(k==="sits"){sits=Number(b.dataset.v);draw()}
+    else if(k==="test"){Audio_.unlock();Voice.speak(TEST_SAY[1])}
+    else if(k==="go"){S.pace=pace;S.sits=sits;S.onboarded=true;const t=today();S.start=t;S.stageSince=t;L.innerHTML="";L.onclick=null;persist();render()}};
+}
+
+/* ================= 下座記錄 ================= */
+function openLog(opt){
+  const L=document.getElementById("layer");const sel=new Set();
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="lg-h"><form class="panel" id="logf">
+    <h2 id="lg-h">${opt.manual?"記錄這一座":"下座了"}</h2>
+    ${sticker("zz","cheer","tr","辛苦了！")}<p class="meta">今天的燈點亮了。剛剛坐的時候，心是什麼樣子？記下來，${nm("zz")}就能給你更準的提醒。</p>
+    <label class="eyebrow" for="lgm">坐了幾分鐘</label><input id="lgm" type="number" inputmode="numeric" min="1" max="120" value="${opt.m}">
+    <div><span class="eyebrow">這一座的狀況（可複選）</span><div class="chips" style="margin-top:8px">${ISSUES.map(x=>`<button type="button" class="chip" data-chip="${x}" aria-pressed="false">${x}</button>`).join("")}</div></div>
+    <details><summary>怎麼分？</summary><div class="faq"><p>掉舉：被喜歡的事拉走（想吃的、想玩的）。散亂：被其他事拉走（工作、煩惱）。昏沉：身心沉重。粗沉沒：所緣模糊、像在暗室。細沉沒：看起來平靜，但心沒有力量。</p></div></details>
+    <label class="eyebrow" for="lgn">一句話心得（選填）</label><textarea id="lgn" placeholder="例如：數到 12 就跑掉，想到明天的會議。"></textarea>
+    <div class="btns"><button class="btn primary" type="submit">儲存</button><button class="btn ghost" type="button" id="lgx">不記錄</button></div>
+  </form></div>`;
+  L.querySelectorAll("[data-chip]").forEach(c=>c.onclick=()=>{const x=c.dataset.chip;if(sel.has(x))sel.delete(x);else sel.add(x);c.classList.toggle("on");c.setAttribute("aria-pressed",sel.has(x))});
+  document.getElementById("lgx").onclick=()=>{if(!opt.manual)saveSit(opt.m,[], "");L.innerHTML=""};
+  document.getElementById("logf").onsubmit=e=>{e.preventDefault();const m=Math.max(1,parseInt(document.getElementById("lgm").value,10)||opt.m);saveSit(m,[...sel],document.getElementById("lgn").value.trim());L.innerHTML=""};
+}
+function saveSit(m,i,n){const t=today();const d=ensureDay(t);d.sits.push({m,i,n,at:new Date().toTimeString().slice(0,5),obj:S.obj||null,st:S.stage});persist(t);render();toast("記下了，燈油 +2")}
+
+/* ================= 聲音 ================= */
+const Audio_={ac:null,unlock(){try{if(!this.ac)this.ac=new (window.AudioContext||window.webkitAudioContext)();if(this.ac.state==="suspended")this.ac.resume()}catch(e){}},
+  bell(soft){try{this.unlock();const ac=this.ac;const t=ac.currentTime;[[196,1],[392.5,.55],[588,.3],[1176,.12]].forEach(([f,g])=>{const o=ac.createOscillator(),gn=ac.createGain();o.type="sine";o.frequency.value=f;gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime((soft?.12:.28)*g,t+.015);gn.gain.exponentialRampToValueAtTime(.0001,t+5);o.connect(gn).connect(ac.destination);o.start(t);o.stop(t+5.1)})}catch(e){}}};
+/* 語音：優先播預錄的 Azure 曉曉 mp3（voice/map.js，破音字已用拼音校正）；沒有錄音的句子才用手機內建語音。 */
+const player=new Audio();player.preload="auto";
+const Voice={web:("speechSynthesis" in window),cur:null,mode:null,
+  map(){return window.VOICE_MAP||null},
+  describe(){const m=this.map();if(m)return `使用預錄的「${(window.VOICE_INFO&&VOICE_INFO.name)||"曉曉"}」語音，破音字已校正（共 ${Object.keys(m).length} 句）。`;if(this.web)return "錄音檔還沒載入，暫時用手機內建的中文語音。";return "這個瀏覽器不支援語音，引導會用文字和鈴聲。"},
+  unlock(){try{player.src="voice/silence.mp3";const p=player.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}},
+  pickWeb(){if(!this.web)return null;const vs=speechSynthesis.getVoices();return vs.find(v=>/zh[-_]TW/i.test(v.lang))||vs.find(v=>/zh[-_]HK/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||null},
+  speak(text){
+    showCap(text);
+    if(!S.voice) return timed(text);
+    const m=this.map();
+    if(m&&m[text]) return this.clip(m[text],text);
+    return this.webSay(text);
+  },
+  clip(file,text){return new Promise(res=>{let fin=false;const end=()=>{if(fin)return;fin=true;clearTimeout(g);player.onended=player.onerror=null;this.cur=null;res()};
+    player.onended=end;player.onerror=()=>{if(fin)return;fin=true;clearTimeout(g);this.cur=null;res(this.webSay(text))};
+    this.cur=end;this.mode="clip";player.src="voice/"+file;player.playbackRate=S.rate/0.9;try{player.preservesPitch=true;player.webkitPreservesPitch=true}catch(e){}
+    const g=setTimeout(end,90000);const p=player.play();if(p&&p.catch)p.catch(()=>{if(fin)return;fin=true;clearTimeout(g);this.cur=null;res(this.webSay(text))})})},
+  webSay(text){if(!this.web)return timed(text);this.mode="web";return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);const v=this.pickWeb();if(v)u.voice=v;u.lang=v?v.lang:"zh-TW";u.rate=S.rate;let fin=false;const end=()=>{if(!fin){fin=true;clearTimeout(g);this.cur=null;res()}};u.onend=end;u.onerror=end;const g=setTimeout(end,text.length*420+4000);this.cur=end;speechSynthesis.speak(u)}catch(e){res(timed(text))}})},
+  stop(){try{player.pause()}catch(e){}try{if(this.web)speechSynthesis.cancel()}catch(e){}const c=this.cur;this.cur=null;c&&c()},
+  pause(){try{if(this.mode==="clip")player.pause();else if(this.web)speechSynthesis.pause()}catch(e){}},
+  resume(){try{if(this.mode==="clip"&&this.cur)player.play().catch(()=>{});else if(this.web)speechSynthesis.resume()}catch(e){}}
+};
+if(Voice.web){try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}}
+/* 列出所有引導詞（產生錄音用）：在瀏覽器主控台執行 allVoiceLines() */
+function allVoiceLines(){
+  const set=new Set([...MERITS,...TEST_SAY,CHECK_SAY]);const keep={stage:S.stage,obj:S.obj};
+  const grab=steps=>steps.forEach(s=>(s.fns||[]).forEach(f=>{if(f.text)set.add(f.text)}));
+  ["mini","alert","night"].forEach(k=>grab(Session.build(k)));
+  for(let n=1;n<=9;n++)for(const o of [null,"breath","buddha"]){S.stage=n;S.obj=o;grab(Session.build("sit",MERITS[0]))}
+  S.stage=keep.stage;S.obj=keep.obj;return [...set];
+}
+function timed(text){return Session.wait(Math.max(2600,text.length*240),{quiet:true})}
+function showCap(text){const c=document.getElementById("cap");if(c)c.textContent=text}
+
+/* ================= 聽講播放列（直接播大慈恩的 Podcast 音檔） ================= */
+const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
+  $:id=>document.getElementById(id),
+  open(n){const info=(window.LECT_AUDIO||{})[n];if(!info){window.open(lurl(n),"_blank","noopener");return}
+    if(this.n!==n){this.n=n;this.a.src=info[0];this.a.preload="metadata";this.pending=(S.lpos||{})[n]||0;this.$("lpDone").hidden=true}
+    this.$("lpN").textContent=`第 ${n} 講`;this.$("lpTitle").textContent=LECT[n-1];
+    this.$("lplayer").hidden=false;document.body.classList.add("playing");
+    this.a.playbackRate=S.lrate||1;this.$("lpRate").textContent=(S.lrate||1)+"×";
+    if("mediaSession" in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:`第 ${n} 講・${LECT[n-1]}`,artist:"真如老師・廣論止觀初探",album:"無風燭",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]})}catch(e){}}
+    this.play()},
+  startRepeat(){this.cancelRepeat();let s=5;const tick=()=>{if(s<=0){this.cancelRepeat();this.a.currentTime=0;this.play();return}this.$("lpTime").textContent=`${s} 秒後重播…`;s--;this.rt=setTimeout(tick,1000)};tick()},
+  cancelRepeat(){clearTimeout(this.rt);this.rt=null},
+  play(){const p=this.a.play();if(p&&p.catch)p.catch(e=>{if(e&&e.name==="NotAllowedError")toast("請再按一次播放")})},
+  toggle(){if(this.a.paused)this.play();else this.a.pause()},
+  skip(s){if(isFinite(this.a.duration))this.a.currentTime=Math.min(this.a.duration,Math.max(0,this.a.currentTime+s))},
+  ui(){const a=this.a,d=a.duration||0,t=a.currentTime||0;if(!this.rt)this.$("lpTime").textContent=`${fmtT(t)} / ${fmtT(d)}`;if(!this.seeking)this.$("lpSeek").value=d?Math.round(t/d*1000):0;
+    this.$("lpPlay").textContent=a.paused?"▶":"❚❚";this.$("lpPlay").setAttribute("aria-label",a.paused?"播放":"暫停");
+    if(d&&t/d>.9&&!S.heard[this.n])this.$("lpDone").hidden=false;
+    if(Date.now()-this.saved>5000&&t>5){this.saved=Date.now();S.lpos=S.lpos||{};S.lpos[this.n]=Math.floor(t);persist()}},
+  close(){this.cancelRepeat();this.a.pause();if(this.n&&this.a.currentTime>5){S.lpos=S.lpos||{};S.lpos[this.n]=Math.floor(this.a.currentTime);persist()}this.$("lplayer").hidden=true;document.body.classList.remove("playing");render()},
+  done(){const n=this.n;if(!n)return;S.heard[n]=today();if(S.lpos)delete S.lpos[n];persist();this.$("lpDone").hidden=true;render();toast(`第 ${n} 講已點亮，燈油 +3`)},
+  init(){const a=this.a;
+    a.addEventListener("loadedmetadata",()=>{if(this.pending&&this.pending<a.duration-10)a.currentTime=this.pending;this.pending=0;this.ui()});
+    ["timeupdate","play","pause"].forEach(ev=>a.addEventListener(ev,()=>this.ui()));
+    a.addEventListener("ended",()=>{this.ui();if(!S.heard[this.n]){this.$("lpDone").hidden=false;if(!S.lrepeat)toast("聽完了！按「聽完了」點亮這一講")}if(S.lrepeat)this.startRepeat()});
+    a.addEventListener("play",()=>this.cancelRepeat());
+    a.addEventListener("error",()=>{if(this.n)toast("音檔載入失敗，可以改到大慈恩網站聽")});
+    this.$("lpPlay").onclick=()=>this.toggle();
+    const rp=this.$("lpRepeat");rp.setAttribute("aria-pressed",!!S.lrepeat);rp.onclick=()=>{S.lrepeat=!S.lrepeat;rp.setAttribute("aria-pressed",S.lrepeat);if(!S.lrepeat)this.cancelRepeat();persist();toast(S.lrepeat?"重複播放：聽完隔 5 秒再從頭聽":"不重複播放")};
+    this.$("lpRate").onclick=()=>{const i=(this.RATES.indexOf(S.lrate||1)+1)%this.RATES.length;S.lrate=this.RATES[i];a.playbackRate=S.lrate;this.$("lpRate").textContent=S.lrate+"×";persist()};
+    const sk=this.$("lpSeek");sk.oninput=()=>{this.seeking=true};sk.onchange=()=>{if(a.duration)a.currentTime=sk.value/1000*a.duration;this.seeking=false};
+    this.$("lpClose").onclick=()=>this.close();this.$("lpDone").onclick=()=>this.done();
+    if("mediaSession" in navigator){try{const m=navigator.mediaSession;m.setActionHandler("play",()=>this.play());m.setActionHandler("pause",()=>a.pause());}catch(e){}}}
+};
+LP.init();
+
+/* ================= 引導流程 ================= */
+const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0,lock:null,
+  async run(kind){
+    if(this.on)return;Audio_.unlock();Voice.unlock();try{LP.a.pause()}catch(e){}this.on=true;this.paused=false;this.abortF=false;this.kind=kind;this.silent=0;
+    const steps=this.build(kind);
+    this.mount(kind,steps.length);
+    try{if(navigator.wakeLock)this.lock=await navigator.wakeLock.request("screen")}catch(e){}
+    document.body.classList.add("in-session");Scene.setMode("session");Scene.flicker(kind==="sit"?0.6:0.4);
+    let i=0;
+    for(const s of steps){if(this.abortF)break;this.skipF=false;this.setStep(s,i++,steps.length);await s.run()}
+    const aborted=this.abortF;this.unmount();
+    if(kind==="sit"){const m=Math.max(1,Math.round(this.silent/60000));if(!aborted||this.silent>=60000)openLog({m})}
+    else if(!aborted){const t=today();const d=ensureDay(t);if(kind==="mini")d.min=true;if(kind==="alert")d.breath=true;if(kind==="night")d.night=true;persist(t);render();toast(kind==="mini"?"保底完成，燈油 +1":"完成，燈油 +1")}
+  },
+  build(kind,pickMerit){
+    const st=stage();
+    const step=(label,fns)=>({label,fns,run:async()=>{for(const f of fns){if(this.abortF||this.skipF)break;await f()}}});
+    const sp=t=>Object.assign(()=>Voice.speak(t),{text:t});const w=(ms,o)=>()=>this.wait(ms,o);
+    if(kind==="mini") return [
+      step("保底一分鐘",[sp("只要一分鐘。坐直，眼睛微微張開。在心裡數十次呼吸，數完就安靜坐著。"),()=>{Audio_.bell(true)},w(60000,{clock:true,silent:true,count:false}),()=>{Audio_.bell()},sp("很好。今天也點了一盞燈。")])];
+    if(kind==="alert") return [
+      step("停一下",[sp("停一下。肩膀放下來，下巴放鬆。跟著光，慢慢吸，再慢慢呼，呼得比吸更長。")]),
+      step("跟著光呼吸",[()=>this.pace(6)]),
+      step("回來",[sp("好。帶著這份安靜，回到你正在做的事。")])];
+    if(kind==="night") return [
+      step("回顧",[sp("今天辛苦了。我們用三分鐘回顧今天。"),sp("第一，想一想今天的身體、語言、念頭，有沒有傷害到別人，或者違犯了自己受的戒。"),w(20000,{clock:true})]),
+      step("懺悔",[sp("如果有，誠心懺悔：知道這是錯的，真心後悔，決定以後不再這樣做，並且依靠三寶。"),w(15000,{clock:true})]),
+      step("隨喜",[sp("第二，想一件今天做得好的事。隨喜自己，也隨喜別人。"),w(15000,{clock:true})]),
+      step("發願",[sp("第三，為明天發一個小願。例如：明天我要準時上座。"),w(8000,{clock:true})]),
+      step("迴向",[sp(DEDICATE),()=>{Audio_.bell(true)}])];
+    const total=sitMin()*60000;
+    const merit=pickMerit||MERITS[Math.floor(Math.random()*MERITS.length)];
+    const mainParts=(st.n>=4&&S.obj)?[OBJ_MAIN[S.obj],...(st.main&&st.n>=5?[st.main]:[])]:[st.main||OBJ_MAIN.breath];
+    const bodySteps=st.body==="full"?BODY_FULL.flatMap(t=>[sp(t),w(2500)]):[sp(BODY_BRIEF)];
+    return [
+      step("皈依發心",[sp("我們開始。先找到舒服的坐姿。"),sp("一起皈依發心。"),sp(REFUGE),w(2000)]),
+      step("想一想功德",[sp(merit),w(2000)]),
+      step("調身",bodySteps),
+      step("調息",[sp(BREATH_SAY),w(15000,{clock:false})]),
+      step("數息二十一次",[sp(COUNT_SAY),()=>{Audio_.bell(true)},async()=>{const t0=this.silent;await this.wait(Math.min(150000,Math.max(60000,total*0.6)),{clock:true,silent:true,count:true});this.countUsed=this.silent-t0}]),
+      step("安住",[()=>{this.skipF=false;Audio_.bell(true)},...mainParts.map(sp),Object.assign(()=>{},{text:st.check?CHECK_SAY:null}),async()=>{const left=Math.max(60000,total-(this.countUsed||0));if(st.check&&left>=120000){await this.wait(left/2,{clock:true,silent:true,steady:true});if(this.abortF||this.skipF)return;Audio_.bell(true);await Voice.speak(CHECK_SAY);await this.wait(left/2,{clock:true,silent:true,steady:true})}else await this.wait(left,{clock:true,silent:true,steady:true})}]),
+      step("下座・迴向",[()=>{this.skipF=false;Audio_.bell()},w(3000),sp("慢慢回來。動一動手指，輕輕張開眼睛。"),sp(DEDICATE)])];
+  },
+  wait(ms,o={}){return new Promise(res=>{let left=ms;let last=performance.now();const clk=document.getElementById("clock");const cnt=document.getElementById("countBtn");
+    if(cnt)cnt.hidden=!o.count;
+    if(o.steady)Scene.flicker(0);
+    const tick=()=>{const now=performance.now();const dt=now-last;last=now;
+      if(this.abortF||this.skipF){done();return}
+      if(!this.paused){left-=dt;if(o.silent)this.silent+=dt}
+      if(clk&&o.clock){const s=Math.max(0,Math.ceil(left/1000));clk.textContent=`${Math.floor(s/60)}:${pad(s%60)}`}
+      if(left<=0){done();return}
+      this._raf=requestAnimationFrame(tick)};
+    const done=()=>{if(clk&&o.clock)clk.textContent="";if(cnt)cnt.hidden=true;if(o.steady)Scene.flicker(.4);res()};
+    this._raf=requestAnimationFrame(tick)})},
+  async pace(cycles){
+    const cap=document.getElementById("cap");
+    for(let c=0;c<cycles;c++){
+      for(const [ph,dur,txt] of [["in",4000,"吸氣……"],["out",6000,"慢慢呼氣……"]]){
+        if(this.abortF||this.skipF)return;if(cap)cap.textContent=txt;Scene.breathe(ph,dur);await this.wait(dur,{clock:false})
+      }
+    }
+    Scene.breathe(null);
+  },
+  mount(kind,n){const L=document.getElementById("layer");
+    const title={sit:"上座・語音引導",mini:"保底一分鐘",alert:"呼吸警報",night:"睡前反省"}[kind];
+    L.innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ov-step">
+      <div class="top"><span class="label">${title}</span><button class="btn small ghost" id="ovEnd">結束</button></div>
+      <div class="center"><div class="prog" id="prog">${Array.from({length:n},()=>"<i></i>").join("")}</div><div class="step" id="ov-step"></div><div class="clock num" id="clock" aria-live="off"></div><p class="cap" id="cap" aria-live="polite"></p>
+      <div class="controls"><button class="btn primary" id="countBtn" hidden>數完了</button><button class="btn" id="ovPause">暫停</button><button class="btn ghost" id="ovSkip">跳過這段</button></div></div></div>`;
+    document.getElementById("ovEnd").onclick=()=>{this.abortF=true;Voice.stop()};
+    document.getElementById("ovSkip").onclick=()=>{this.skipF=true;Voice.stop()};
+    document.getElementById("countBtn").onclick=()=>{this.skipF=true};
+    const pb=document.getElementById("ovPause");pb.onclick=()=>{this.paused=!this.paused;pb.textContent=this.paused?"繼續":"暫停";if(this.paused)Voice.pause();else Voice.resume()};
+  },
+  setStep(s,i,n){const el=document.getElementById("ov-step");if(el&&s.label)el.textContent=s.label;document.querySelectorAll("#prog i").forEach((x,j)=>x.classList.toggle("on",j<=i))},
+  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="progress"?"lamps":"orb")}
+};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Session.on){Session.abortF=true}});
+
+/* ================= Three.js 場景：一根小蠟燭＋飄浮光點＋153 盞燈 ================= */
+const Scene=(()=>{
+  const api={setMode(){},setLamps(){},breathe(){},flicker(){}};
+  if(!window.THREE)return api;
+  const cv=document.getElementById("gl");let R;
+  try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:"low-power"})}catch(e){return api}
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  R.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  const NIGHT=new THREE.Color(0x16123a);let clearA=0;R.setClearColor(NIGHT,0);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(35,1,.1,100);cam.position.set(0,0,10);
+  scene.add(new THREE.HemisphereLight(0xffffff,0xc9bdf5,.95));
+  const dl=new THREE.DirectionalLight(0xffd9a8,.55);dl.position.set(3,4,5);scene.add(dl);
+
+  /* 蠟燭 */
+  const candle=new THREE.Group();scene.add(candle);
+  const lam=c=>new THREE.MeshLambertMaterial({color:c});
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.42,.45,1.35,40),lam(0xfff3e4));candle.add(body);
+  const rim=new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.07,40),lam(0xffe8d2));rim.position.y=.68;candle.add(rim);
+  [[.3,.26],[1.7,.42],[3.0,.2],[4.4,.34],[5.5,.22]].forEach(([a,l])=>{const d=new THREE.Mesh(new THREE.SphereGeometry(.075,14,10),lam(0xfff6ea));d.scale.set(1,l/.075*.5,1);d.position.set(Math.cos(a)*.42,.68-l*.5,Math.sin(a)*.42);candle.add(d)});
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(.455,.465,.13,40),lam(0xff7a59));band.position.y=-.22;candle.add(band);
+  const band2=new THREE.Mesh(new THREE.CylinderGeometry(.46,.468,.04,40),lam(0xffad1f));band2.position.y=-.1;candle.add(band2);
+  const plate=new THREE.Mesh(new THREE.CylinderGeometry(.78,.66,.1,40),lam(0xffc46b));plate.position.y=-.72;candle.add(plate);
+  const wick=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.16,8),lam(0x3a2f63));wick.position.y=.78;candle.add(wick);
+  const FU={uTime:{value:0},uFlick:{value:1},uA:{value:1}};
+  const flame=new THREE.Mesh(new THREE.PlaneGeometry(.62,1.05),new THREE.ShaderMaterial({uniforms:FU,transparent:true,depthWrite:false,
+    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader:`uniform float uTime,uFlick,uA;varying vec2 vUv;
+    void main(){vec2 p=vUv*2.-1.;float t=(p.y+.78)/1.72;
+      p.x-=sin(uTime*3.2+t*3.)*.09*uFlick*t*t+sin(uTime*7.1)*.02*uFlick*t;
+      float w=1.75*sqrt(max(t,0.))*pow(max(1.-t,0.),1.25)*.62;
+      float e=abs(p.x)/max(w,1e-3);
+      float a=smoothstep(1.,.72,e)*step(0.,t)*step(t,1.);
+      vec3 c=mix(vec3(1.,.42,.16),vec3(1.,.74,.2),smoothstep(0.,.7,1.-e));
+      c=mix(c,vec3(1.,.97,.86),smoothstep(.62,0.,e)*smoothstep(.85,.15,t));
+      c=mix(c,vec3(.45,.58,1.),smoothstep(.16,0.,t)*smoothstep(.6,0.,e)*.7);
+      gl_FragColor=vec4(c,a*uA);}`}));
+  flame.position.y=1.24;candle.add(flame);
+  const hc=document.createElement("canvas");hc.width=hc.height=128;const hx=hc.getContext("2d");const gr=hx.createRadialGradient(64,64,0,64,64,64);
+  gr.addColorStop(0,"rgba(255,196,90,.75)");gr.addColorStop(.4,"rgba(255,160,70,.25)");gr.addColorStop(1,"rgba(255,140,60,0)");hx.fillStyle=gr;hx.fillRect(0,0,128,128);
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(hc),transparent:true,depthWrite:false}));glow.position.y=1.18;glow.scale.set(2.4,2.4,1);candle.add(glow);
+  candle.renderOrder=1;flame.renderOrder=3;glow.renderOrder=2;
+
+  /* 飄浮光點 */
+  const N=90,sp=new Float32Array(N*3),col=new Float32Array(N*3),spd=new Float32Array(N),sz=new Float32Array(N);
+  const pal=[[1,.68,.12],[1,.48,.35],[.42,.55,1],[1,.44,.57],[.13,.7,.55]];
+  for(let i=0;i<N;i++){sp[i*3]=Math.random()*2-1;sp[i*3+1]=Math.random()*2-1;sp[i*3+2]=-Math.random()*2;const c=pal[i%pal.length];col.set(c,i*3);spd[i]=.03+Math.random()*.06;sz[i]=.6+Math.random()*1.2}
+  const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.BufferAttribute(sp,3));sg.setAttribute("aCol",new THREE.BufferAttribute(col,3));sg.setAttribute("aSpd",new THREE.BufferAttribute(spd,1));sg.setAttribute("aSz",new THREE.BufferAttribute(sz,1));
+  const SU={uTime:{value:0},uHW:{value:2},uHH:{value:3},uA:{value:.75},uPR:{value:R.getPixelRatio()}};
+  const sparks=new THREE.Points(sg,new THREE.ShaderMaterial({uniforms:SU,transparent:true,depthWrite:false,
+    vertexShader:`uniform float uTime,uHW,uHH,uPR;attribute vec3 aCol;attribute float aSpd,aSz;varying vec3 vC;varying float vF;
+    void main(){vC=aCol;float y=mod(position.y+1.+uTime*aSpd,2.)-1.;float x=position.x+sin(uTime*.5+position.y*9.)*.04;
+      vF=smoothstep(1.,.75,abs(y));vec4 mv=modelViewMatrix*vec4(x*uHW*1.1,y*uHH*1.15,position.z,1.);gl_PointSize=aSz*9.*uPR;gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`uniform float uA;varying vec3 vC;varying float vF;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);float a=smoothstep(.5,.1,d)+smoothstep(.06,0.,min(abs(q.x),abs(q.y)))*smoothstep(.5,.2,d)*.6;gl_FragColor=vec4(vC,clamp(a,0.,1.)*uA*vF);}`}));
+  scene.add(sparks);
+
+  /* 153 盞燈（進度頁） */
+  const LP=new Float32Array(TOTAL*3),LON=new Float32Array(TOTAL),LIN=new Float32Array(TOTAL);
+  for(let i=0;i<TOTAL;i++){const a=i*.41;const r=.35+(TOTAL-1-i)*.0115;LP[i*3]=Math.cos(a)*r;LP[i*3+1]=-1.9+i*.025;LP[i*3+2]=Math.sin(a)*r;LIN[i]=INTRO.includes(i+1)?1:0}
+  const lg=new THREE.BufferGeometry();lg.setAttribute("position",new THREE.BufferAttribute(LP,3));lg.setAttribute("aOn",new THREE.BufferAttribute(LON,1));lg.setAttribute("aIntro",new THREE.BufferAttribute(LIN,1));
+  const LU={uTime:{value:0},uA:{value:0},uPR:{value:R.getPixelRatio()},uS:{value:1}};
+  const lamps=new THREE.Points(lg,new THREE.ShaderMaterial({uniforms:LU,transparent:true,depthWrite:false,
+    vertexShader:`uniform float uTime,uPR,uS;attribute float aOn,aIntro;varying float vOn,vIn;void main(){vOn=aOn;vIn=aIntro;vec4 mv=modelViewMatrix*vec4(position,1.);float s=aOn>.5?(15.+3.*sin(uTime*2.+position.y*7.)):(aIntro>.5?9.:7.);gl_PointSize=s*uPR*uS;gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`uniform float uA;varying float vOn,vIn;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,.0,d);vec3 c=vOn>.5?vec3(1.,.66,.1):(vIn>.5?vec3(1.,.55,.45):vec3(.55,.5,.82));float k=vOn>.5?1.:.55;gl_FragColor=vec4(c,a*k*uA);}`}));
+  const line=new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x8c84b8,transparent:true,opacity:0}));
+  const lampG=new THREE.Group();lampG.add(line);lampG.add(lamps);scene.add(lampG);
+
+  /* 版面定位：用螢幕比例放蠟燭與燈 */
+  let mode="orb",bre={ph:null,t0:0,dur:1,from:0},flick=1,targetFlick=1,breath=0;
+  const cur={x:0,y:0,s:1,la:0,ca:1,ls:1};
+  function halfs(){const hh=Math.tan(THREE.MathUtils.degToRad(cam.fov/2))*cam.position.z;return [hh*cam.aspect,hh]}
+  function target(){const [hw,hh]=halfs();const W=innerWidth,H=innerHeight;const toX=sx=>(sx*2-1)*hw,toY=sy=>(1-sy*2)*hh;
+    const col=Math.min(560,W);const sxr=(W/2+col*.27)/W;
+    if(mode==="session"){const s=Math.min((.30*2*hh)/2.6,(.5*2*hw)/1.6);return {x:0,y:toY(.36),s,la:0,ca:1}}
+    if(mode==="lamps"){const ls=Math.min(.3*2*hh/3.8,.72*2*hw/4.6);return {x:toX(sxr)+hw*3,y:toY(.12),s:.5,la:1,ca:0,lx:0,ly:toY(.22),ls}}
+    const s=(.22*2*hh)/2.2;const scroll=(scrollY||0)/H*2*hh;return {x:toX(sxr),y:toY(.2)+scroll,s,la:0,ca:1}}
+  function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const [hw,hh]=halfs();SU.uHW.value=hw;SU.uHH.value=hh}
+  addEventListener("resize",size);size();
+  api.setMode=m=>{mode=m};
+  api.setLamps=h=>{for(let i=0;i<TOTAL;i++)LON[i]=h[i+1]?1:0;lg.attributes.aOn.needsUpdate=true};
+  api.breathe=(ph,dur)=>{bre={ph,t0:performance.now(),dur:dur||1,from:breath}};
+  api.flicker=v=>{targetFlick=v};
+  let last=performance.now(),time=0,hidden=false;document.addEventListener("visibilitychange",()=>{hidden=document.hidden;if(!hidden)last=performance.now()});
+  const T=target();candle.position.set(T.x,T.y,0);candle.scale.setScalar(T.s);
+  function loop(now){requestAnimationFrame(loop);if(hidden)return;const dt=Math.min(.05,(now-last)/1000);last=now;if(!reduce)time+=dt;
+    FU.uTime.value=time;SU.uTime.value=time;LU.uTime.value=time;
+    flick+=(targetFlick-flick)*Math.min(1,dt*1.5);FU.uFlick.value=flick;
+    if(bre.ph){const k=Math.min(1,(now-bre.t0)/bre.dur);const e=.5-.5*Math.cos(Math.PI*k);breath=bre.ph==="in"?bre.from+(1-bre.from)*e:bre.from*(1-e)}else breath+=(0-breath)*Math.min(1,dt*2);
+    const tg=target();const L=Math.min(1,dt*3);
+    cur.x+=(tg.x-cur.x)*L;cur.s+=(tg.s-cur.s)*L;cur.y=mode==="orb"&&Math.abs(tg.y-cur.y)<.6?tg.y:cur.y+(tg.y-cur.y)*L;
+    candle.position.set(cur.x,cur.y,0);candle.scale.setScalar(cur.s);
+    candle.rotation.y=reduce?0:Math.sin(time*.4)*.25;
+    const fl=1+(reduce?0:.05*Math.sin(time*13)*flick)+breath*.25;flame.scale.set(1+breath*.12,fl,1);
+    glow.material.opacity=(mode==="session"?.95:.7)*(1+breath*.3);glow.scale.setScalar(2.4*(1+breath*.35));
+    LU.uA.value+=(tg.la-LU.uA.value)*L;line.material.opacity=LU.uA.value*.35;
+    if(tg.ls){LU.uS.value=Math.max(.6,tg.ls*1.6);lampG.scale.setScalar(tg.ls);lampG.position.set(tg.lx,tg.ly,0)}
+    lampG.rotation.y+=reduce?0:dt*.15;lampG.rotation.x=.28;
+    const wantA=mode==="session"?1:0;clearA+=(wantA-clearA)*Math.min(1,dt*2);R.setClearColor(NIGHT,clearA);
+    SU.uA.value=mode==="session"?.35:.75;
+    R.render(scene,cam)}
+  requestAnimationFrame(loop);
+  return api;
+})();
+
+/* ================= 啟動 ================= */
+function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)?h:"today";render();scrollTo(0,0)}
+addEventListener("hashchange",onHash);
+onHash();
+askPersist();
+if("serviceWorker" in navigator&&location.protocol==="https:"){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
