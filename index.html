@@ -498,6 +498,7 @@ body.in-session::before{background:transparent}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (min-width:700px){.hero h1{font-size:40px}}
 </style>
+<link rel="stylesheet" href="lamp/lamp.css">
 </head>
 <body>
 
@@ -523,6 +524,9 @@ body.in-session::before{background:transparent}
 <script src="hearing.js"></script>
 <script src="vip_guide.js"></script>
 <script src="quotes.js"></script>
+<script src="lamp/lamp.js"></script>
+<script src="lamp/shan.js"></script>
+<script src="lamp/sky.js"></script>
 <script src="chars/files.js"></script>
 <script>
 /* ================= 資料 ================= */
@@ -624,13 +628,13 @@ const THEMES=[
    zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"},hu:{name:"小燈",kind:"lantern"}}
 ];
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2;if(d.hb)o+=1}
-  o+=Object.keys(S.vquiz||{}).length+Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
+  o+=Object.keys(S.vquiz||{}).length+Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;if(window.DDLamp&&DDLamp.oilBonus)o+=DDLamp.oilBonus();return o}
 const unlocked=th=>oil()>=th.cost;
 const CARD_COST=5;
 /* 燈油怎麼來（圖示表）：[學, 做什麼, 燈油] */
 const OIL_TABLE=[["jie","聽聞一段",2],["jie","聞法勝利",1],["jie","睡前反省",1],["jie","法類印章",10],
   ["ding","上座一座（每天最多兩座）",2],["ding","保底一分鐘",1],["ding","呼吸警報",1],["ding","聽完一講",3],
-  ["hui","觀察修",2],["hui","小測驗第一次答對",1],["hui","聽完一講",3],["all","同一講再聽第 2、3 遍",1],["all","通過一關",5]];
+  ["hui","觀察修",2],["hui","小測驗第一次答對",1],["hui","聽完一講",3],["shan","記一則善行（每天最多 3 則）",1],["all","今天該做的幾學都做到",3],["all","同一講再聽第 2、3 遍",1],["all","通過一關",5]];
 const XUE={jie:["戒","#ff7a59"],ding:["定","#ffad1f"],hui:["慧","#6c8cff"],shan:["善","#3fae8c"],all:["・","#a99fc8"]};
 const xueBadge=k=>`<b class="xb" style="background:${XUE[k][1]}">${XUE[k][0]}</b>`;
 function oilTable(){return `<div class="oil-table">${OIL_TABLE.map(([k,l,v])=>`<div>${xueBadge(k)}<span>${esc(l)}</span><b class="num">+${v}</b></div>`).join("")}</div>
@@ -1351,8 +1355,9 @@ function render(){
   const subRoute=route!=="today";document.body.classList.toggle("sub",subRoute);Scene.setMode(subRoute?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
-  else{checkUnlock();checkFreeCard()}
+  else{litLamp();checkUnlock();checkFreeCard()}
 }
+function litLamp(){if(!window.DDLamp||Session.on||document.querySelector("#layer .sheet,#layer .ddl-ov,#layer [class*=ddl-]"))return;try{const r=DDLamp.sync();if(r&&r.changed)DDLamp.reveal(r)}catch(e){}}
 function lastIssue(){const t=today();for(let i=0;i<5;i++){const d=day(addDays(t,-i));if(d&&d.sits&&d.sits.length){const s=d.sits[d.sits.length-1];const it=(s.i||[]).find(x=>ISSUE_TALK[x]);return it||null}}return null}
 function dailyTalk(){const n=daysBetween(S.start,today());const iss=lastIssue();
   if(iss&&n%2===0)return ISSUE_TALK[iss];
@@ -1399,9 +1404,10 @@ function vToday(){
   <header class="hero">
     <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
     <h1>${greet()}，<br>今天也點一盞燈。</h1>
-    <div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>
+    ${window.DDLamp?DDLamp.todayCard():`<div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>`}
   </header>
   <section class="section tiles" aria-label="戒定慧">${tiles.join("")}</section>
+  ${window.Shan?`<section class="section shan-sec">${Shan.strip()}</section>`:""}
   ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
   <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
 }
@@ -1517,7 +1523,7 @@ function vProgress(){
         <div class="mini-note">觀察修第 ${vstage().n} 階・${esc(vstage().name)}・<a href="#hui">次第地圖 ›</a></div><span class="eyebrow">最近的觀察筆記</span>${vipNotes()}</div></section>`
       :`<section class="section"><div class="card has-tr">${sticker(tileWho("hui"),"think","tr","往深處看")}<p class="meta">毗缽舍那還沒開啟。</p><div class="btns"><a class="btn" href="#hui">看看慧</a></div></div></section>`}
   else{
-    const cats={};sh.forEach(([k,e])=>{const c=(e&&(e.c||e.k||e.type||e.cat))||"其他";cats[c]=(cats[c]||0)+1});
+    const KN=(window.Shan&&Shan.KINDS)||{};const cats={};sh.forEach(([k,e])=>{const c0=(e&&(e.k||e.c||e.type||e.cat))||"other";const c=(KN[c0]&&KN[c0].name)||c0;cats[c]=(cats[c]||0)+1});
     const st=maxStreak(d=>d.shan&&d.shan.length);
     const gates=[{id:"shan-7",label:"連續記 7 天",st:st>=7?"pass":"cur",info:`最長連續 ${st} 天`},{id:"shan-21",label:"連續記 21 天",st:st>=21?"pass":st>=7?"cur":"wait",info:`最長連續 ${st} 天`},
       {id:"shan-4",label:"四類都記過",st:Object.keys(cats).length>=4?"pass":"wait",info:`已記過 ${Object.keys(cats).length} 類`}];
@@ -1617,6 +1623,8 @@ function vShop(){const a=availOil(),o=oil();const Q=QS();const got=Object.keys(S
   <section class="section"><span class="eyebrow">收藏</span><div class="coll">
     <a class="coll-row" href="#album"><span class="st-ic">📇</span><b>法語集</b><span class="num">${got}／${Q.length}</span><span class="tile-go">›</span></a>
     ${coll}</div></section>
+  ${window.DDSky?`<section class="section"><span class="eyebrow">我的燈海</span><div data-ddsky-host>${DDSky.mySea()}</div></section>
+  <section class="section">${DDSky.album()}</section>`:""}
   <div id="shop-themes"></div>${vThemes()}`}
 function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=[...THEMES].reverse().find(t=>t.cost<=o);const cur=curTheme();
   const pct=next?Math.round((o-prev.cost)/(next.cost-prev.cost)*100):100;
