@@ -2,6 +2,16 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
+<script>/* 出錯時不要整頁空白：顯示原因，並可下載備份、清快取重載（進度不會刪） */
+window.__errs=[];addEventListener("error",e=>{__errs.push((e.message||"載入失敗")+" ＠"+String(e.filename||(e.target&&e.target.src)||"").split("/").pop()+":"+(e.lineno||""))},true);
+addEventListener("unhandledrejection",e=>{__errs.push("Promise: "+String(e.reason&&e.reason.message||e.reason))});
+function ddCrash(msg){const a=document.getElementById("app");if(!a)return;document.body.classList.add("sub");
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  a.innerHTML='<div style="margin:24px 16px;padding:20px;border-radius:18px;background:#fff;color:#2a2340;font:15px/1.7 system-ui,sans-serif;box-shadow:0 4px 20px #0002"><b style="font-size:18px">畫面出了點問題</b><p>你的進度還在，沒有遺失。請把這一頁截圖傳給開發者。</p><pre style="white-space:pre-wrap;word-break:break-all;background:#f4f1fa;padding:10px;border-radius:10px;font-size:12px">'+esc([msg].concat(window.__errs).filter(Boolean).join("\n").slice(0,1500))+'</pre><p style="font-size:12px;color:#777">'+esc(navigator.userAgent)+'</p><div style="display:flex;flex-wrap:wrap;gap:8px"><button onclick="location.reload()">重新整理</button><button onclick="ddFresh()">清除快取再開</button><button onclick="ddBackup()">下載進度備份</button></div></div>'}
+function ddBackup(){try{const b=new Blob([localStorage.getItem("wfz-v1")||"{}"],{type:"application/json"});const u=URL.createObjectURL(b);const x=document.createElement("a");x.href=u;x.download="燈燈相續備份-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(x);x.click()}catch(e){alert(e)}}
+async function ddFresh(){try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.reload()}
+addEventListener("load",()=>setTimeout(()=>{const a=document.getElementById("app");if(a&&!a.innerHTML.trim())ddCrash("畫面沒有內容")},3000));
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>燈燈相續</title>
 <meta name="description" content="菩提道次第廣論的聽聞與實修：每天一段師父講解、聞法勝利、奢摩他上座、止觀初探，照戒定慧次第學習。">
@@ -465,6 +475,18 @@ textarea{min-height:72px;resize:vertical}
 .checkitem input{width:22px;height:22px;accent-color:var(--coral);margin-top:1px}
 .remedy{font-size:13px;color:var(--mute);margin-top:2px}
 
+/* 右上角的燈油（像遊戲的金幣） */
+.oilhud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:max(12px,env(safe-area-inset-right,0px));z-index:11;display:flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border-radius:999px;text-decoration:none;color:#5a3a00;background:linear-gradient(180deg,#fff7d6,#ffd979);border:2px solid #4a3a7a;box-shadow:0 3px 0 #4a3a7a,0 6px 14px rgba(43,35,80,.25);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;line-height:1}
+.oilhud .ic{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffbe8,#ffcf4d 60%,#f0a020);border:2px solid #4a3a7a;display:grid;place-items:center}
+.oilhud .ic svg{width:16px;height:16px}
+.oilhud small{font-size:10px;font-weight:700;opacity:.7;margin-right:1px}
+.oilhud:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3a7a,0 3px 8px rgba(43,35,80,.25)}
+.oilhud.pop{animation:oilpop .7s ease}
+.oilhud.pop .ic{animation:oilspin .7s ease}
+@keyframes oilpop{0%{transform:scale(1)}30%{transform:scale(1.18)}60%{transform:scale(.96)}100%{transform:scale(1)}}
+@keyframes oilspin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.oilhud .plus{position:absolute;right:10px;top:100%;margin-top:4px;color:#e08a00;font-size:14px;font-weight:800;animation:oilplus 1.2s ease forwards;pointer-events:none;text-shadow:0 1px 0 #fff}
+@keyframes oilplus{0%{opacity:0;transform:translateY(-6px)}20%{opacity:1}100%{opacity:0;transform:translateY(10px)}}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
 nav.tabs .in{display:flex;gap:4px;max-width:520px;width:100%;background:rgba(255,255,255,.88);border-radius:24px;padding:5px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(43,35,80,.16)}
 nav.tabs a{flex:1;text-align:center;text-decoration:none;color:var(--mute);font-size:12px;padding:7px 4px;border-radius:18px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
@@ -512,6 +534,7 @@ body.in-session::before{background:transparent}
     <div class="lp-ctl"><button id="lpRepeat" class="lp-ico" aria-pressed="false" aria-label="重複播放（每次間隔 5 秒）" title="重複播放"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg></button><button id="lpPlay" class="lp-play" aria-label="播放">▶</button><button id="lpRate" class="num" aria-label="播放速度">1×</button></div>
     <button id="lpDone" class="btn primary small" hidden>聽完了</button></div>
 </div>
+<a class="oilhud" id="oilHud" href="#shop" aria-label="累積燈油"></a>
 <nav class="tabs" aria-label="主選單"><div class="in" id="tabs"></div></nav>
 <div id="layer"></div>
 
@@ -638,6 +661,12 @@ const OIL_TABLE=[["jie","聽聞一段",2],["jie","聞法勝利",1],["jie","睡�
   ["hui","觀察修",2],["hui","小測驗第一次答對",1],["hui","聽完一講",3],["shan","記一則善行（每天最多 3 則）",1],["all","今天該做的幾學都做到",3],["all","同一講再聽第 2、3 遍",1],["all","通過一關",5]];
 const XUE={jie:["戒","#ff7a59"],ding:["定","#ffad1f"],hui:["慧","#6c8cff"],shan:["善","#3fae8c"],all:["・","#a99fc8"]};
 const xueBadge=k=>`<b class="xb" style="background:${XUE[k][1]}">${XUE[k][0]}</b>`;
+let _oilShown=null;
+function oilHud(){const el=document.getElementById("oilHud");if(!el)return;let n=0;try{n=oil()}catch(e){}
+  el.innerHTML=`<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3C9 8 7 10.5 7 14a5 5 0 0 0 10 0c0-3.5-2-6-5-11z" fill="#ff8a1f" stroke="#4a3a7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10c-1.4 2.2-2 3.3-2 4.4a2 2 0 0 0 4 0c0-1.1-.6-2.2-2-4.4z" fill="#fff3b0"/></svg></span><span><small>燈油</small>${n}</span>`;
+  el.title="累積燈油 "+n+" 滴（點這裡到燈坊）";
+  if(_oilShown!=null&&n>_oilShown){const d=n-_oilShown;el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");const s=document.createElement("span");s.className="plus";s.textContent="+"+d;el.appendChild(s);setTimeout(()=>s.remove(),1300)}
+  _oilShown=n}
 function oilTable(){return `<div class="oil-table">${OIL_TABLE.map(([k,l,v])=>`<div>${xueBadge(k)}<span>${esc(l)}</span><b class="num">+${v}</b></div>`).join("")}</div>
   <p class="mini-note">燈油換的是好看的、新的圖；錯過的那天不能補點、關卡不能用燈油過、聽聞的段數不能用燈油買。</p>`}
 const availOil=()=>Math.max(0,oil()-(S.spent||0));
@@ -1358,7 +1387,8 @@ function renderTabs(){
   const due=CPS.some(cp=>cpStatus(cp)==="due");
   const cur=SUBS.includes(route)?"today":route==="album"?"shop":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${TAB_ICON[id]}</span>${l}${id==="progress"&&due?'<span class="badge" aria-label="有關卡可以檢核"></span>':""}</a>`).join("");
 }
-function render(){
+function render(){try{render0()}catch(e){console.error(e);ddCrash((route||"")+"："+(e&&e.stack||e))}}
+function render0(){
   document.body.dataset.theme=curTheme();
   renderTabs();
   if(route==="progress") app.innerHTML=vProgress();
@@ -1370,7 +1400,7 @@ function render(){
   else if(route==="album") app.innerHTML=vAlbum();
   else app.innerHTML=vToday();
   const subRoute=route!=="today";document.body.classList.toggle("sub",subRoute);Scene.setMode(subRoute?"none":"orb");
-  Scene.setLamps(S.heard);
+  Scene.setLamps(S.heard);oilHud();
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
   else{litLamp();checkUnlock();checkFreeCard()}
 }
