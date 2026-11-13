@@ -1,5 +1,5 @@
 // 燈燈相續 service worker：離線也能開啟。頁面與程式先連網拿最新版；語音、圖片、字型用快取。
-const CACHE = "dd-v10";
+const CACHE = "dd-v11";
 const CORE = ["./", "./index.html", "./lectures.js", "./lectures_vip.js", "./segments.js", "./lamrim.js", "./hearing.js", "./vip_guide.js", "./chars/files.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png", "./voice/map.js", "./voice/silence.mp3"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
