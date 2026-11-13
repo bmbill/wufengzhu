@@ -59,6 +59,7 @@ a{color:var(--coral)}
 
 .hero{min-height:36vh;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:10px;padding-right:34%}
 .hero.wide{padding-right:0;min-height:26vh}
+body.sub .hero.wide{min-height:0;padding-top:max(30px,calc(env(safe-area-inset-top,0px) + 18px))}
 .hero .date{font-family:var(--f-num);letter-spacing:.12em;font-size:12px;color:var(--mute);text-transform:uppercase}
 .hero h1{font-size:32px;line-height:1.18}
 .hero .sub{color:var(--mute);font-size:14px}
@@ -177,6 +178,34 @@ body.in-session .lplayer{visibility:hidden}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
 body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
+/* 改版：分頁圖示、圓環、點燈日曆、關卡路線、燈坊、設定 */
+#tabs .g svg{width:22px;height:22px;display:block;margin:0 auto 2px}
+.rings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ring{position:relative;border:0;background:var(--card);border-radius:18px;padding:10px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:1px;font:inherit;color:var(--ink);cursor:pointer;box-shadow:var(--shadow)}
+.ring svg{width:56px;height:56px}
+.ring-k{position:absolute;top:28px;font-family:var(--f-display);font-weight:700;font-size:17px}
+.ring-v{font-size:16px;font-weight:600;margin-top:2px}.ring-s{font-size:10px;color:var(--mute);line-height:1.3;text-align:center}
+.ring.on{outline:2.5px solid var(--ink);outline-offset:-2px}
+.xheat i.x0{background:rgba(43,35,80,.06)}.xheat i.x1{background:#ffd8b8}.xheat i.x2{background:#ffb27d}.xheat i.x3{background:#ff8a5b}.xheat i.x4{background:linear-gradient(135deg,#ffd36b,#e0a531)}.xheat i.lv{background:rgba(63,174,140,.3)}
+.legend i.x1{background:#ffd8b8}.legend i.x2{background:#ffb27d}.legend i.x3{background:#ff8a5b}.legend i.x4{background:#e0a531}.legend i.lv{background:rgba(63,174,140,.3)}
+.route{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:4px 2px 8px}
+.gate{flex:0 0 auto;width:66px;border:0;background:none;font:inherit;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:0}
+.gate i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:13px;background:rgba(43,35,80,.08);color:var(--mute)}
+.gate span{font-size:11px;line-height:1.35;text-align:center;color:var(--mute)}
+.gate.pass i{background:#22b48d;color:#fff}.gate.cur i,.gate.due i,.gate.retry i{background:#ffad1f;color:#fff;box-shadow:0 0 0 4px rgba(255,173,31,.22)}
+.gate.pass span,.gate.cur span,.gate.due span{color:var(--ink);font-weight:600}
+.gate-line{flex:1 0 12px;height:2px;background:rgba(43,35,80,.12);margin-top:15px;min-width:10px}
+.xb{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;color:#fff;font-family:var(--f-display);font-size:12px;font-weight:700;margin-right:4px;vertical-align:-3px}
+.oil-table{display:grid;gap:6px;margin-top:8px}.oil-table div{display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:6px;font-size:13.5px}.oil-table b.num{color:#c2552f}
+.oil-card .oil-v small{font-size:14px;color:var(--mute)}
+details.info summary{font-size:13px;color:var(--mute);cursor:pointer;margin-top:8px}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.shop-tile{border:0;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 12px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;font:inherit;color:var(--ink);text-decoration:none;cursor:pointer;text-align:left}
+.shop-tile[disabled]{opacity:.5;cursor:default}.shop-tile b{font-size:15px}.shop-tile small{color:var(--mute);font-size:12px}
+.st-ic{font-size:26px;line-height:1}
+.coll{display:grid;gap:8px}
+.coll-row{display:grid;grid-template-columns:32px 1fr auto 14px;align-items:center;gap:8px;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);text-decoration:none;color:var(--ink)}
+.set-tabs{margin:4px 0 0}
 /* 法語卡：精美卡片（直書） */
 .fcard{position:relative;container-type:inline-size;width:min(300px,86vw);aspect-ratio:5/7;margin:12px auto 8px;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(43,35,80,.28);isolation:isolate;color:#2b2350;background:#fff}
 .fc-art{position:absolute;inset:0;z-index:-2}.fc-art svg{width:100%;height:100%;display:block}.fc-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -594,11 +623,18 @@ const THEMES=[
   {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢、八隻手忙不停的小章魚八八，和深海裡自己會發光的燈籠魚小燈。",
    zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"},hu:{name:"小燈",kind:"lantern"}}
 ];
-const OIL_RULES="每日聽聞一段 +2・聞法勝利 +1・法類印章 +10・上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1・小測驗每題第一次答對 +1（第二章）。抽法語卡用掉的是「可用燈油」，累積燈油不會減少";
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2;if(d.hb)o+=1}
   o+=Object.keys(S.vquiz||{}).length+Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
 const unlocked=th=>oil()>=th.cost;
 const CARD_COST=5;
+/* 燈油怎麼來（圖示表）：[學, 做什麼, 燈油] */
+const OIL_TABLE=[["jie","聽聞一段",2],["jie","聞法勝利",1],["jie","睡前反省",1],["jie","法類印章",10],
+  ["ding","上座一座（每天最多兩座）",2],["ding","保底一分鐘",1],["ding","呼吸警報",1],["ding","聽完一講",3],
+  ["hui","觀察修",2],["hui","小測驗第一次答對",1],["hui","聽完一講",3],["all","同一講再聽第 2、3 遍",1],["all","通過一關",5]];
+const XUE={jie:["戒","#ff7a59"],ding:["定","#ffad1f"],hui:["慧","#6c8cff"],shan:["善","#3fae8c"],all:["・","#a99fc8"]};
+const xueBadge=k=>`<b class="xb" style="background:${XUE[k][1]}">${XUE[k][0]}</b>`;
+function oilTable(){return `<div class="oil-table">${OIL_TABLE.map(([k,l,v])=>`<div>${xueBadge(k)}<span>${esc(l)}</span><b class="num">+${v}</b></div>`).join("")}</div>
+  <p class="mini-note">燈油換的是好看的、新的圖；錯過的那天不能補點、關卡不能用燈油過、聽聞的段數不能用燈油買。</p>`}
 const availOil=()=>Math.max(0,oil()-(S.spent||0));
 const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
 const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
@@ -740,7 +776,7 @@ const CPS=[
  {id:"object",name:"選定所緣",when:"聽完第 49、53 講",
   trig:s=>heardAll(s,[49,53]),
   items:[["知道自己比較像哪一種行者（貪、瞋、癡、慢、尋思、等分、薄塵）","重聽第 49、50 講；觀察一週，上座時最大的困擾是什麼。"],
-         ["已經選定所緣，兩週內沒有換","選呼吸或佛像都可以，選了就固定。到「調整」頁設定。"],
+         ["已經選定所緣，兩週內沒有換","選呼吸或佛像都可以，選了就固定。到「設定」頁的「定」設定。"],
          ["請教過帶修的法師或班上學長","把你的觀察記錄給法師看，請他幫你確認。"]]},
  {id:"sink",name:"認識沉掉",when:"聽完第 72、73、74、77 講",
   trig:s=>heardAll(s,[72,73,74,77]),
@@ -776,7 +812,7 @@ const WD="日一二三四五六";
 
 /* ================= 狀態 ================= */
 const KEY="wfz-v1";
-/* ================= 第二章：毗缽舍那 ================= */
+/* ================= 慧：毗缽舍那 ================= */
 const VIP=()=>window.VIP_AUDIO||{};
 const vipNums=()=>Object.keys(VIP()).map(Number).sort((a,b)=>a-b);
 const vipTitle=n=>(VIP()[n]||[])[2]||`第 ${n} 講`;
@@ -808,24 +844,24 @@ const VIP_INTRO="接下來是觀察修。跟止住修不一樣，現在要用心
 const VIP_MID="回到剛剛的問題，再看仔細一點。";
 const VIP_END="好，慢慢回來。把剛剛看到的，用一句話記下來。";
 CPS.push(
- {id:"vstop",name:"唯止不足（第二章）",when:"開啟第二章、聽完毗缽舍那第 1～7 講",
+ {id:"vstop",name:"唯止不足",when:"開啟毗缽舍那、聽完第 1～7 講",
   trig:s=>!!s.vipOn&&[1,2,3,4,5,6,7].every(n=>(s.vheard||{})[n]),
   items:[["說得出為什麼只有奢摩他不夠（只能壓伏煩惱，不能斷根）","重聽毗缽舍那第 1～4 講。"],
          ["知道求空正見要依止善知識、多聽聞、依了義的經論","重聽毗缽舍那第 5～9 講。"],
-         ["分得出止住修和觀察修","止住修是安住不分析；觀察修是用正理思惟。看「調整」頁第二章的說明。"]]},
- {id:"vdep",name:"有與有自性（第二章）",when:"聽完毗缽舍那第 91 講",
+         ["分得出止住修和觀察修","止住修是安住不分析；觀察修是用正理思惟。看「設定」頁「慧」的說明。"]]},
+ {id:"vdep",name:"有與有自性",when:"聽完毗缽舍那第 91 講",
   trig:s=>!!s.vipOn&&[57,63,77,91].every(n=>(s.vheard||{})[n]),
   items:[["分得出「有」「無」「有自性」「無自性」四者，能舉一個生活的例子","重聽毗缽舍那第 77、91 講。"],
          ["說得出中觀師怎麼安立因果：正因為無自性，因果緣起才能成立","重聽毗缽舍那第 57～63 講。"],
          ["不再說「空就是什麼都沒有」","用觀察修第 4 階的題目練幾次。"]]},
- {id:"vrecog",name:"認識所破（第二章）",when:"聽完毗缽舍那第 47～49 講",
+ {id:"vrecog",name:"認識所破",when:"聽完毗缽舍那第 47～49 講",
   trig:s=>!!s.vipOn&&[47,48,49].every(n=>(s.vheard||{})[n]),
   items:[["說得出為什麼要先認識所破","重聽毗缽舍那第 47～49 講。"],
          ["知道要破的是「自性有」，不是「有」","重聽毗缽舍那第 77、91 講：有無與有無自性的差別。"],
          ["做觀察修時，試著在強烈情緒中看過一次「我」的樣子","用觀察修第 3 階的題目再練幾次。"]]}
 );
 function vipSection(d){const q=vqueue();const w=weekNo(today());const hw=vheardInWeek(w);const n=q[0];const vs=vstage();const key="v"+n;
-  return `<section class="section" aria-labelledby="h-vip"><div class="row between"><span class="eyebrow" id="h-vip">第二章・毗缽舍那</span><span class="mini-note num">本週 ${hw}/${S.vpace||1} 講</span></div>
+  return `<section class="section" aria-labelledby="h-vip"><div class="row between"><span class="eyebrow" id="h-vip">慧・毗缽舍那</span><span class="mini-note num">本週 ${hw}/${S.vpace||1} 講</span></div>
   ${lectureCard("v")}
   <div class="card"><div class="task"><button class="check ${d.vthink?"on":""}" data-act="vthink" aria-label="觀察修${d.vthink?"，已完成":""}">${d.vthink?"✓":"○"}</button>
     <div style="min-width:0"><div class="t">觀察修・5 分鐘 <span class="tag">${vs.n}・${esc(vs.name)}</span></div><div class="d">${esc(vs.focus)}</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="vthink">${d.vthink?"再做一次":"開始"}</button></div></div></div></div>
@@ -1205,7 +1241,7 @@ function triSection(){const L=LRA();const D=lrDone();const nd=Object.keys(D).len
     <div class="tri-row"><b class="tri-k">戒</b><div style="min-width:0;flex:1"><div class="t">師父南普陀廣論・目前在「${esc(cat)}」</div>
       ${partStat.map(([p,a,b])=>`<div class="issue"><span>${p}</span><div class="bar"><i style="width:${b?a/b*100:0}%"></i></div><span class="num" style="text-align:right">${a}/${b}</span></div>`).join("")}</div></div>
     <div class="tri-row"><b class="tri-k">定</b><div style="min-width:0;flex:1"><div class="t">奢摩他・上座第 ${st.n} 階「${esc(st.name)}」</div><div class="mini-note">止觀初探 ${heardCount()}／${TOTAL} 講</div></div></div>
-    <div class="tri-row"><b class="tri-k">慧</b><div style="min-width:0;flex:1"><div class="t">毗缽舍那</div><div class="mini-note">${S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}／${vipNums().length} 講・觀察修第 ${vstage().n} 階`:"還沒開啟（到「調整」頁開啟第二章）"}</div></div></div>
+    <div class="tri-row"><b class="tri-k">慧</b><div style="min-width:0;flex:1"><div class="t">毗缽舍那</div><div class="mini-note">${S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}／${vipNums().length} 講・觀察修第 ${vstage().n} 階`:"還沒開啟（到「設定」頁「慧」開啟）"}</div></div></div>
   </div></section>`}
 function lrAdjust(){const C=LRC();if(!C.length)return "";const cur=lrCatCur();
   return `<section class="section"><span class="eyebrow">戒・每日聽聞</span>
@@ -1267,11 +1303,11 @@ function coach(){
   else if(lp&&gap>=2&&!practiced(d)){out.push({tone:"calm",q:["confused","昨天沒坐到……今天要坐兩次補回來嗎？"],zm:"gentle",title:"昨天沒坐到？",body:"不用補兩座。今天照常坐一座就好。真的很忙，就做「保底一分鐘」，也算有練。",acts:[["保底一分鐘","mini"]]})}
   const cps=CPS.filter(cp=>cpStatus(cp)==="due");
   if(cps.length) out.push({tone:"hot",q:["think","檢核？是要考試嗎？"],zm:"happy",title:`檢核點到了：${cps[0].name}`,body:"花兩分鐘勾一勾，看看哪裡需要加強。沒過也沒關係，會告訴你怎麼補。",acts:[["去檢核","go-check"]]});
-  if(!S.vipOn&&!S.vipOffered&&heardAll(S,INTRO)) out.push({tone:"hot",q:["happy","入門線聽完了！"],zm:"wow",title:"可以開啟第二章：毗缽舍那",body:"奢摩他入門線聽完了。第二章會多一張毗缽舍那的聽講卡，和每天選做的「觀察修 5 分鐘」；上座照常。",acts:[["開啟第二章","vip-on"],["之後再說","vip-later"]]});
+  if(!S.vipOn&&!S.vipOffered&&heardAll(S,INTRO)) out.push({tone:"hot",q:["happy","入門線聽完了！"],zm:"wow",title:"可以開啟慧：毗缽舍那",body:"奢摩他入門線聽完了。開啟後，慧那一格會有毗缽舍那的聽講，和每天選做的「觀察修 5 分鐘」；上座照常。",acts:[["開啟毗缽舍那","vip-on"],["之後再說","vip-later"]]});
   const a=canAdvance();
   if(a.ok&&!snoozed("adv")&&!wl) out.push({tone:"hot",q:["happy","最近每天都有坐耶！"],zm:"cheer",title:`可以往第 ${a.next.n} 階「${a.next.name}」了`,body:`最近練習很穩，需要的講次也聽了。下一階座時 ${a.next.min} 分鐘：${a.next.focus}`,acts:[["升一階","advance"],["再穩一週","snooze-adv"]]});
   else if(!wl&&S.stage<9&&a.steady&&a.longEnough&&(a.miss.length||a.needObj)&&!snoozed("adv-info")){
-    const parts=[];if(a.miss.length)parts.push(`先聽第 ${a.miss.join("、")} 講`);if(a.needObj)parts.push("到「調整」選定所緣");
+    const parts=[];if(a.miss.length)parts.push(`先聽第 ${a.miss.join("、")} 講`);if(a.needObj)parts.push("到「設定」選定所緣");
     out.push({tone:"calm",q:["think","我可以往上一階了嗎？"],zm:"think",title:"練習很穩，下一階快到了",body:`往第 ${a.next.n} 階「${a.next.name}」之前，還要${parts.join("，再")}。`,acts:[["知道了","snooze-adv-info"]]});
   }
   const c=consistency();
@@ -1291,23 +1327,28 @@ function coach(){
 const app=document.getElementById("app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let route="today";
-const TABS=[["today","今","今日"],["progress","燈","進度"],["check","驗","檢核"],["adjust","調","調整"]];
+const TABS=[["today","","今日"],["progress","","進度"],["shop","","燈坊"],["settings","","設定"]];
+const TAB_ICON={
+  today:'<svg viewBox="0 0 24 24"><path d="M12 2c2.2 3 4.2 4.6 4.2 7.3a4.2 4.2 0 0 1-8.4 0C7.8 6.6 9.8 5 12 2z" fill="currentColor"/><rect x="8.6" y="13.2" width="6.8" height="8.2" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+  progress:'<svg viewBox="0 0 24 24"><path d="M5 20v-8M10.5 20V5M16 20v-5M21.5 20H2.5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+  shop:'<svg viewBox="0 0 24 24"><path d="M12 1.8v2.6M8.4 4.4h7.2l1 2.8H7.4z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M6.2 7.2h11.6q1.3 6.2-1 11.6H7.2Q4.9 13.4 6.2 7.2z" fill="currentColor"/><path d="M10 21.6h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'};
 function renderTabs(){
   const due=CPS.some(cp=>cpStatus(cp)==="due");
-  const cur=SUBS.includes(route)?"today":route==="album"?"progress":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
+  const cur=SUBS.includes(route)?"today":route==="album"?"shop":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${TAB_ICON[id]}</span>${l}${id==="progress"&&due?'<span class="badge" aria-label="有關卡可以檢核"></span>':""}</a>`).join("");
 }
 function render(){
   document.body.dataset.theme=curTheme();
   renderTabs();
   if(route==="progress") app.innerHTML=vProgress();
-  else if(route==="check") app.innerHTML=vCheck();
-  else if(route==="adjust") app.innerHTML=vAdjust();
+  else if(route==="shop") app.innerHTML=vShop();
+  else if(route==="settings") app.innerHTML=vSettings();
   else if(route==="jie") app.innerHTML=vJie();
   else if(route==="ding") app.innerHTML=vDing();
   else if(route==="hui") app.innerHTML=vHui();
   else if(route==="album") app.innerHTML=vAlbum();
   else app.innerHTML=vToday();
-  const subRoute=SUBS.includes(route)||route==="album";document.body.classList.toggle("sub",subRoute);Scene.setMode(route==="progress"?"lamps":subRoute?"none":"orb");
+  const subRoute=route!=="today";document.body.classList.toggle("sub",subRoute);Scene.setMode(subRoute?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
   else{checkUnlock();checkFreeCard()}
@@ -1352,7 +1393,7 @@ function vToday(){
     homeTile({k:"hui",href:"hui",glyph:"慧",eb:"慧・增上慧學",title:"聽聞毗婆舍那",
       sub:S.vipOn?`觀察修第 ${vstage().n} 階・${vstage().name}`:"還沒開啟，點進去看看",
       chips:S.vipOn?chip(`本週 ${vhw}/${S.vpace||1} 講`,vhw>=(S.vpace||1))+chip("觀察修",!!d.vthink):"",
-      pct:S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,pctLabel:S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}/${vipNums().length} 講`:"第二章",
+      pct:S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,pctLabel:S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}/${vipNums().length} 講`:"還沒開啟",
       stk:sticker(tileWho("hui"),"think","tr",S.vipOn?"往深處看":"")})];
   return `
   <header class="hero">
@@ -1417,42 +1458,78 @@ function vHui(){const d=day(today())||{};
   ${vipSection(d)}
   ${vgSection()}`}
 
+/* ===== 進度：戒定慧善四個圓環、點燈日曆、各學的關卡路線 ===== */
+let pgTab="jie";
+function xueDays(){const jie=new Set(),hui=new Set();for(const id in lrDone())jie.add(lrDone()[id]);
+  for(const n in (S.vheard||{}))hui.add(S.vheard[n]);return {jie,hui}}
+function dayXue(k,X){const d=DAYS[k]||{};return {jie:!!(d.night||d.hb)||X.jie.has(k),ding:!!((d.sits&&d.sits.length)||d.min||d.breath),hui:!!d.vthink||X.hui.has(k),shan:!!(d.shan&&d.shan.length)}}
+function ring(pct,color,big,small,label,on,k){const r=26,c=2*Math.PI*r;const p=Math.max(0,Math.min(1,pct||0));
+  return `<button class="ring ${on?"on":""}" data-act="pg-tab" data-v="${k}" aria-pressed="${on}" aria-label="${label}"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(43,35,80,.09)" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
+    <span class="ring-k" style="color:${color}">${label}</span><span class="ring-v num">${big}</span><span class="ring-s">${small}</span></button>`}
+function shanEntries(){const out=[];for(const k in DAYS)(DAYS[k].shan||[]).forEach(e=>out.push([k,e]));return out}
+function maxStreak(pred){const ks=Object.keys(DAYS).filter(k=>pred(DAYS[k])).sort();let best=0,cur=0,prev=null;
+  for(const k of ks){cur=prev&&addDays(prev,1)===k?cur+1:1;best=Math.max(best,cur);prev=k}return best}
+function gateRoute(list){return `<div class="route" role="list">${list.map((g,i)=>`<button role="listitem" class="gate ${g.st}" data-act="${g.cp?"cp-open":"gate-info"}" data-id="${g.id}" data-info="${esc(g.info||"")}"><i>${g.st==="pass"?"✓":g.st==="due"||g.st==="retry"?"!":i+1}</i><span>${esc(g.label)}</span></button>`).join('<span class="gate-line" aria-hidden="true"></span>')}</div>`}
+function cpGates(ids){return CPS.filter(cp=>ids(cp.id)).map(cp=>{const s=cpStatus(cp);return {id:cp.id,label:cp.name,cp,st:s==="wait"?"wait":s}})}
+function cpOpenCard(list){const g=list.find(x=>x.cp&&x.id===openCp);return g?cpCard(g.cp,CPS.indexOf(g.cp)):""}
 function vProgress(){
-  const t=today();const hc=heardCount();const ic=introCount();
-  let mdays=0,mins=0,sessions=0;const ym=t.slice(0,7);
-  for(const k in DAYS){const d=DAYS[k];if(practiced(d)&&k.startsWith(ym))mdays++;(d.sits||[]).forEach(s=>{mins+=Number(s.m)||0;sessions++});if(d.min)mins+=1}
-  const cells=[];const endK=t;const startK=addDays(endK,-(83+ (6-parseK(endK).getDay())));
-  for(let i=0;i<84+(6-parseK(endK).getDay());i++){const k=addDays(startK,i);if(k>endK){cells.push(`<i style="visibility:hidden"></i>`);continue}const d=day(k);let cl="";if(d&&d.leave)cl="lv";else if(d){const n=(d.sits||[]).length;cl=n>=2?"l3":n===1?"l2":d.min?"l1":""}cells.push(`<i class="${cl} ${k===t?"today":""}" title="${k}"></i>`)}
-  const cnt={};ISSUES.forEach(x=>cnt[x]=0);let tot=0;
-  for(let i=0;i<30;i++){const d=day(addDays(t,-i));if(!d)continue;(d.sits||[]).forEach(s=>(s.i||[]).forEach(x=>{if(cnt[x]!=null){cnt[x]++;tot++}}))}
-  const maxc=Math.max(1,...Object.values(cnt));
-  const st=stage();
-  return `
-  <div class="lamps-space"><div class="lamps-cap"><div class="big num">${hc}<small style="font-size:18px;color:var(--mute)"> / ${TOTAL}</small></div><div class="mini-note">已點亮的燈（聽完的講次）</div></div></div>
-  ${triSection()}
-  <section class="section">
-    <div class="stats">
+  const t=today();const X=xueDays();const L=LRA();const ldone=Object.keys(lrDone()).length;
+  let sitDays=0;for(const k in DAYS){if(practiced(DAYS[k]))sitDays++}
+  const sh=shanEntries();const sh30=new Set(sh.filter(([k])=>daysBetween(k,t)<30).map(([k])=>k)).size;
+  const rings=[ring(L.length?ldone/L.length:0,XUE.jie[1],ldone,`／${L.length} 段`,"戒",pgTab==="jie","jie"),
+    ring(stage().n/9,XUE.ding[1],sitDays,"天上座","定",pgTab==="ding","ding"),
+    ring(S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,XUE.hui[1],S.vipOn?vheardCount():"—",S.vipOn?`／${vipNums().length} 講`:"還沒開啟","慧",pgTab==="hui","hui"),
+    ring(sh30/30,XUE.shan[1],sh.length,"則善行","善",pgTab==="shan","shan")].join("");
+  /* 點燈日曆：最近 12 週，每天一格，顏色＝那天點了幾學（四學都做是金色） */
+  const endK=t;const startK=addDays(endK,-(83+(6-parseK(endK).getDay())));const cells=[];
+  for(let i=0;i<84+(6-parseK(endK).getDay());i++){const k=addDays(startK,i);if(k>endK){cells.push(`<i style="visibility:hidden"></i>`);continue}
+    const x=dayXue(k,X);const n=[x.jie,x.ding,x.hui,x.shan].filter(Boolean).length;const lv=(DAYS[k]||{}).leave;
+    cells.push(`<i class="${lv&&!n?"lv":"x"+n} ${k===t?"today":""}" title="${k}：${["戒","定","慧","善"].filter((_,j)=>[x.jie,x.ding,x.hui,x.shan][j]).join("、")||"—"}"></i>`)}
+  let panel="";
+  if(pgTab==="jie"){
+    const parts=PARTS.map(p=>{let a=0,b=0;LRC().forEach((c,ci)=>{if(c[1]===p){b+=catLen(ci);a+=lrDoneIn(ci)}});return [p,a,b]});
+    const firstOpen=parts.findIndex(([p,a,b])=>a<b);
+    const gates=parts.map(([p,a,b],i)=>({id:"jie-"+i,label:p+"聽完",st:a>=b&&b?"pass":i===firstOpen?"cur":"wait",info:`${p}：已聽 ${a}／${b} 段`}));
+    panel=`<section class="section"><span class="eyebrow">戒的關卡</span><div class="card">${gateRoute(gates)}
+      ${parts.map(([p,a,b])=>`<div class="issue"><span>${p}</span><div class="bar"><i style="width:${b?a/b*100:0}%"></i></div><span class="num" style="text-align:right">${a}/${b}</span></div>`).join("")}</div></section>
+      ${stampsSection()}`}
+  else if(pgTab==="ding"){
+    const ic=introCount();let mdays=0,mins=0;const ym=t.slice(0,7);
+    for(const k in DAYS){const d=DAYS[k];if(practiced(d)&&k.startsWith(ym))mdays++;(d.sits||[]).forEach(s=>{mins+=Number(s.m)||0});if(d.min)mins+=1}
+    const cnt={};ISSUES.forEach(x=>cnt[x]=0);let tot=0;
+    for(let i=0;i<30;i++){const d=day(addDays(t,-i));if(!d)continue;(d.sits||[]).forEach(s=>(s.i||[]).forEach(x=>{if(cnt[x]!=null){cnt[x]++;tot++}}))}
+    const maxc=Math.max(1,...Object.values(cnt));const st=stage();const gates=cpGates(id=>id[0]!=="v");
+    panel=`<section class="section"><span class="eyebrow">定的關卡</span><div class="card">${gateRoute(gates)}</div>${cpOpenCard(gates)}</section>
+    <section class="section"><div class="stats">
+      <div class="stat"><div class="v num">${heardCount()}<small> / ${TOTAL}</small></div><div class="k">止觀初探</div><div class="bar" style="margin-top:6px"><i style="width:${heardCount()/TOTAL*100}%"></i></div></div>
       <div class="stat"><div class="v num">${ic}<small> / ${INTRO.length}</small></div><div class="k">入門線</div><div class="bar" style="margin-top:6px"><i style="width:${ic/INTRO.length*100}%"></i></div></div>
-      <div class="stat"><div class="v num">${mdays}<small> 天</small></div><div class="k">本月上座天數</div></div>
-      <div class="stat"><div class="v num">${mins}<small> 分</small></div><div class="k">累積上座時間</div></div>
-      <div class="stat"><div class="v num">${st.n}<small> / 9</small></div><div class="k">目前階段・${st.name}</div></div>
-    </div>
-  </section>
-  ${S.vipOn?`<section class="section"><span class="eyebrow">第二章・毗缽舍那</span><div class="card has-tr">${sticker("zz","think","tr","")}<div><div class="oil-v num">${vheardCount()}<small style="font-size:14px;color:var(--mute)"> / ${vipNums().length} 講</small></div><div class="mini-note">觀察修：第 ${vstage().n} 階・${esc(vstage().name)}</div></div><span class="eyebrow">最近的觀察筆記</span>${vipNotes()}</div></section>`:""}
-  ${stampsSection()}
-  ${vThemes()}
-  ${vCards()}
-  <section class="section"><span class="eyebrow">最近十二週</span>
-    <div class="card"><div class="heat" aria-label="最近十二週的上座紀錄">${cells.join("")}</div>
-    <div class="legend"><span><i style="background:rgba(239,231,214,.07)"></i>沒坐</span><span><i style="background:rgba(243,181,68,.35)"></i>保底</span><span><i style="background:rgba(243,181,68,.7)"></i>一座</span><span><i style="background:var(--gold)"></i>兩座</span><span><i style="background:rgba(134,212,189,.25)"></i>請假</span></div></div>
-  </section>
-  <section class="section"><span class="eyebrow">上座的狀況・最近 30 天</span>
-    <div class="card">${tot?`<div class="issues">${ISSUES.map(x=>`<div class="issue"><span>${x}</span><div class="bar"><i style="width:${cnt[x]/maxc*100}%"></i></div><span class="num" style="text-align:right">${cnt[x]}</span></div>`).join("")}</div>`:`<p class="meta">每次下座記錄「掉舉、昏沉、細沉沒」等狀況，這裡就會顯示你最常遇到什麼。</p>`}</div>
-  </section>
-  <section class="section"><span class="eyebrow">九個階梯</span>
-    <div class="card"><div class="steps">${STAGES.map(s=>`<div class="stp ${s.n===S.stage?"cur":s.n<S.stage?"past":""}"><b>${s.n}</b><span>${s.name}<span class="mini-note" style="display:block">${esc(s.focus)}</span></span><span class="m">${s.min} 分</span></div>`).join("")}</div></div>
-  </section>
-  ${vList()}`;
+      <div class="stat"><div class="v num">${mdays}<small> 天</small></div><div class="k">本月上座</div></div>
+      <div class="stat"><div class="v num">${mins}<small> 分</small></div><div class="k">累積上座</div></div></div></section>
+    <section class="section"><span class="eyebrow">上座的狀況・最近 30 天</span>
+      <div class="card">${tot?`<div class="issues">${ISSUES.map(x=>`<div class="issue"><span>${x}</span><div class="bar"><i style="width:${cnt[x]/maxc*100}%"></i></div><span class="num" style="text-align:right">${cnt[x]}</span></div>`).join("")}</div>`:`<p class="meta">每次下座記錄「掉舉、昏沉、細沉沒」等狀況，這裡就會顯示你最常遇到什麼。</p>`}</div></section>
+    <section class="section"><span class="eyebrow">九個階梯・目前第 ${st.n} 階</span>
+      <div class="card"><div class="steps">${STAGES.map(s=>`<div class="stp ${s.n===S.stage?"cur":s.n<S.stage?"past":""}"><b>${s.n}</b><span>${s.name}<span class="mini-note" style="display:block">${esc(s.focus)}</span></span><span class="m">${s.min} 分</span></div>`).join("")}</div></div></section>
+    ${vList()}`}
+  else if(pgTab==="hui"){
+    const gates=cpGates(id=>id[0]==="v");
+    panel=S.vipOn?`<section class="section"><span class="eyebrow">慧的關卡</span><div class="card">${gateRoute(gates)}</div>${cpOpenCard(gates)}</section>
+      <section class="section"><div class="card has-tr">${sticker(tileWho("hui"),"think","tr","")}<div class="oil-v num">${vheardCount()}<small style="font-size:14px;color:var(--mute)"> / ${vipNums().length} 講</small></div>
+        <div class="mini-note">觀察修第 ${vstage().n} 階・${esc(vstage().name)}・<a href="#hui">次第地圖 ›</a></div><span class="eyebrow">最近的觀察筆記</span>${vipNotes()}</div></section>`
+      :`<section class="section"><div class="card has-tr">${sticker(tileWho("hui"),"think","tr","往深處看")}<p class="meta">毗缽舍那還沒開啟。</p><div class="btns"><a class="btn" href="#hui">看看慧</a></div></div></section>`}
+  else{
+    const cats={};sh.forEach(([k,e])=>{const c=(e&&(e.c||e.k||e.type||e.cat))||"其他";cats[c]=(cats[c]||0)+1});
+    const st=maxStreak(d=>d.shan&&d.shan.length);
+    const gates=[{id:"shan-7",label:"連續記 7 天",st:st>=7?"pass":"cur",info:`最長連續 ${st} 天`},{id:"shan-21",label:"連續記 21 天",st:st>=21?"pass":st>=7?"cur":"wait",info:`最長連續 ${st} 天`},
+      {id:"shan-4",label:"四類都記過",st:Object.keys(cats).length>=4?"pass":"wait",info:`已記過 ${Object.keys(cats).length} 類`}];
+    panel=`<section class="section"><span class="eyebrow">善的關卡</span><div class="card">${gateRoute(gates)}</div></section>
+      <section class="section"><div class="card">${sh.length?`<div class="issues">${Object.entries(cats).map(([c,n])=>`<div class="issue"><span>${esc(c)}</span><div class="bar"><i style="width:${n/sh.length*100}%"></i></div><span class="num" style="text-align:right">${n}</span></div>`).join("")}</div>`
+        :`<p class="meta">在首頁「記一則」寫下善行點滴、觀功念恩、誦經，這裡就會累積。</p>`}</div></section>`}
+  return `<header class="hero wide"><div class="date">PROGRESS</div><h1>進度</h1></header>
+  <section class="section"><div class="rings" role="group" aria-label="戒定慧善">${rings}</div></section>
+  <section class="section"><div class="row between"><span class="eyebrow">點燈日曆・最近十二週</span></div>
+    <div class="card"><div class="heat xheat" aria-label="最近十二週每天點了哪幾學">${cells.join("")}</div>
+    <div class="legend"><span><i class="x1"></i>一學</span><span><i class="x2"></i>兩學</span><span><i class="x3"></i>三學</span><span><i class="x4"></i>四學都做</span><span><i class="lv"></i>請假</span></div></div></section>
+  ${panel}`;
 }
 let listFilter="intro";
 const fmtT=s=>{s=Math.max(0,Math.floor(s||0));return `${Math.floor(s/60)}:${pad(s%60)}`};
@@ -1513,7 +1590,7 @@ function vAlbum(){const Q=QS();const got=S.qcards||{};const n=Object.keys(got).l
     const own=ks.filter(k=>got[k]).length;
     return `<section class="section"><div class="row between"><span class="eyebrow">${p}</span><span class="mini-note num">${own}／${ks.length}</span></div>
       <div class="album-grid">${ks.map(k=>got[k]?qCard(Q[k],k,{mini:true}):qBack(k,true)).join("")}</div></section>`}).join("");
-  return `<header class="hero wide subhead"><a class="back" href="#progress">‹ 燈</a><div class="date">法語集</div><h1>集卡冊</h1><p class="sub">師父講廣論的原話，一共 ${Q.length} 張。已收集 ${n} 張。</p></header>
+  return `<header class="hero wide subhead"><a class="back" href="#shop">‹ 燈坊</a><div class="date">法語集</div><h1>集卡冊</h1><p class="sub">師父講廣論的原話，一共 ${Q.length} 張。已收集 ${n} 張。</p></header>
   <section class="section"><div class="card has-tr">${sticker(tileWho("jie"),"love","tr","抽一張？")}<p class="meta">可用燈油 <b class="num">${a}</b> 滴・${CARD_COST} 滴換一張・某天戒定慧都做了送一張</p>
     <div class="btns"><button class="btn primary" data-act="q-draw" ${a>=CARD_COST?"":"disabled"}>${a>=CARD_COST?`抽一張（${CARD_COST} 滴）`:`還差 ${CARD_COST-a} 滴`}</button></div></div></section>
   <div class="seg album-seg" role="group" aria-label="依部篩選">${chips}</div>
@@ -1526,32 +1603,47 @@ function vCards(){const Q=QS();if(!Q.length)return "";const got=S.qcards||{};con
     ${n?`<div class="album-peek">${Object.keys(got).sort((x,y)=>got[y]<got[x]?-1:1).slice(0,3).map(k=>qCard(Q[+k],+k,{mini:true})).join("")}</div>`:""}
     <div class="btns"><a class="btn" href="#album">打開集卡冊 ›</a></div>
   </div></section>`}
+function vShop(){const a=availOil(),o=oil();const Q=QS();const got=Object.keys(S.qcards||{}).length;
+  const extra=window.DDShop&&DDShop.tiles?DDShop.tiles():"";const coll=window.DDShop&&DDShop.collections?DDShop.collections():"";
+  return `<header class="hero wide"><div class="date">LAMP WORKSHOP</div><h1>燈坊</h1></header>
+  <section class="section"><div class="card oil-card has-tr">${sticker(tileWho("jie"),"love","tr","")}
+    <div class="oilbar"><svg class="oil-drop" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4c6 9 14 16 14 25a14 14 0 0 1-28 0c0-9 8-16 14-25z" fill="#ffad1f" stroke="#2b2350" stroke-width="2"/><ellipse cx="17" cy="28" rx="3" ry="5" fill="#fff" opacity=".6"/></svg>
+      <div><div class="oil-v num">${a}<small> 滴可用</small></div><div class="mini-note">累積 ${o} 滴・主題角色看累積，不會花掉</div></div></div>
+    <details class="info"><summary aria-label="燈油怎麼來">ⓘ 燈油怎麼來</summary>${oilTable()}</details></div></section>
+  <section class="section"><span class="eyebrow">用燈油換</span><div class="shop-grid">
+    <button class="shop-tile" data-act="q-draw" ${a>=CARD_COST?"":"disabled"}><span class="st-ic">📜</span><b>抽法語卡</b><small class="num">${CARD_COST} 滴</small></button>
+    <button class="shop-tile" data-act="go-themes"><span class="st-ic">🎭</span><b>主題角色</b><small>看累積燈油</small></button>
+    ${extra}</div></section>
+  <section class="section"><span class="eyebrow">收藏</span><div class="coll">
+    <a class="coll-row" href="#album"><span class="st-ic">📇</span><b>法語集</b><span class="num">${got}／${Q.length}</span><span class="tile-go">›</span></a>
+    ${coll}</div></section>
+  <div id="shop-themes"></div>${vThemes()}`}
 function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=[...THEMES].reverse().find(t=>t.cost<=o);const cur=curTheme();
   const pct=next?Math.round((o-prev.cost)/(next.cost-prev.cost)*100):100;
-  return `<section class="section"><span class="eyebrow">燈油與主題</span>
+  return `<section class="section"><span class="eyebrow">主題角色</span>
   <div class="card has-tr">${sticker("zz","love","tr","收集中")}
     <div class="oilbar"><svg class="oil-drop" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4c6 9 14 16 14 25a14 14 0 0 1-28 0c0-9 8-16 14-25z" fill="#ffad1f" stroke="#2b2350" stroke-width="2"/><ellipse cx="17" cy="28" rx="3" ry="5" fill="#fff" opacity=".6"/></svg>
-      <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴燈油（累積）</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
+      <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴累積燈油</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
     <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner(tileWho("jie",t.id),"happy",t.id)}${charInner(tileWho("ding",t.id),"happy",t.id)}${charInner(tileWho("hui",t.id),"happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${["jie","ding","hui"].map(k=>`<span>${esc(t[tileWho(k,t.id)].name)}</span>`).join("・")}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
-    <p class="mini-note">${OIL_RULES}</p>
   </div></section>`}
 let openCp=null;
-function vCheck(){
-  const rows=CPS.map((cp,i)=>{const s=cpStatus(cp);const r=S.cps[cp.id];
+function cpCard(cp,i){const s=cpStatus(cp);const r=S.cps[cp.id];
     const lab={pass:"通過",wait:"還沒到",due:"可以檢核",retry:"再練練"}[s];
     const stk=s==="pass"?sticker("zz","love","tr","通過！"):s==="due"?sticker("an","think","tr","換我了？"):s==="retry"?sticker("zz","gentle","tr","慢慢來"):"";
     return `<div class="card ${stk?"has-tr":""}">${stk}<div class="cp ${s}"><span class="ic">${s==="pass"?"✓":i+1}</span><div style="min-width:0"><div class="t" style="font-weight:700">${cp.name}</div><div class="meta">${cp.when}${r&&r.date?`・上次 ${r.date}`:""}</div></div><span class="tag ${s==="pass"?"jade":s==="due"?"gold":""}">${lab}</span></div>
-    ${s==="due"||s==="retry"||openCp===cp.id?`<div class="btns"><button class="btn ${s==="due"?"primary":""} small" data-act="cp-open" data-id="${cp.id}">${openCp===cp.id?"收起":"開始檢核"}</button></div>`:""}
-    ${openCp===cp.id?`<form data-cp="${cp.id}" class="cpform">${cp.items.map((it,j)=>`<label class="checkitem"><input type="checkbox" id="cp-${cp.id}-${j}" name="i${j}" ${r&&r.items&&r.items[j]?"checked":""}><span>${esc(it[0])}</span></label>`).join("")}<div class="btns" style="margin-top:8px"><button class="btn primary" type="submit">送出</button></div></form>`:""}
+    ${s==="due"||s==="retry"||openCp===cp.id?`<form data-cp="${cp.id}" class="cpform">${cp.items.map((it,j)=>`<label class="checkitem"><input type="checkbox" id="cp-${cp.id}-${j}" name="i${j}" ${r&&r.items&&r.items[j]?"checked":""}><span>${esc(it[0])}</span></label>`).join("")}<div class="btns" style="margin-top:8px"><button class="btn primary" type="submit">送出</button></div></form>`:""}
     ${r&&!r.passed?`<div class="tip" style="margin-top:4px">要加強的地方：${cp.items.map((it,j)=>r.items&&!r.items[j]?`<div class="remedy">・${esc(it[0])} → ${esc(it[1])}</div>`:"").join("")}<div class="remedy">14 天後可以再檢核一次（${addDays(r.date,14)}）。</div></div>`:""}
-    </div>`}).join("");
-  return `<header class="hero wide"><div class="date">CHECKPOINTS</div><h1>檢核點</h1><p class="sub">不是考試，是看看哪裡需要多照顧一下。沒過的項目，會告訴你怎麼補。</p></header><section class="section">${rows}</section>`;
-}
-function vAdjust(){
+    </div>`}
+let setTab="jie";
+function vSettings(){
+  const html=vAdjustParts();const tabs=[["jie","戒"],["ding","定"],["hui","慧"],...(window.Shan&&Shan.settingsHTML?[["shan","善"]]:[]),["all","共用"]];
+  return `<header class="hero wide"><div class="date">SETTINGS</div><h1>設定</h1><p class="sub">照你的生活調。慢一點沒關係，穩定最重要。</p></header>
+  <div class="seg set-tabs" role="group" aria-label="設定分組">${tabs.map(([k,l])=>`<button class="${setTab===k?"on":""}" data-act="set-tab" data-v="${k}">${k==="all"?l:xueBadge(k)+l}</button>`).join("")}</div>
+  ${setTab==="shan"?Shan.settingsHTML():html[setTab]||""}`}
+function vAdjustParts(){
   const st=stage();const c=consistency();
-  return `<header class="hero wide"><div class="date">ADJUST</div><h1>調整進度</h1><p class="sub">照你的生活調。慢一點沒關係，穩定最重要。</p></header>
-  ${lrAdjust()}
-  <section class="section"><span class="eyebrow">止觀初探・聽講速度（每週）</span>
+  const parts={};parts.jie=lrAdjust();
+  parts.ding=`<section class="section"><span class="eyebrow">止觀初探・聽講速度（每週）</span>
     <div class="card"><div class="seg" role="group" aria-label="每週聽幾講">${[[1,"慢慢來・1 講"],[2,"穩穩走・2 講"],[3,"精進・3 講"]].map(([v,l])=>`<button class="${S.pace===v?"on":""}" data-act="set-pace" data-v="${v}">${l}</button>`).join("")}</div>
     <p class="mini-note">先聽入門線 28 講，再聽其他的。每週 1 講，入門線約 7 個月；2 講約 3 個半月。</p></div>
   </section>
@@ -1569,8 +1661,8 @@ function vAdjust(){
   <section class="section"><span class="eyebrow">所緣</span>
     <div class="card"><div class="seg" role="group" aria-label="選擇所緣">${[[null,"還沒選"],["breath","呼吸"],["buddha","佛像"]].map(([v,l])=>`<button class="${S.obj===v?"on":""}" data-act="set-obj" data-v="${v||""}">${l}</button>`).join("")}</div>
     <p class="mini-note">念頭特別多、像跑馬場的人，廣論說「多尋思者定應修息」。散亂不嚴重、常昏沉的人，緣佛像也很好（佛像本身就是可欣境）。選定前可以先請教帶修的法師；選了以後，未得止前不要換。</p></div>
-  </section>
-  <section class="section"><span class="eyebrow">語音引導</span>
+  </section>`;
+  parts.all=`<section class="section"><span class="eyebrow">語音引導</span>
     <div class="card"><div class="seg" role="group" aria-label="語音開關">${[[true,"開"],[false,"只顯示文字"]].map(([v,l])=>`<button class="${S.voice===v?"on":""}" data-act="set-voice" data-v="${v}">${l}</button>`).join("")}</div>
     <div class="seg" role="group" aria-label="說話速度">${[[0.8,"慢"],[0.9,"適中"],[1.0,"一般"]].map(([v,l])=>`<button class="${S.rate===v?"on":""}" data-act="set-rate" data-v="${v}">${l}</button>`).join("")}</div>
     <div class="btns"><button class="btn small" data-act="voice-test">試聽</button></div>
@@ -1580,14 +1672,15 @@ function vAdjust(){
     <div class="card"><div class="seg" role="group" aria-label="語音指令">${[[true,"開"],[false,"關"]].map(([v,l])=>`<button class="${(S.handsVoice!==false)===v?"on":""}" data-act="set-hands" data-v="${v}">${l}</button>`).join("")}</div>
     <p class="mini-note">聽完一段或一講時，先在心裡做結論，再說「繼續／完成」或「重聽」。第一次會問麥克風權限。${SR?"":"這個瀏覽器不支援語音辨識，"}也可以按耳機的「下一首」（繼續）、「上一首」（重聽）。螢幕鎖住時語音辨識不能用，耳機按鍵可以。</p></div>
   </section>
-  <section class="section"><span class="eyebrow">第二章・毗缽舍那</span>
-    <div class="card has-tr">${sticker("zz","think","tr",S.vipOn?"一起觀察":"")}
-    <p>${S.vipOn?"已開啟。":"還沒開啟。"}奢摩他是「止住修」：安住在所緣上、不分析；毗缽舍那是「觀察修」：用正理去思惟、去觀察。廣論說，生起無我正見的聞思不必等到得止，所以第二章隨時可以打開；每天的上座照常。</p>
-    <div class="seg" role="group" aria-label="第二章開關">${[[true,"開啟"],[false,"先不要"]].map(([v,l])=>`<button class="${!!S.vipOn===v?"on":""}" data-act="${v?"vip-on":"vip-off"}">${l}</button>`).join("")}</div>
+  `;
+  parts.hui=`<section class="section"><span class="eyebrow">慧・毗缽舍那</span>
+    <div class="card has-tr">${sticker(tileWho("hui"),"think","tr",S.vipOn?"一起觀察":"")}
+    <p>${S.vipOn?"已開啟。":"還沒開啟。"}奢摩他是「止住修」：安住在所緣上、不分析；毗缽舍那是「觀察修」：用正理去思惟、去觀察。廣論說，生起無我正見的聞思不必等到得止，所以隨時可以開啟；每天的上座照常。</p>
+    <div class="seg" role="group" aria-label="毗缽舍那開關">${[[true,"開啟"],[false,"先不要"]].map(([v,l])=>`<button class="${!!S.vipOn===v?"on":""}" data-act="${v?"vip-on":"vip-off"}">${l}</button>`).join("")}</div>
     ${S.vipOn?`<span class="mini-note">毗缽舍那每週聽幾講</span><div class="seg" role="group" aria-label="毗缽舍那每週聽幾講">${[[1,"1 講"],[2,"2 講"]].map(([v,l])=>`<button class="${(S.vpace||1)===v?"on":""}" data-act="set-vpace" data-v="${v}">${l}</button>`).join("")}</div>`:""}
-    <p class="mini-note">老師還在講，目前有 ${vipNums().length} 講，網站每週自動加入新的一講。觀察修的題目跟著聽講進度換：為何要觀 → 我執是苦根（聽完第 28、32 講）→ 認識所破（聽完第 47～49 講）。</p></div>
-  </section>
-  <section class="section"><span class="eyebrow">中斷了怎麼辦</span>
+    <p class="mini-note">老師還在講，目前有 ${vipNums().length} 講，網站每週自動加入新的一講。觀察修的題目跟著聽講進度換：為何要觀 → 我執是苦根（聽完第 28、32 講）→ 認識所破（聽完第 47～49 講）→ 緣起：有與有自性（聽完第 63、77、91 講）。</p></div>
+  </section>`;
+  parts.ding+=`<section class="section"><span class="eyebrow">中斷了怎麼辦</span>
     <div class="card faq has-tr">${sticker("an","confused","tr","中斷了…")}
       <details><summary>沒聽講</summary><p>講次是「排隊制」，不是日期制。沒聽的就留在隊伍最前面，下次接著聽，不會越欠越多。上週沒達標也不用補。連續三週都沒達到一半，App 會問你要不要把速度放慢。</p></details>
       <details><summary>一兩天沒上座</summary><p>不用補兩座，今天照常坐一座。很忙就做「保底一分鐘」。生病、出遠門可以按「請假」，那天不算進穩定度。</p></details>
@@ -1597,8 +1690,8 @@ function vAdjust(){
       <details><summary>坐不住、一直想睡</summary><p>座時縮短（上面可以自己設），寧可短而清楚，不要長而昏沉。昏沉多：眼睛微開、背別靠、別吃太飽、早點睡；坐中可以想佛像的光明。</p></details>
     </div>
     <div class="btns"><button class="btn small" data-act="warm">開始回溫三天</button><button class="btn small" data-act="leave">今天請假</button></div>
-  </section>
-  <section class="section"><span class="eyebrow">資料</span>
+  </section>`;
+  parts.all+=`<section class="section"><span class="eyebrow">資料</span>
     <div class="card"><p class="meta">進度只存在這支手機的瀏覽器裡，不會上傳到任何地方。${lastBackupNote()}</p>
     <p class="mini-note">iPhone：用 Safari 開啟 →「分享」→「加入主畫面」，資料比較不會被系統清掉。Android：Chrome 選單 →「加到主畫面」。</p>
     <div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button><button class="btn small" data-act="upload">從備份檔還原</button></div>
@@ -1607,8 +1700,9 @@ function vAdjust(){
     <div id="dataArea"></div></div>
   </section>
   <section class="section"><span class="eyebrow">出處</span>
-    <div class="card"><p class="mini-note">次第依《菩提道次第廣論》奢摩他章與《四家合註》；講次為真如老師《廣論止觀初探・奢摩他》（大慈恩譯經基金會）。呼吸調息參考老師疫情期間的調息教授。本工具為個人學習輔助，修持請以帶修法師的指導為準。</p></div>
+    <div class="card"><p class="mini-note">戒：日常老和尚《菩提道次第廣論》南普陀講記（大慈恩譯經基金會逐字稿與音檔）。定：《廣論》奢摩他章、《四家合註》、真如老師《廣論止觀初探・奢摩他》；呼吸調息參考老師疫情期間的調息教授。慧：真如老師《廣論止觀初探・毗缽舍那》。本工具為個人學習輔助，修持請以帶修法師的指導為準。</p></div>
   </section>`;
+  return parts;
 }
 
 /* ================= 動作 ================= */
@@ -1631,6 +1725,10 @@ document.addEventListener("click",e=>{
     case "vg-quiz": openVgQuiz();break;
     case "q-draw": if(availOil()>=CARD_COST)drawCard(false);break;
     case "album-part": albumPart=+b.dataset.v;render();break;
+    case "pg-tab": pgTab=b.dataset.v;openCp=null;render();break;
+    case "set-tab": setTab=b.dataset.v;render();break;
+    case "gate-info": toast(b.dataset.info||"");break;
+    case "go-themes": {const el=document.getElementById("shop-themes");if(el)el.scrollIntoView({behavior:"smooth"});break}
     case "q-open": openQuote(+b.dataset.k);break;
     case "q-listen": {const q=QS()[+b.dataset.k];const i=q?qUnit(q):null;if(i!=null){document.getElementById("layer").innerHTML="";const u=LRA()[i];const cat=LRC()[u[6]];Audio_.unlock();LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i)})}break}
     case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("毗婆舍那已開啟");break;
@@ -1669,7 +1767,7 @@ document.addEventListener("click",e=>{
     case "snooze-pace": S.snooze.pace=addDays(t,14);go();break;
     case "pace-down": S.pace=Math.max(1,S.pace-1);S.snooze.pace=addDays(t,21);go();break;
     case "pace-up": S.pace=Math.min(3,S.pace+1);S.snooze.pace=addDays(t,21);go();break;
-    case "go-check": location.hash="#check";break;
+    case "go-check": location.hash="#progress";break;
     case "cp-open": openCp=openCp===b.dataset.id?null:b.dataset.id;render();break;
     case "set-pace": S.pace=Number(b.dataset.v);go();break;
     case "set-sits": S.sits=Number(b.dataset.v);go();break;
@@ -1723,7 +1821,7 @@ function openOnboard(){
     <p>我是${nm("zz")}，會陪你照戒、定、慧的次第一步一步學：每天聽一段師父講的廣論，先思惟聞法勝利再聽；每天坐一小段，有語音帶你；每週聽一點真如老師的《止觀初探》。不趕進度，中斷了也沒關係，我會告訴你怎麼接回來。</p>
     <div><span class="eyebrow">止觀初探每週想聽幾講？</span><div class="seg" style="margin-top:6px">${[[1,"1 講（推薦）"],[2,"2 講"],[3,"3 講"]].map(([v,l])=>`<button class="${pace===v?"on":""}" data-ob="pace" data-v="${v}">${l}</button>`).join("")}</div></div>
     <div><span class="eyebrow">每天上座幾次？</span><div class="seg" style="margin-top:6px">${[[1,"一座（推薦）"],[2,"兩座"]].map(([v,l])=>`<button class="${sits===v?"on":""}" data-ob="sits" data-v="${v}">${l}</button>`).join("")}</div></div>
-    <p class="mini-note">之後都可以在「調整」頁改。語音引導請在安靜的地方、戴耳機效果最好。</p>
+    <p class="mini-note">之後都可以在「設定」頁改。語音引導請在安靜的地方、戴耳機效果最好。</p>
     <div class="btns"><button class="btn primary" data-ob="go">開始點燈</button><button class="btn" data-ob="test">試聽語音</button></div>
   </div></div>`};
   draw();
@@ -1936,7 +2034,7 @@ const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0
     const pb=document.getElementById("ovPause");pb.onclick=()=>{this.paused=!this.paused;pb.textContent=this.paused?"繼續":"暫停";if(this.paused)Voice.pause();else Voice.resume()};
   },
   setStep(s,i,n){const el=document.getElementById("ov-step");if(el&&s.label)el.textContent=s.label;document.querySelectorAll("#prog i").forEach((x,j)=>x.classList.toggle("on",j<=i))},
-  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb")}
+  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="today"?"orb":"none")}
 };
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Session.on){Session.abortF=true}});
 
@@ -2046,7 +2144,8 @@ const Scene=(()=>{
 })();
 
 /* ================= 啟動 ================= */
-function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)||SUBS.includes(h)||h==="album"?h:"today";render();scrollTo(0,0)}
+const ROUTE_ALIAS={check:"progress",adjust:"settings"};
+function onHash(){let h=(location.hash||"").slice(1);h=ROUTE_ALIAS[h]||h;route=TABS.some(t=>t[0]===h)||SUBS.includes(h)||h==="album"?h:"today";render();scrollTo(0,0)}
 addEventListener("hashchange",onHash);
 onHash();
 askPersist();
