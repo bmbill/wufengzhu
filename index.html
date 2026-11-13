@@ -176,6 +176,26 @@ body.in-session .lplayer{visibility:hidden}
 .tri{gap:14px}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
+/* 首頁三大塊 */
+.tiles{gap:16px}
+.tile{position:relative;display:grid;grid-template-columns:58px minmax(0,1fr) 16px;gap:12px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid rgba(255,255,255,.8);border-radius:var(--r);padding:16px 14px;box-shadow:var(--shadow);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);margin-top:14px;transition:transform .15s}
+.tile:active{transform:scale(.98)}
+.tile-k{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-family:var(--f-display);font-size:30px;font-weight:700;color:#fff}
+.tile-jie .tile-k{background:linear-gradient(150deg,#ff9a6b,#ff7a59)}
+.tile-ding .tile-k{background:linear-gradient(150deg,#ffc24d,#ffad1f)}
+.tile-hui .tile-k{background:linear-gradient(150deg,#8ea6ff,#6c8cff)}
+.tile-b{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile-eb{font-size:11px;letter-spacing:.1em;color:var(--mute)}
+.tile-t{font-family:var(--f-display);font-size:22px;font-weight:700;line-height:1.2}
+.tile-sub{font-size:13px;color:var(--mute);padding-right:44px}
+.tchips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 2px}
+.tchip{font-size:12px;padding:2px 9px;border-radius:999px;background:rgba(43,35,80,.06);color:var(--mute);white-space:nowrap}
+.tchip.ok{background:rgba(34,180,141,.16);color:#0f7a5e;font-weight:700}
+.tchip.warn{background:rgba(255,111,145,.16);color:#c2335a;font-weight:700}
+.tile-pct{font-size:11px;color:var(--mute)}
+.tile-go{font-size:26px;color:var(--faint);line-height:1}
+.tile .sticker.tr{top:-30px;right:4px;width:60px;height:60px}
+.subhead .back{display:inline-block;align-self:flex-start;text-decoration:none;color:var(--ink);background:var(--card-2);border-radius:999px;padding:5px 12px;font-size:13px;box-shadow:var(--shadow);margin-bottom:6px}
 /* 主題收藏 */
 .oilbar{display:flex;align-items:center;gap:12px}
 .oil-drop{width:44px;height:44px;flex:none}
@@ -700,8 +720,8 @@ function notesBody(key){const nt=(S.notes||{})[key]||{};const rows=[];(nt.seg||[
   return rows.length?`<div class="steps">${rows.map(([l,s])=>`<div class="tip"><span class="mini-note">${esc(l)}</span><br>${esc(s)}</div>`).join("")}</div>`:`<p class="meta">這講還沒有寫筆記。</p>`}
 function keyInfo(key){if(key[0]==="L"){const n=lrIndex(key.slice(1));const u=LRA()[n]||[0,"",0,0,0,0,0];return {ch:"L",n,title:u[1].split("\n")[0].slice(0,30),label:((LRC()[u[6]]||[""])[0])+"・南普陀第 "+u[0]+" 卷"}}const ch=key[0]==="v"?"v":"s";const n=Number(key.slice(1));return {ch,n,title:ch==="v"?vipTitle(n):LECT[n-1],label:(ch==="v"?"毗缽舍那・":"")+`第 ${n} 講`}}
 let revOpen=null;
-function reviewCard(){const t=today();const N=S.notes||{};const R=S.rev||{};
-  for(const key in N){const p=N[key].p||[];if(!p.length)continue;const age=daysBetween(p[0],t);
+function reviewCard(pf){const t=today();const N=S.notes||{};const R=S.rev||{};
+  for(const key in N){if(pf&&key[0]!==pf)continue;const p=N[key].p||[];if(!p.length)continue;const age=daysBetween(p[0],t);
     for(const [iv,until] of [[1,2],[3,6],[7,13]]){if(age>=iv&&age<=until&&!R[key+"@"+iv]){const k=keyInfo(key);const open=revOpen===key;
       return `<section class="section"><div class="card has-tl">${sticker("an","think","tl","還記得嗎？")}<span class="eyebrow">回想一下・聽完第 ${age} 天</span>
         <h3>${esc(k.label)}・${esc(k.title)}</h3>
@@ -944,7 +964,7 @@ let route="today";
 const TABS=[["today","今","今日"],["progress","燈","進度"],["check","驗","檢核"],["adjust","調","調整"]];
 function renderTabs(){
   const due=CPS.some(cp=>cpStatus(cp)==="due");
-  document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${route===id?"on":""}" aria-current="${route===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
+  const cur=SUBS.includes(route)?"today":route;document.getElementById("tabs").innerHTML=TABS.map(([id,g,l])=>`<a href="#${id}" class="${cur===id?"on":""}" aria-current="${cur===id?"page":"false"}"><span class="g">${g}</span>${l}${id==="check"&&due?'<span class="badge" aria-label="有檢核點到了"></span>':""}</a>`).join("");
 }
 function render(){
   document.body.dataset.theme=curTheme();
@@ -952,8 +972,11 @@ function render(){
   if(route==="progress") app.innerHTML=vProgress();
   else if(route==="check") app.innerHTML=vCheck();
   else if(route==="adjust") app.innerHTML=vAdjust();
+  else if(route==="jie") app.innerHTML=vJie();
+  else if(route==="ding") app.innerHTML=vDing();
+  else if(route==="hui") app.innerHTML=vHui();
   else app.innerHTML=vToday();
-  Scene.setMode(route==="progress"?"lamps":"orb");
+  Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
   else checkUnlock();
@@ -965,13 +988,65 @@ function dailyTalk(){const n=daysBetween(S.start,today());const iss=lastIssue();
 /* 「今天想一想」卡片上引導者說的一句話 */
 function dailyTip(){const lines=dailyTalk().filter(l=>l[0]==="zz");const l=lines[lines.length-1]||["zz","gentle",stage().tip];return [l[1],l[2]]}
 function greet(){const h=new Date().getHours();return h<5?"夜深了":h<11?"早安":h<14?"午安":h<18?"午後好":"晚上好"}
+/* ================= 首頁：戒、定、慧三大塊；點進去才做各自的任務 ================= */
+const SUBS=["jie","ding","hui"];
+function chip(label,ok){return `<span class="tchip ${ok?"ok":""}">${ok?"✓":"○"} ${esc(label)}</span>`}
+function homeTile(o){return `<a class="tile tile-${o.k}" href="#${o.href}">${o.stk}
+  <span class="tile-k" aria-hidden="true">${o.glyph}</span>
+  <span class="tile-b"><span class="tile-eb">${esc(o.eb)}</span><span class="tile-t">${esc(o.title)}</span><span class="tile-sub">${esc(o.sub)}</span>
+    ${o.chips?`<span class="tchips">${o.chips}</span>`:""}
+    <span class="bar"><i style="width:${Math.round(o.pct*100)}%"></i></span><span class="tile-pct">${esc(o.pctLabel)}</span></span>
+  <span class="tile-go" aria-hidden="true">›</span></a>`}
 function vToday(){
+  const t=today();const d=day(t)||{sits:[]};const st=stage();const w=weekNo(t);const dt=new Date();
+  // 戒
+  const L=LRA();const li=lrNext();const lcat=li!=null?LRC()[L[li][6]]:null;const ldt=lrDoneToday();const lpace=S.lrPace||1;const ldone=Object.keys(lrDone()).length;
+  const jieOk=ldt>=lpace;
+  // 定
+  const sdone=(d.sits||[]).length,sneed=S.sits;const hw=heardInWeek(w);const co=coach();const dingOk=sdone>=sneed;
+  // 慧
+  const vhw=S.vipOn?vheardInWeek(w):0;const huiOk=S.vipOn&&!!d.vthink;
+  const okCount=[jieOk,dingOk,huiOk].filter(Boolean).length,total=S.vipOn?3:2;
+  const tiles=[
+    homeTile({k:"jie",href:"jie",glyph:"戒",eb:"戒・增上戒學",title:"聽聞廣論",
+      sub:lcat?`${lcat[1]}・${lcat[0]}`:"道前基礎到四攝全部聽完了",
+      chips:chip(`今日聽聞 ${ldt}/${lpace} 段`,jieOk)+chip("睡前反省",!!d.night),
+      pct:L.length?ldone/L.length:0,pctLabel:`師父南普陀廣論 ${ldone}/${L.length} 段`,
+      stk:sticker("zz",jieOk?"cheer":"gentle","tr",jieOk?"聽完了！":"先發心")}),
+    homeTile({k:"ding",href:"ding",glyph:"定",eb:"定・增上定學",title:"奢摩他",
+      sub:`上座第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}`,
+      chips:chip(sneed>1?`上座 ${Math.min(sdone,sneed)}/${sneed}`:"上座",dingOk)+chip(`止觀初探 本週 ${hw}/${S.pace} 講`,hw>=S.pace)+(co.length?`<span class="tchip warn">${co.length} 則提醒</span>`:""),
+      pct:heardCount()/TOTAL,pctLabel:`止觀初探 ${heardCount()}/${TOTAL} 講`,
+      stk:sticker("an",dingOk?"happy":"sit","tr",dingOk?"坐完了！":"一起坐")}),
+    homeTile({k:"hui",href:"hui",glyph:"慧",eb:"慧・增上慧學",title:"聽聞毗婆舍那",
+      sub:S.vipOn?`觀察修第 ${vstage().n} 階・${vstage().name}`:"還沒開啟，點進去看看",
+      chips:S.vipOn?chip(`本週 ${vhw}/${S.vpace||1} 講`,vhw>=(S.vpace||1))+chip("觀察修",!!d.vthink):"",
+      pct:S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,pctLabel:S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}/${vipNums().length} 講`:"第二章",
+      stk:sticker("zz","think","tr",S.vipOn?"往深處看":"")})];
+  return `
+  <header class="hero">
+    <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
+    <h1>${greet()}，<br>今天也點一盞燈。</h1>
+    <div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>
+  </header>
+  <section class="section tiles" aria-label="戒定慧">${tiles.join("")}</section>
+  ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
+  <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
+}
+function subHead(eb,title,sub){return `<header class="hero wide subhead"><a class="back" href="#today">‹ 今日</a><div class="date">${esc(eb)}</div><h1>${esc(title)}</h1><p class="sub">${esc(sub)}</p></header>`}
+function vJie(){const d=day(today())||{};
+  return subHead("戒・增上戒學","聽聞廣論","每天一段師父講的廣論。聽之前先思惟聞法勝利，聽完用一句話說這段在講什麼。")+`
+  ${reviewCard("L")}
+  ${lrSection()}
+  <section class="section"><span class="eyebrow">守護尸羅</span>
+    <div class="card has-br">${sticker("an",new Date().getHours()>=20?"sleepy":"think","br",new Date().getHours()>=20?"晚安～":"")}
+      <div class="task"><button class="check ${d.night?"on":""}" data-act="night" aria-label="睡前反省${d.night?"，已完成":""}">${d.night?"✓":"○"}</button><div><div class="t">睡前反省・3 分鐘</div><div class="d">回顧身口意、懺悔、隨喜、發願。清淨尸羅是修止最重要的資糧。</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="night">開始</button></div></div></div>
+    </div></section>
+  <p class="store-note"><a href="#progress">到進度頁看法類印章簿 ›</a></p>`}
+function vDing(){
   const t=today();const d=day(t)||{sits:[]};const st=stage();const m=sitMin();
-  const done=(d.sits||[]).length;const need=S.sits;
-  const q=queue();const w=weekNo(t);const hw=heardInWeek(w);
-  const dt=new Date();
-  const co=coach().slice(0,3);
-  const merit=MERITS[daysBetween(S.start,t)%MERITS.length];
+  const done=(d.sits||[]).length;const need=S.sits;const w=weekNo(t);const hw=heardInWeek(w);
+  const co=coach().slice(0,3);const merit=MERITS[daysBetween(S.start,t)%MERITS.length];
   let sitCards="";
   for(let i=0;i<need;i++){
     const on=i<done;const label=need===1?"上座":(i===0?"上座（一）":"上座（二）");
@@ -979,19 +1054,12 @@ function vToday(){
     <div style="min-width:0"><div class="t">${label}・<span class="num">${m}</span> 分鐘</div><div class="d">${on?`完成：${esc(d.sits[i].m)} 分鐘${d.sits[i].i&&d.sits[i].i.length?"・"+d.sits[i].i.map(esc).join("、"):""}`:esc(st.focus)}</div>
     ${on?"":`<div class="btns" style="margin-top:8px"><button class="btn primary" data-act="sit">開始語音引導</button><button class="btn" data-act="manual">我自己坐完了</button></div>`}</div></div>`;
   }
-  const nextL=q[0];
-  return `
-  <header class="hero">
-    <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
-    <h1>${greet()}，<br>今天也點一盞燈。</h1>
-    <div class="stagepill"><b>${st.n}</b>第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}</div>
-  </header>
+  return subHead("定・增上定學","奢摩他",`上座第 ${st.n} 階「${st.name}」。${st.focus}`)+`
   ${co.length?`<section class="section" aria-label="提醒">${co.map(c=>{const hot=c.tone==="hot";const st_=hot?sticker("zz",c.zm,"tr","好消息！"):sticker("an",c.q[0],"tr",MINI[c.q[0]]||"");
     return `<div class="card ${c.tone} has-tr" role="status">${st_}<h3>${esc(c.title)}</h3><p>${esc(c.body)}</p>${c.acts.length?`<div class="btns">${c.acts.map(([l,a],i)=>`<button class="btn ${i===0?"primary":""} small" data-act="${a}">${esc(l)}</button>`).join("")}</div>`:""}</div>`}).join("")}</section>`:""}
-  ${reviewCard()}
-  ${lrSection()}
+  ${reviewCard("s")}
   <section class="section" aria-labelledby="h-must">
-    <div class="row between"><span class="eyebrow" id="h-must">今日任務・必做</span><span class="mini-note num">${Math.min(done,need)}/${need}</span></div>
+    <div class="row between"><span class="eyebrow" id="h-must">上座</span><span class="mini-note num">${Math.min(done,need)}/${need}</span></div>
     <div class="card has-tr">${done>=need?sticker("zz","cheer","tr","點亮了！"):sticker("zz","fight","tr",done?"再一座！":"一起坐！")}${sitCards}
       ${done<need?`<details><summary>今天真的很忙？</summary><div class="faq"><p>做「保底一分鐘」：坐直、眼睛微開、數十次呼吸。也算今天有練，只是不升階。</p><div class="btns" style="margin-top:8px"><button class="btn small" data-act="mini">${d.min?"再做一次保底":"保底一分鐘"}</button><button class="btn ghost small" data-act="leave">今天請假</button></div></div></details>`:""}
     </div>
@@ -1000,20 +1068,23 @@ function vToday(){
     <div class="row between"><span class="eyebrow" id="h-listen">本週聽講・止觀初探</span><span class="mini-note num">本週 ${hw}/${S.pace} 講</span></div>
     ${lectureCard("s")}
   </section>
-  ${S.vipOn?vipSection(d):""}
-  <section class="section" aria-labelledby="h-opt">
-    <span class="eyebrow" id="h-opt">選做</span>
-    <div class="card has-br">${new Date().getHours()>=20?sticker("an","sleepy","br","晚安～"):sticker("an","sit","br","深呼吸")}
+  <section class="section"><span class="eyebrow">隨時可做</span>
+    <div class="card has-br">${sticker("an","sit","br","深呼吸")}
       <div class="task"><button class="check ${d.breath?"on":""}" data-act="alert" aria-label="呼吸警報${d.breath?"，已完成":""}">${d.breath?"✓":"○"}</button><div><div class="t">呼吸警報・1 分鐘</div><div class="d">發現肩膀緊、喉嚨卡、心急時，跟著光慢慢呼氣。（老師的調息教授）</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="alert">開始</button></div></div></div>
-      <div class="task"><button class="check ${d.night?"on":""}" data-act="night" aria-label="睡前反省${d.night?"，已完成":""}">${d.night?"✓":"○"}</button><div><div class="t">睡前反省・3 分鐘</div><div class="d">回顧身口意、懺悔、隨喜、發願。清淨尸羅是修止最重要的資糧。</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="night">開始</button></div></div></div>
-    </div>
-  </section>
+    </div></section>
   <section class="section">
     <div class="card has-tl">${sticker("zz",dailyTip()[0],"tl")}<span class="eyebrow">今天想一想</span><p class="quote">${esc(merit)}</p><p class="tip">${esc(dailyTip()[1])}</p></div>
-  </section>
-  ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
-  <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
-}
+  </section>`}
+function vHui(){const d=day(today())||{};
+  if(!S.vipOn)return subHead("慧・增上慧學","聽聞毗婆舍那","真如老師《止觀初探・毗缽舍那》與觀察修。")+`
+  <section class="section"><div class="card has-tr">${sticker("zz","think","tr","往深處看")}
+    <h3>還沒開啟</h3><p>奢摩他是「止住修」：安住在所緣上、不分析；毗缽舍那是「觀察修」：用正理去思惟、去觀察。廣論說，生起無我正見的聞思不必等到得止，所以隨時可以開始；奢摩他的上座照常。</p>
+    <p class="meta">開啟後，這裡會有毗缽舍那的聽講（老師還在講，目前 ${vipNums().length} 講，每週自動更新）和每天選做的「觀察修 5 分鐘」。</p>
+    <div class="btns"><button class="btn primary" data-act="vip-on">開啟毗婆舍那</button></div></div></section>`;
+  return subHead("慧・增上慧學","聽聞毗婆舍那",`觀察修第 ${vstage().n} 階「${vstage().name}」。${vstage().focus}`)+`
+  ${reviewCard("v")}
+  ${vipSection(d)}`}
+
 function vProgress(){
   const t=today();const hc=heardCount();const ic=introCount();
   let mdays=0,mins=0,sessions=0;const ym=t.slice(0,7);
@@ -1148,7 +1219,7 @@ document.addEventListener("click",e=>{
     case "heard": if(b.dataset.ch==="v"){S.vheard=S.vheard||{};S.vheard[b.dataset.n]=t;persist();render();toast(`毗缽舍那第 ${b.dataset.n} 講已點亮，燈油 +3`)}else{S.heard[b.dataset.n]=t;persist();render();toast(`第 ${b.dataset.n} 講已點亮，燈油 +3`)}break;
     case "toggle": {const n=b.dataset.n;const H=b.dataset.ch==="v"?(S.vheard=S.vheard||{}):S.heard;if(H[n])delete H[n];else H[n]=t;go();break}
     case "vthink": Session.run("vip");break;
-    case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("第二章已開啟");break;
+    case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("毗婆舍那已開啟");break;
     case "vip-later": S.vipOffered=true;go();break;
     case "vip-off": S.vipOn=false;if(listFilter==="vip")listFilter="intro";go();break;
     case "set-vpace": S.vpace=Number(b.dataset.v);go();break;
@@ -1517,6 +1588,7 @@ const Scene=(()=>{
   function target(){const [hw,hh]=halfs();const W=innerWidth,H=innerHeight;const toX=sx=>(sx*2-1)*hw,toY=sy=>(1-sy*2)*hh;
     const col=Math.min(560,W);const sxr=(W/2+col*.27)/W;
     if(mode==="session"){const s=Math.min((.30*2*hh)/2.6,(.5*2*hw)/1.6);return {x:0,y:toY(.36),s,la:0,ca:1}}
+    if(mode==="none"){const s=(.22*2*hh)/2.2;return {x:toX(sxr)+hw*3,y:toY(.2),s,la:0,ca:0}}
     if(mode==="lamps"){const ls=Math.min(.3*2*hh/3.8,.72*2*hw/4.6);return {x:toX(sxr)+hw*3,y:toY(.12),s:.5,la:1,ca:0,lx:0,ly:toY(.22),ls}}
     const s=(.22*2*hh)/2.2;const scroll=(scrollY||0)/H*2*hh;return {x:toX(sxr),y:toY(.2)+scroll,s,la:0,ca:1}}
   function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const [hw,hh]=halfs();SU.uHW.value=hw;SU.uHH.value=hh}
@@ -1548,7 +1620,7 @@ const Scene=(()=>{
 })();
 
 /* ================= 啟動 ================= */
-function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)?h:"today";render();scrollTo(0,0)}
+function onHash(){const h=(location.hash||"").slice(1);route=TABS.some(t=>t[0]===h)||SUBS.includes(h)?h:"today";render();scrollTo(0,0)}
 addEventListener("hashchange",onHash);
 onHash();
 askPersist();
