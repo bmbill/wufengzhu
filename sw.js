@@ -1,5 +1,5 @@
 // 無風燭 service worker：離線也能開啟。頁面與程式先連網拿最新版；語音、圖片、字型用快取。
-const CACHE = "wfz-v4";
+const CACHE = "wfz-v5";
 const CORE = ["./", "./index.html", "./lectures.js", "./lectures_vip.js", "./chars/files.js", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-180.png", "./voice/map.js", "./voice/silence.mp3"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
