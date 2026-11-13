@@ -479,7 +479,9 @@ textarea{min-height:72px;resize:vertical}
 .oilhud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:max(12px,env(safe-area-inset-right,0px));z-index:11;display:flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border-radius:999px;text-decoration:none;color:#5a3a00;background:linear-gradient(180deg,#fff7d6,#ffd979);border:2px solid #4a3a7a;box-shadow:0 3px 0 #4a3a7a,0 6px 14px rgba(43,35,80,.25);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;line-height:1}
 .oilhud .ic{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fffbe8,#ffcf4d 60%,#f0a020);border:2px solid #4a3a7a;display:grid;place-items:center}
 .oilhud .ic svg{width:16px;height:16px}
-.oilhud small{font-size:10px;font-weight:700;opacity:.7;margin-right:1px}
+.oilhud small{font-size:10px;font-weight:700;opacity:.7;margin-right:2px}
+.oilhud .nums{display:flex;flex-direction:column;gap:2px}
+.oilhud .tot{font-size:10px;font-weight:700;opacity:.75}
 .oilhud:active{transform:translateY(2px);box-shadow:0 1px 0 #4a3a7a,0 3px 8px rgba(43,35,80,.25)}
 .oilhud.pop{animation:oilpop .7s ease}
 .oilhud.pop .ic{animation:oilspin .7s ease}
@@ -662,9 +664,9 @@ const OIL_TABLE=[["jie","聽聞一段",2],["jie","聞法勝利",1],["jie","睡�
 const XUE={jie:["戒","#ff7a59"],ding:["定","#ffad1f"],hui:["慧","#6c8cff"],shan:["善","#3fae8c"],all:["・","#a99fc8"]};
 const xueBadge=k=>`<b class="xb" style="background:${XUE[k][1]}">${XUE[k][0]}</b>`;
 let _oilShown=null;
-function oilHud(){const el=document.getElementById("oilHud");if(!el)return;let n=0;try{n=oil()}catch(e){}
-  el.innerHTML=`<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3C9 8 7 10.5 7 14a5 5 0 0 0 10 0c0-3.5-2-6-5-11z" fill="#ff8a1f" stroke="#4a3a7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10c-1.4 2.2-2 3.3-2 4.4a2 2 0 0 0 4 0c0-1.1-.6-2.2-2-4.4z" fill="#fff3b0"/></svg></span><span><small>燈油</small>${n}</span>`;
-  el.title="累積燈油 "+n+" 滴（點這裡到燈坊）";
+function oilHud(){const el=document.getElementById("oilHud");if(!el)return;let n=0,a=0;try{n=oil();a=availOil()}catch(e){}
+  el.innerHTML=`<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3C9 8 7 10.5 7 14a5 5 0 0 0 10 0c0-3.5-2-6-5-11z" fill="#ff8a1f" stroke="#4a3a7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10c-1.4 2.2-2 3.3-2 4.4a2 2 0 0 0 4 0c0-1.1-.6-2.2-2-4.4z" fill="#fff3b0"/></svg></span><span class="nums"><span><small>可用</small>${a}</span><span class="tot">累積 ${n}</span></span>`;
+  el.title="可用燈油 "+a+" 滴、累積 "+n+" 滴（點這裡到燈坊）";el.setAttribute("aria-label",el.title);
   if(_oilShown!=null&&n>_oilShown){const d=n-_oilShown;el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");const s=document.createElement("span");s.className="plus";s.textContent="+"+d;el.appendChild(s);setTimeout(()=>s.remove(),1300)}
   _oilShown=n}
 function oilTable(){return `<div class="oil-table">${OIL_TABLE.map(([k,l,v])=>`<div>${xueBadge(k)}<span>${esc(l)}</span><b class="num">+${v}</b></div>`).join("")}</div>
