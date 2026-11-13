@@ -1,4 +1,4 @@
-# 每週自動更新《止觀初探・毗缽舍那》講次清單（老師還在講）
+# 每週自動更新《止觀初探・毗缽舍那》講次清單，並替新講次做內容分段（老師還在講）
 name: 更新毗缽舍那講次
 
 on:
@@ -17,16 +17,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: 安裝 ffmpeg（找講話停頓用）
+        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg
       - name: 抓最新講次
         run: python tools/update_vip.py
+      - name: 替新講次分段
+        run: python tools/build_segments.py --workers 4
       - name: 有變動就提交
         run: |
-          if git diff --quiet lectures_vip.js; then
+          if git diff --quiet lectures_vip.js segments.js tools/segments_cache.json; then
             echo "沒有新講次"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add lectures_vip.js
-            git commit -m "自動更新毗缽舍那講次清單"
+            git add lectures_vip.js segments.js tools/segments_cache.json
+            git commit -m "自動更新毗缽舍那講次與分段"
             git push
           fi
