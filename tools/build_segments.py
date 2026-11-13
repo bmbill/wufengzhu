@@ -22,6 +22,9 @@ CACHE = os.path.join(ROOT, "tools", "segments_cache.json")
 OUT = os.path.join(ROOT, "segments.js")
 UA = {"User-Agent": "Mozilla/5.0 (wufengzhu segments)"}
 HEAD = re.compile(r"^\s*【(.+?)】\s*$")
+# 聲音對位的結果（tools/calib_segments.py）：{講次: {分段字數位置: 秒數}}；有的就不用推算＋停頓
+ALIGN_P = os.path.join(ROOT, "tools", "segments_align.json")
+ALIGN = json.load(open(ALIGN_P, encoding="utf-8")) if os.path.exists(ALIGN_P) else {}
 
 
 def ffmpeg():
@@ -168,11 +171,15 @@ def build(it):
         secs, total = [["", i * 1000] for i in range(n)], n * 1000
     total = total or 1
     out = [[0.0, secs[0][0]]]
+    al = ALIGN.get(it["key"], {})
     for title, c in secs[1:]:
         t = c / total * dur
         if t < 20 or t > dur - 20:
             continue
-        s, ok = snap(it["mp3"], t, dur)
+        if str(c) in al:
+            s = al[str(c)]
+        else:
+            s, ok = snap(it["mp3"], t, dur)
         out.append([round(s, 1), title])
     out.sort(key=lambda x: x[0])
     # 太短的段併到前一段

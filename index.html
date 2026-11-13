@@ -177,6 +177,35 @@ body.in-session .lplayer{visibility:hidden}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
 body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
+/* 慧：次第地圖、詞卡、小測驗 */
+.vg-map{display:grid;gap:6px;margin-top:8px}
+.vg-step{border-radius:14px;background:var(--card-2);padding:2px 10px}
+.vg-step summary{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;padding:8px 0;cursor:pointer;list-style:none}
+.vg-step summary::-webkit-details-marker{display:none}
+.vg-step summary::after,.vg-step summary::before{content:none!important;display:none!important}
+.vg-step summary small{display:block;font-size:11.5px;color:var(--mute)}
+.vg-n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-num);font-size:13px;background:rgba(43,35,80,.08)}
+.vg-step.done .vg-n{background:rgba(34,180,141,.18);color:#0f7a5e}
+.vg-step.cur{outline:2px solid #8ea6ff}.vg-step.cur .vg-n{background:#6c8cff;color:#fff}
+.vg-step.todo{opacity:.72}
+.vg-pts{margin:0 0 8px;padding-left:20px;font-size:14px;line-height:1.65}
+.vg-cmp table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.vg-cmp th,.vg-cmp td{padding:6px 5px;border-bottom:1px solid rgba(43,35,80,.08);text-align:left;vertical-align:top}
+.vg-cmp thead th{font-size:12px;color:var(--mute)}
+.vg-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vgc{min-height:96px;border:0;border-radius:16px;background:var(--card);box-shadow:var(--shadow);padding:10px;display:flex;flex-direction:column;justify-content:center;gap:4px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.vgc b{font-family:var(--f-display);font-size:15px}
+.vgc span{font-size:13px;line-height:1.5}
+.vgc small{font-size:11.5px;color:var(--mute);line-height:1.45}
+.vgc.on{background:linear-gradient(150deg,rgba(142,166,255,.22),rgba(108,140,255,.12))}
+.vgc.lock{opacity:.5;align-items:center;text-align:center;cursor:default}
+.qz-q{font-size:19px;line-height:1.5}
+.qz-o{display:grid;gap:8px;margin:10px 0}
+.qz-o .btn{text-align:left;justify-content:flex-start}
+.qz-o .btn:disabled{opacity:1}
+.qz-o .btn.wrong{border-color:#c2335a;color:#c2335a;background:rgba(255,111,145,.1)}
+.qz-ok{color:#0f7a5e;font-weight:600}.qz-no{color:#c2335a;font-weight:600}
+.vg-pits{padding-left:20px;font-size:14px;line-height:1.65}
 /* 免手持：語音指令狀態、用說的 */
 .hands{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);background:var(--card-2);border-radius:12px;padding:7px 10px;margin:8px 0 2px}
 .hd-dot{width:9px;height:9px;border-radius:50%;background:#bbb;flex:none}
@@ -377,6 +406,7 @@ body.in-session::before{background:transparent}
 <script src="segments.js"></script>
 <script src="lamrim.js"></script>
 <script src="hearing.js"></script>
+<script src="vip_guide.js"></script>
 <script src="chars/files.js"></script>
 <script>
 /* ================= 資料 ================= */
@@ -477,7 +507,7 @@ const THEMES=[
 ];
 const OIL_RULES="每日聽聞一段 +2・聞法勝利 +1・法類印章 +10・上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1";
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2;if(d.hb)o+=1}
-  o+=Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
+  o+=Object.keys(S.vquiz||{}).length+Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
 const unlocked=th=>oil()>=th.cost;
 const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
 const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
@@ -663,7 +693,11 @@ const VSTAGES=[
  {n:3,name:"認識所破",req:[47,48,49],focus:"在強烈的情緒裡，看看心中那個「我」是怎麼顯現的；要破的是自性有，不是有。",
   prompts:["回想一次被冤枉、或被大大稱讚的時候。那時候心裡出現的「我」，是什麼樣子？是不是很實在、很獨立，好像不靠任何條件，自己就在那裡？",
            "在心裡輕輕喊一聲自己的名字。看看浮現的那個「我」是怎麼出現的。先不要急著否定它，先認識它。",
-           "提醒自己：要破的，是那個好像獨立存在、自己就成立的我，不是平常吃飯走路、造業受果的我。破得太過，會落入斷見。"]}
+           "提醒自己：要破的，是那個好像獨立存在、自己就成立的我，不是平常吃飯走路、造業受果的我。破得太過，會落入斷見。"]},
+ {n:4,name:"緣起：有與有自性",req:[63,77,91],focus:"依因緣而有，所以沒有自性；沒有自性，所以能依因緣而有。破的是自性有，不是有。",
+  prompts:["想一顆蘋果是怎麼來的：種子、土地、陽光、雨水、農夫、運送的人。一樣一樣想。拿掉其中一個，還有這顆蘋果嗎？它有沒有一個不靠這些、自己就成立的蘋果？",
+           "想一想：「沒有自性」和「沒有」，差在哪裡？今天吃的飯、說過的話、做過的事，是不是都沒有自性，卻又真的會帶來結果？",
+           "想一件今天覺得「反正都是空的，無所謂」的事。提醒自己：正因為是依因緣而有，種什麼因，就得什麼果，因果更不能隨便。"]}
 ];
 function vstage(){let s=VSTAGES[0];const H=S.vheard||{};for(const v of VSTAGES)if(v.req.every(n=>H[n]))s=v;return s}
 const VIP_INTRO="接下來是觀察修。跟止住修不一樣，現在要用心去思惟、去觀察。";
@@ -675,6 +709,11 @@ CPS.push(
   items:[["說得出為什麼只有奢摩他不夠（只能壓伏煩惱，不能斷根）","重聽毗缽舍那第 1～4 講。"],
          ["知道求空正見要依止善知識、多聽聞、依了義的經論","重聽毗缽舍那第 5～9 講。"],
          ["分得出止住修和觀察修","止住修是安住不分析；觀察修是用正理思惟。看「調整」頁第二章的說明。"]]},
+ {id:"vdep",name:"有與有自性（第二章）",when:"聽完毗缽舍那第 91 講",
+  trig:s=>!!s.vipOn&&[57,63,77,91].every(n=>(s.vheard||{})[n]),
+  items:[["分得出「有」「無」「有自性」「無自性」四者，能舉一個生活的例子","重聽毗缽舍那第 77、91 講。"],
+         ["說得出中觀師怎麼安立因果：正因為無自性，因果緣起才能成立","重聽毗缽舍那第 57～63 講。"],
+         ["不再說「空就是什麼都沒有」","用觀察修第 4 階的題目練幾次。"]]},
  {id:"vrecog",name:"認識所破（第二章）",when:"聽完毗缽舍那第 47～49 講",
   trig:s=>!!s.vipOn&&[47,48,49].every(n=>(s.vheard||{})[n]),
   items:[["說得出為什麼要先認識所破","重聽毗缽舍那第 47～49 講。"],
@@ -687,6 +726,48 @@ function vipSection(d){const q=vqueue();const w=weekNo(today());const hw=vheardI
   <div class="card"><div class="task"><button class="check ${d.vthink?"on":""}" data-act="vthink" aria-label="觀察修${d.vthink?"，已完成":""}">${d.vthink?"✓":"○"}</button>
     <div style="min-width:0"><div class="t">觀察修・5 分鐘 <span class="tag">${vs.n}・${esc(vs.name)}</span></div><div class="d">${esc(vs.focus)}</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="vthink">${d.vthink?"再做一次":"開始"}</button></div></div></div></div>
   </section>`}
+/* ===== 慧：次第地圖、詞卡、小測驗、下座後（內容在 vip_guide.js） ===== */
+const VGS=()=>window.VG_STEPS||[];
+function vgStep(){const St=VGS();if(!St.length)return 0;const q=vqueue();const n=q.length?q[0]:(vipNums().slice(-1)[0]||1);let cur=0;
+  St.forEach((s,i)=>{if(s.from!=null&&s.from<=n)cur=i});return cur}
+let vgFlip={};
+function vgSection(){const St=VGS();if(!St.length)return "";const cur=vgStep();
+  const lect=s=>s.from==null?"老師還沒講到，可以先讀原文":`止觀初探・毗缽舍那 第 ${s.from}～${s.to||"（連載中）"} 講`;
+  const map=St.map((s,i)=>`<details class="vg-step ${i<cur?"done":i===cur?"cur":"todo"}" ${i===cur?"open":""}><summary><b class="vg-n">${i<cur?"✓":i+1}</b><span>${esc(s.name)}<small>${esc(s.scroll)}・${esc(lect(s))}</small></span></summary>
+      <ul class="vg-pts">${s.pts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${s.q?`<p class="root">${esc(s.q)}</p>`:""}</details>`).join("");
+  const cmp=(window.VG_COMPARE||[]).map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("");
+  const cards=(window.VG_CARDS||[]).map((c,i)=>{const lock=c.s>cur;const on=!!vgFlip[i];
+    return lock?`<div class="vgc lock" aria-label="第 ${c.s+1} 步解鎖"><b>？</b><small>第 ${c.s+1} 步解鎖</small></div>`
+      :`<button class="vgc ${on?"on":""}" data-act="vg-flip" data-i="${i}" aria-pressed="${on}">${on?`<b>${esc(c.t)}</b><span>${esc(c.d)}</span>${c.m?`<small>比喻：${esc(c.m)}</small>`:""}`:`<b>${esc(c.t)}</b><small>點一下翻面</small>`}</button>`}).join("");
+  const Q=(window.VG_QUIZ||[]).filter(x=>x.s<=cur);const got=S.vquiz||{};const ok=Q.filter(x=>got[(window.VG_QUIZ||[]).indexOf(x)]).length;
+  return `<section class="section"><span class="eyebrow">毗缽舍那的次第地圖</span>
+    <div class="card has-tr">${sticker("zz","think","tr","你在這裡")}<p class="meta">依照你聽到的講次，目前在第 ${cur+1} 步。後面的步驟老師還在講，可以先讀原文。</p>
+      <div class="vg-map">${map}</div>
+      <details class="vg-cmp"><summary>止和觀，差在哪裡？</summary><table><thead><tr><th></th><th>奢摩他（止）</th><th>毗缽舍那（觀）</th></tr></thead><tbody>${cmp}</tbody></table></details></div></section>
+  <section class="section"><div class="row between"><span class="eyebrow">詞卡</span><span class="mini-note">比喻只取一分，記得對照原文</span></div>
+    <div class="vg-cards">${cards}</div></section>
+  <section class="section"><span class="eyebrow">小測驗</span>
+    <div class="card has-tr">${sticker("an","happy","tr","考考你")}<p class="meta">已解鎖 ${Q.length} 題，答對過 ${ok} 題。每題第一次答對，燈油 +1。</p>
+      <div class="btns"><button class="btn primary" data-act="vg-quiz" ${Q.length?"":"disabled"}>${ok<Q.length?"來三題":"再練三題"}</button></div></div></section>
+  <section class="section"><span class="eyebrow">下座後</span>
+    <div class="card"><div class="steps">${(window.VG_LIFE||[]).map(([t,d])=>`<div class="tip"><b>${esc(t)}</b><br>${esc(d)}</div>`).join("")}</div>
+      <details><summary>要避開的坑（廣論特別破的）</summary><ol class="vg-pits">${(window.VG_PITS||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details></div></section>`}
+function openVgQuiz(){const all=window.VG_QUIZ||[];const cur=vgStep();const got=S.vquiz||{};
+  const pool=all.map((x,i)=>i).filter(i=>all[i].s<=cur);if(!pool.length)return;
+  const fresh=pool.filter(i=>!got[i]),old=pool.filter(i=>got[i]);const sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+  const pick=sh(fresh).concat(sh(old)).slice(0,3);let k=0,score=0;const L=document.getElementById("layer");
+  const show=()=>{if(k>=pick.length){L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qz-h"><div class="panel">${sticker("zz",score===pick.length?"cheer":"gentle","tr",score===pick.length?"全對！":"再接再厲")}
+      <h2 id="qz-h">答對 ${score}／${pick.length} 題</h2><p class="meta">答錯的題目，下次還會出現。也可以回頭看看次第地圖裡的原文。</p><div class="btns"><button class="btn primary" id="qzOk">好</button></div></div></div>`;
+      document.getElementById("qzOk").onclick=()=>{L.innerHTML="";render()};return}
+    const i=pick[k],x=all[i];
+    L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qz-h"><div class="panel"><span class="eyebrow">小測驗・${k+1}／${pick.length}・第 ${x.s+1} 步</span><h2 id="qz-h" class="qz-q">${esc(x.q)}</h2>
+      <div class="qz-o">${x.o.map((o,j)=>`<button class="btn" data-j="${j}">${esc(o)}</button>`).join("")}</div><div id="qzW"></div></div></div>`;
+    L.querySelectorAll(".qz-o .btn").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;const right=j===x.a;
+      L.querySelectorAll(".qz-o .btn").forEach(bb=>{bb.disabled=true;if(+bb.dataset.j===x.a)bb.classList.add("primary")});if(!right)b.classList.add("wrong");
+      if(right){score++;S.vquiz=S.vquiz||{};if(!S.vquiz[i]){S.vquiz[i]=today();toast("答對了，燈油 +1")}persist()}
+      document.getElementById("qzW").innerHTML=`<p class="${right?"qz-ok":"qz-no"}">${right?"答對了！":"再想想："}${esc(x.w)}</p><div class="btns"><button class="btn primary" id="qzN">${k+1<pick.length?"下一題":"看結果"}</button></div>`;
+      document.getElementById("qzN").onclick=()=>{k++;show()}})};
+  show()}
 function vipNotes(){const out=[];Object.keys(DAYS).sort().reverse().forEach(k=>{(DAYS[k].vnotes||[]).slice().reverse().forEach(x=>out.push([k,x]))});
   return out.length?`<div class="steps">${out.slice(0,5).map(([k,x])=>`<div class="tip"><span class="mini-note num">${k.slice(5)}・第 ${x.s} 階</span><br>${esc(x.t)}</div>`).join("")}</div>`:`<p class="meta">做完觀察修寫下的一句話，會出現在這裡。</p>`}
 function openVipNote(){const L=document.getElementById("layer");const vs=vstage();
@@ -1228,7 +1309,8 @@ function vHui(){const d=day(today())||{};
     <div class="btns"><button class="btn primary" data-act="vip-on">開啟毗婆舍那</button></div></div></section>`;
   return subHead("慧・增上慧學","聽聞毗婆舍那",`觀察修第 ${vstage().n} 階「${vstage().name}」。${vstage().focus}`)+`
   ${reviewCard("v")}
-  ${vipSection(d)}`}
+  ${vipSection(d)}
+  ${vgSection()}`}
 
 function vProgress(){
   const t=today();const hc=heardCount();const ic=introCount();
@@ -1368,6 +1450,9 @@ document.addEventListener("click",e=>{
     case "heard": if(b.dataset.ch==="v"){S.vheard=S.vheard||{};S.vheard[b.dataset.n]=t;persist();render();toast(`毗缽舍那第 ${b.dataset.n} 講已點亮，燈油 +3`)}else{S.heard[b.dataset.n]=t;persist();render();toast(`第 ${b.dataset.n} 講已點亮，燈油 +3`)}break;
     case "toggle": {const n=b.dataset.n;const H=b.dataset.ch==="v"?(S.vheard=S.vheard||{}):S.heard;if(H[n])delete H[n];else H[n]=t;go();break}
     case "vthink": Session.run("vip");break;
+    case "vg-flip": {const i=+b.dataset.i;vgFlip[i]=!vgFlip[i];b.classList.toggle("on",vgFlip[i]);const c=(window.VG_CARDS||[])[i];
+      b.setAttribute("aria-pressed",vgFlip[i]);b.innerHTML=vgFlip[i]?`<b>${esc(c.t)}</b><span>${esc(c.d)}</span>${c.m?`<small>比喻：${esc(c.m)}</small>`:""}`:`<b>${esc(c.t)}</b><small>點一下翻面</small>`;break}
+    case "vg-quiz": openVgQuiz();break;
     case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("毗婆舍那已開啟");break;
     case "vip-later": S.vipOffered=true;go();break;
     case "vip-off": S.vipOn=false;if(listFilter==="vip")listFilter="intro";go();break;

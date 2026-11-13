@@ -109,6 +109,10 @@ def topic_of(q):
     return clip(t)
 
 
+# 逐字稿裡被誤標成原文的師父講解（卷, 段落位置）；用 tools 掃描「原文段裡的白話字比例」找出、人工確認過
+MISLABEL = [(117, 29), (119, 1), (124, 20), (124, 23), (225, 4), (226, 5), (226, 25), (226, 56)]
+
+
 def main():
     vols = list(range(1, LAST_LR + 1))
     with ThreadPoolExecutor(10) as ex:
@@ -207,6 +211,27 @@ def main():
         else:
             tidy.append(u)
     units = tidy
+    # 大慈恩逐字稿把師父講解誤標成廣論原文（scripture-kai）的段落：不當原文顯示。
+    # 只改顯示的原文文字，不動分段與段落識別碼（主題、進度、起點校準都靠識別碼）。
+    # 整段原文都是誤標的，就當成上一段原文的續講。
+    BADTXT = set()
+    for bv, bi in MISLABEL:
+        bps = paras_of(data[bv])
+        if bi < len(bps) and bps[bi][0]:
+            BADTXT.add(bps[bi][2])
+    for x, u in enumerate(units):
+        lines = u[1].split(chr(10))
+        keep = [l for l in lines if l not in BADTXT]
+        if len(keep) == len(lines):
+            continue
+        if keep:
+            u[1] = chr(10).join(keep)
+        elif x:
+            u[1] = units[x - 1][1].split(chr(10))[0][:40] + "（續）"
+            if len(u) == 8:
+                u.append(1)
+            else:
+                u[8] = 1
     # 太長的段（超過 MAX_SEC）照講解段落的時間再切成幾天，原文標（二）（三）……
     NUM = "一二三四五六七八九十"
     split = []
@@ -250,6 +275,26 @@ def main():
         if m:
             u[9] = m[0]
             u.append(m[1])
+    # 起點校準：tools/start_fix.json（calib_starts.py 用語音辨識對位的結果）。同卷上一段的結束點跟著改；
+    # 套用後若前後順序不對、或段落短於 30 秒，就不採用那一筆。
+    fp = os.path.join(ROOT, "tools", "start_fix.json")
+    if os.path.exists(fp):
+        FIX = json.load(open(fp, encoding="utf-8"))
+        used = 0
+        for i, u in enumerate(units):
+            t = FIX.get("%d.%d" % (u[0], u[4]))
+            if t is None or u[2] <= 1:
+                continue
+            prev = units[i - 1] if i and units[i - 1][0] == u[0] else None
+            if prev is not None and t - prev[2] < 30:
+                continue
+            if t >= u[3] - 30:
+                continue
+            u[2] = t
+            if prev is not None:
+                prev[3] = t
+            used += 1
+        print("  起點校準：套用 %d / %d 筆" % (used, len(FIX)))
     # 法類分界：照廣論科判校正過的起點（tools/cat_bounds.json：法類→起始段落識別碼），覆蓋上面「卷內第一次提到法類名」的估計
     bp = os.path.join(ROOT, "tools", "cat_bounds.json")
     if os.path.exists(bp):

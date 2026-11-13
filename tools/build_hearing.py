@@ -60,6 +60,11 @@ def write_js():
     C = json.load(open(os.path.join(ROOT, "tools", "out", "hearing_chunks.json"), encoding="utf-8"))
     M = json.load(open(os.path.join(ROOT, "tools", "hearing_meta.json"), encoding="utf-8"))
     assert len(C) == len(M), (len(C), len(M))
+    fp = os.path.join(ROOT, "tools", "hearing_fix.json")
+    FIX = json.load(open(fp, encoding="utf-8")) if os.path.exists(fp) else {}
+    fx = lambda v, t: t if t is None else FIX.get("%d:%g" % (v, t), t)   # 聲音對位校準過的切點（calib_hearing.py）
+    for c in C:
+        c["plan"] = [[v, fx(v, s), fx(v, e)] for v, s, e in c["plan"]]
     out, lastq = [], ""
     for c, (topic, goal) in zip(C, M):
         q = "\n".join(c["q"]) or lastq

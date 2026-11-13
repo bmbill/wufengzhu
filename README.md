@@ -40,6 +40,18 @@
 
 `hearing.js` 是聞法勝利前行：師父講「聽聞勝利」的部分（卷 17 後段～卷 19 前段），由 `tools/build_hearing.py` 照講解段落切成 16 小段（約 2～3 分鐘），主題與目標寫在 `tools/hearing_meta.json`（`python tools/build_hearing.py` 產生切段，`python tools/build_hearing.py js` 合成）。進度以「卷.段落位置」記錄，重新產生資料也不會跑掉。
 
+## 慧：次第地圖、詞卡、小測驗
+
+`vip_guide.js`：毗缽舍那 9 步次第地圖（依聽到的講次標出目前在哪一步）、止觀對照、13 張詞卡、12 題小測驗、下座後練習與要避開的坑。內容整理自 `__AI\毗婆舍那次第整理_學習網站素材.md`。
+
+## 分段點的聲音對位
+
+逐字稿時間和字數推算都不準，改用 faster-whisper 辨識分段點附近的聲音，拼音比對上一段最後幾個字／這一段開頭幾個字來定位：
+- 戒：`tools/calib_starts.py` → `tools/start_fix.json`（build_lamrim.py 套用）
+- 止觀初探、毗缽舍那：`tools/calib_segments.py` → `tools/segments_align.json`（build_segments.py 套用）
+- 聞法勝利：`tools/calib_hearing.py` → `tools/hearing_fix.json`（build_hearing.py js 套用）
+- 毗缽舍那新講次：這台電腦的工作排程「DengDeng-SegmentCalib」每週日 20:00 跑 `tools/local_weekly.py` 補校。
+
 ## 免手持（在路上聽）
 
 聽完一段或一講時，先在心裡做結論，再說「繼續／完成」或「重聽」（瀏覽器的語音辨識，zh-TW；第一次會問麥克風權限）。耳機的「下一首」＝繼續、「上一首」＝重聽，螢幕鎖住時也能用。筆記欄旁有「🎙 用說的」可以語音輸入。調整頁可以關掉語音指令。
