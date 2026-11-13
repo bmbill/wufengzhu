@@ -605,7 +605,7 @@ const DEDICATE="願以此功德，普及於一切，我等與眾生，皆共成�
 const BODY_BRIEF="雙腿盤坐或散盤都可以。背自然挺直，不靠椅背。肩膀放鬆、放平。眼睛微微張開，往下看著鼻端的方向。舌尖輕抵上齒。";
 const BODY_FULL=["第一，雙腿：全跏趺或半跏趺，不舒服就散盤。","第二，眼睛：不要全閉，也不要張大，輕輕垂下，看著鼻端的方向。","第三，身體：不後仰，也不前傾，端正地坐。","第四，雙肩：放平，不要一高一低。","第五，頭：不抬、不低、不歪，從鼻子到肚臍成一直線。","第六，嘴唇和牙齒：自然放鬆。","第七，舌頭：輕抵上齒。","第八，呼吸：無聲、不粗、不急，輕到自己幾乎感覺不到。"];
 const BREATH_SAY="現在讓呼吸慢下來。不要用力吸，只要慢慢地呼。讓它安靜、輕柔，不出聲。";
-const COUNT_SAY="接下來數呼吸。一吸一呼算一次，在心裡默數，數到二十一。數亂了，就從一重來。數完了按「數完了」，或者等鈴聲。";
+const COUNT_SAY="接下來數呼吸。一吸一呼算一次，在心裡默數，數到二十一。數亂了，就從一重來。數完了，可以按「數完了」，或直接說「數完了」，或者等鈴聲。";
 /* ================= 角色與主題 ================= */
 /* 每個主題是一對不同的角色：zz＝引導者、an＝學員。
    圖檔放 chars/<主題>/guide-<表情>.png、learner-<表情>.png（用 tools/slice_sheet.py 從 ChatGPT 的 4×4 大圖切出來），
@@ -1007,15 +1007,15 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
 const Hands={on:null,rec:null,tries:0,
   can(){return !!SR&&S.handsVoice!==false},
   /* o={next,repeat}：next＝繼續／完成，repeat＝重聽 */
-  async arm(o,say){this.disarm();this.on=o;this.tries=0;this.media(true);this.status("wait");for(const s of [].concat(say||[])){if(this.on!==o)return;await Voice.speak(s)}if(this.on===o&&this.can())this.listen();else this.status()},
+  async arm(o,say,opt){this.disarm();this.on=o;this.tries=0;this.keep=!!(opt&&opt.keep);this.media(true);this.status("wait");for(const s of [].concat(say||[])){if(this.on!==o)return;await Voice.speak(s)}if(this.on===o&&this.can())this.listen();else this.status()},
   disarm(){this.on=null;this.stop();this.media(false);this.status()},
   media(on){if(!("mediaSession" in navigator))return;try{navigator.mediaSession.setActionHandler("nexttrack",on?()=>this.fire("next"):null);navigator.mediaSession.setActionHandler("previoustrack",on?()=>this.fire("repeat"):null)}catch(e){}},
   fire(k){const o=this.on;if(!o)return;this.disarm();Voice.stop();if(o[k])o[k]()},
   listen(){if(!SR||!this.on)return;let r;try{r=new SR()}catch(e){return}r.lang="zh-TW";r.interimResults=true;r.continuous=false;r.maxAlternatives=3;
     r.onresult=e=>{let t="";for(const x of e.results)for(const a of x)t+=a.transcript+"|";
-      if(/重聽|再聽|重來|重新|從頭/.test(t))this.fire("repeat");else if(this.on&&this.on.more&&/下一段|下一個|接著聽|繼續聽/.test(t))this.fire("more");else if(/繼續|下一|好了|完成|可以|點亮|OK|ok|okay/i.test(t))this.fire("next")};
+      if(/重聽|再聽|重來|重新|從頭/.test(t))this.fire("repeat");else if(this.on&&this.on.more&&/下一段|下一個|接著聽|繼續聽/.test(t))this.fire("more");else if(/數完|完了|繼續|下一|好了|完成|可以|點亮|OK|ok|okay/i.test(t))this.fire("next")};
     r.onerror=e=>{if(e&&(e.error==="not-allowed"||e.error==="service-not-allowed")){S.handsVoice=false;persist();this.status();toast("沒有麥克風權限，改用按鈕或耳機按鍵")}};
-    r.onend=()=>{if(this.rec!==r)return;this.rec=null;if(this.on&&this.can()&&this.tries++<8)setTimeout(()=>{if(this.on&&!this.rec)this.listen()},250);else this.status()};
+    r.onend=()=>{if(this.rec!==r)return;this.rec=null;if(this.on&&this.can()&&(this.keep||this.tries++<8))setTimeout(()=>{if(this.on&&!this.rec)this.listen()},250);else this.status()};
     this.rec=r;try{r.start();this.status("listen")}catch(e){this.rec=null}},
   stop(){const r=this.rec;this.rec=null;try{r&&r.abort()}catch(e){}},
   status(st){document.querySelectorAll(".hands").forEach(el=>{el.className="hands "+(this.on?(st||(this.rec?"listen":"idle")):"off")})}};
@@ -1880,6 +1880,9 @@ const Audio_={ac:null,unlock(){try{if(!this.ac)this.ac=new (window.AudioContext|
   bell(soft){try{this.unlock();const ac=this.ac;const t=ac.currentTime;[[196,1],[392.5,.55],[588,.3],[1176,.12]].forEach(([f,g])=>{const o=ac.createOscillator(),gn=ac.createGain();o.type="sine";o.frequency.value=f;gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime((soft?.12:.28)*g,t+.015);gn.gain.exponentialRampToValueAtTime(.0001,t+5);o.connect(gn).connect(ac.destination);o.start(t);o.stop(t+5.1)})}catch(e){}}};
 /* 語音：優先播預錄的 Azure 曉曉 mp3（voice/map.js，破音字已用拼音校正）；沒有錄音的句子才用手機內建語音。 */
 const player=new Audio();player.preload="auto";
+/* 戒的每段引導語（主題、目標）預錄在 voice-lr/，檔名＝句子的 FNV-1a 雜湊（tools/make_lr_voice.py 同一個算法） */
+const LRV_RE=/^(聽法之前，我們先聽一段師父講聞法勝利|透過這一段，我們可以知道|這一段，請想一想|接下來，正式聽師父講)/;
+function fnvHex(s){let h=0x811c9dc5;for(const ch of s){h^=ch.codePointAt(0);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,"0")}
 const Voice={web:("speechSynthesis" in window),cur:null,mode:null,
   map(){return window.VOICE_MAP||null},
   describe(){const m=this.map();if(m)return `使用預錄的「${(window.VOICE_INFO&&VOICE_INFO.name)||"曉曉"}」語音，破音字已校正（共 ${Object.keys(m).length} 句）。`;if(this.web)return "錄音檔還沒載入，暫時用手機內建的中文語音。";return "這個瀏覽器不支援語音，引導會用文字和鈴聲。"},
@@ -1890,6 +1893,7 @@ const Voice={web:("speechSynthesis" in window),cur:null,mode:null,
     if(!S.voice) return timed(text);
     const m=this.map();
     if(m&&m[text]) return this.clip(m[text],text);
+    if(LRV_RE.test(text)) return this.clip("../voice-lr/"+fnvHex(text)+".mp3",text);   // 戒的引導語：曉曉預錄（找不到就用手機語音）
     return this.webSay(text);
   },
   clip(file,text){return new Promise(res=>{let fin=false;const end=()=>{if(fin)return;fin=true;clearTimeout(g);player.onended=player.onerror=null;this.cur=null;res()};
@@ -2029,6 +2033,7 @@ const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0
   },
   wait(ms,o={}){return new Promise(res=>{let left=ms;let last=performance.now();const clk=document.getElementById("clock");const cnt=document.getElementById("countBtn");
     if(cnt)cnt.hidden=!o.count;
+    if(o.count&&Hands.can())Hands.arm({next:()=>{this.skipF=true}},null,{keep:true});
     if(o.steady)Scene.flicker(0);
     const tick=()=>{const now=performance.now();const dt=now-last;last=now;
       if(this.abortF||this.skipF){done();return}
@@ -2036,7 +2041,7 @@ const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0
       if(clk&&o.clock){const s=Math.max(0,Math.ceil(left/1000));clk.textContent=`${Math.floor(s/60)}:${pad(s%60)}`}
       if(left<=0){done();return}
       this._raf=requestAnimationFrame(tick)};
-    const done=()=>{if(clk&&o.clock)clk.textContent="";if(cnt)cnt.hidden=true;if(o.steady)Scene.flicker(.4);res()};
+    const done=()=>{if(o.count&&Hands.on)Hands.disarm();if(clk&&o.clock)clk.textContent="";if(cnt)cnt.hidden=true;if(o.steady)Scene.flicker(.4);res()};
     this._raf=requestAnimationFrame(tick)})},
   async pace(cycles){
     const cap=document.getElementById("cap");
@@ -2059,7 +2064,7 @@ const Session={on:false,paused:false,skipF:false,abortF:false,kind:null,silent:0
     const pb=document.getElementById("ovPause");pb.onclick=()=>{this.paused=!this.paused;pb.textContent=this.paused?"繼續":"暫停";if(this.paused)Voice.pause();else Voice.resume()};
   },
   setStep(s,i,n){const el=document.getElementById("ov-step");if(el&&s.label)el.textContent=s.label;document.querySelectorAll("#prog i").forEach((x,j)=>x.classList.toggle("on",j<=i))},
-  unmount(){cancelAnimationFrame(this._raf);document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="today"?"orb":"none")}
+  unmount(){cancelAnimationFrame(this._raf);if(Hands.on)Hands.disarm();document.body.classList.remove("in-session");Voice.stop();document.getElementById("layer").innerHTML="";this.on=false;try{this.lock&&this.lock.release()}catch(e){}this.lock=null;Scene.breathe(null);Scene.flicker(1);Scene.setMode(route==="today"?"orb":"none")}
 };
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&Session.on){Session.abortF=true}});
 

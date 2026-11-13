@@ -3,3 +3,4 @@ tools/out/
 tools/*.png
 tools/cache/
 *.part
+voice-lr/*.part
