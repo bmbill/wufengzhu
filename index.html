@@ -177,6 +177,16 @@ body.in-session .lplayer{visibility:hidden}
 .tri-row{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:start}
 .tri-k{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-size:20px;background:var(--ink);color:#fff}
 body.sub:not(.in-session) #gl{opacity:0;transition:opacity .4s}
+/* 法語卡 */
+.qcard{position:relative;margin:14px 0 6px;padding:22px 18px 16px;border-radius:22px;background:linear-gradient(160deg,#fffaf0,#fff3e0);box-shadow:var(--shadow);border:1px solid rgba(255,173,31,.35)}
+.qcard .sticker.tr{top:-34px;right:-4px}
+.qc-t{font-family:var(--f-display);font-size:21px;line-height:1.7;margin:6px 0 12px;color:var(--ink)}
+.qc-src{font-size:12px;color:var(--mute);text-align:right;margin:0}
+.qc-go{display:block;margin:6px 0 0 auto}
+.qgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.qmini{min-height:58px;border:0;border-radius:12px;background:#fff7e8;font:inherit;font-size:12px;line-height:1.45;color:var(--ink);padding:6px;text-align:left;cursor:pointer}
+.qmini.lock{display:grid;place-items:center;background:rgba(43,35,80,.05);color:var(--faint);cursor:default}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 /* 慧：次第地圖、詞卡、小測驗 */
 .vg-map{display:grid;gap:6px;margin-top:8px}
 .vg-step{border-radius:14px;background:var(--card-2);padding:2px 10px}
@@ -264,8 +274,9 @@ details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;padding:4px 
 .oil-v{font-family:var(--f-num);font-size:30px;font-weight:500;line-height:1}
 .themes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .th{border:2px solid transparent;background:rgba(255,255,255,.7);border-radius:18px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;min-width:0}
-.th .pv{width:100%;height:52px;display:flex;justify-content:center;gap:2px}
-.th .pv img,.th .pv svg{width:40px;height:40px;object-fit:contain}
+.th .pv{width:100%;height:52px;display:flex;justify-content:center;align-items:center;gap:0;overflow:hidden}
+.th .pv img,.th .pv svg{width:33%;max-width:40px;height:auto;aspect-ratio:1;object-fit:contain;min-width:0}
+.th small.who span{white-space:nowrap}
 .th small.who{color:var(--ink);font-size:11px}
 .th b{font-family:var(--f-display);font-size:15px}
 .th small{font-size:11px;color:var(--mute)}
@@ -408,6 +419,7 @@ body.in-session::before{background:transparent}
 <script src="lamrim.js"></script>
 <script src="hearing.js"></script>
 <script src="vip_guide.js"></script>
+<script src="quotes.js"></script>
 <script src="chars/files.js"></script>
 <script>
 /* ================= 資料 ================= */
@@ -508,10 +520,12 @@ const THEMES=[
   {id:"ocean",name:"海洋",cost:200,desc:"呼吸又慢又穩的海龜慢慢、八隻手忙不停的小章魚八八，和深海裡自己會發光的燈籠魚小燈。",
    zz:{name:"慢慢",kind:"turtle"},an:{name:"八八",kind:"octopus"},hu:{name:"小燈",kind:"lantern"}}
 ];
-const OIL_RULES="每日聽聞一段 +2・聞法勝利 +1・法類印章 +10・上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1・小測驗每題第一次答對 +1（第二章）";
+const OIL_RULES="每日聽聞一段 +2・聞法勝利 +1・法類印章 +10・上座一座 +2（每天最多兩座）・聽完一講 +3・保底一分鐘 +1・呼吸警報 +1・睡前反省 +1・通過檢核 +5・觀察修 +2（第二章）・同一講再聽第 2、3 遍各 +1・小測驗每題第一次答對 +1（第二章）。抽法語卡用掉的是「可用燈油」，累積燈油不會減少";
 function oil(){let o=0;for(const k in DAYS){const d=DAYS[k];o+=Math.min((d.sits||[]).length,2)*2;if(d.min)o+=1;if(d.breath)o+=1;if(d.night)o+=1;if(d.vthink)o+=2;if(d.hb)o+=1}
   o+=Object.keys(S.vquiz||{}).length+Object.keys((S.lr&&S.lr.done)||{}).length*2+Object.keys(S.stamps||{}).length*10;for(const k in (S.notes||{}))o+=Math.max(0,((S.notes[k].p||[]).length)-1);o+=(Object.keys(S.heard).length+Object.keys(S.vheard||{}).length)*3;for(const id in S.cps)if(S.cps[id]&&S.cps[id].passed)o+=5;return o}
 const unlocked=th=>oil()>=th.cost;
+const CARD_COST=5;
+const availOil=()=>Math.max(0,oil()-(S.spent||0));
 const themeOf=id=>THEMES.find(x=>x.id===id)||THEMES[0];
 const curTheme=()=>{const t=THEMES.find(x=>x.id===S.theme);return t&&unlocked(t)?t.id:"dawn"};
 const nm=(who,theme)=>themeOf(theme||curTheme())[who].name;
@@ -1221,7 +1235,7 @@ function render(){
   document.body.classList.toggle("sub",SUBS.includes(route));Scene.setMode(route==="progress"?"lamps":SUBS.includes(route)?"none":"orb");
   Scene.setLamps(S.heard);
   if(!S.onboarded&&!document.querySelector(".sheet")) openOnboard();
-  else checkUnlock();
+  else{checkUnlock();checkFreeCard()}
 }
 function lastIssue(){const t=today();for(let i=0;i<5;i++){const d=day(addDays(t,-i));if(d&&d.sits&&d.sits.length){const s=d.sits[d.sits.length-1];const it=(s.i||[]).find(x=>ISSUE_TALK[x]);return it||null}}return null}
 function dailyTalk(){const n=daysBetween(S.start,today());const iss=lastIssue();
@@ -1248,7 +1262,7 @@ function vToday(){
   const sdone=(d.sits||[]).length,sneed=S.sits;const hw=heardInWeek(w);const co=coach();const dingOk=sdone>=sneed;
   // 慧
   const vhw=S.vipOn?vheardInWeek(w):0;const huiOk=S.vipOn&&!!d.vthink;
-  const okCount=[jieOk,dingOk,huiOk].filter(Boolean).length,total=S.vipOn?3:2;
+  const okCount=[jieOk,dingOk,huiOk].filter(Boolean).length,total=S.vipOn?3:2;dayAllDone=okCount>=total;
   const tiles=[
     homeTile({k:"jie",href:"jie",glyph:"戒",eb:"戒・增上戒學",title:"聽聞廣論",
       sub:lcat?`${lcat[1]}・${lcat[0]}`:"道前基礎到四攝全部聽完了",
@@ -1352,6 +1366,7 @@ function vProgress(){
   ${S.vipOn?`<section class="section"><span class="eyebrow">第二章・毗缽舍那</span><div class="card has-tr">${sticker("zz","think","tr","")}<div><div class="oil-v num">${vheardCount()}<small style="font-size:14px;color:var(--mute)"> / ${vipNums().length} 講</small></div><div class="mini-note">觀察修：第 ${vstage().n} 階・${esc(vstage().name)}</div></div><span class="eyebrow">最近的觀察筆記</span>${vipNotes()}</div></section>`:""}
   ${stampsSection()}
   ${vThemes()}
+  ${vCards()}
   <section class="section"><span class="eyebrow">最近十二週</span>
     <div class="card"><div class="heat" aria-label="最近十二週的上座紀錄">${cells.join("")}</div>
     <div class="legend"><span><i style="background:rgba(239,231,214,.07)"></i>沒坐</span><span><i style="background:rgba(243,181,68,.35)"></i>保底</span><span><i style="background:rgba(243,181,68,.7)"></i>一座</span><span><i style="background:var(--gold)"></i>兩座</span><span><i style="background:rgba(134,212,189,.25)"></i>請假</span></div></div>
@@ -1366,13 +1381,45 @@ function vProgress(){
 }
 let listFilter="intro";
 const fmtT=s=>{s=Math.max(0,Math.floor(s||0));return `${Math.floor(s/60)}:${pad(s%60)}`};
+/* ===== 法語卡：師父原話＋角色＋出處；可用燈油 5 滴抽一張，某天戒定慧都做完送一張 ===== */
+const QS=()=>window.QUOTES||[];
+let dayAllDone=false;
+function qUnit(q){const i=lrIndex(q[1]);return i}
+function qSource(q){const i=qUnit(q);const u=i!=null?LRA()[i]:null;const cat=u?LRC()[u[6]][0]:"";return `師父・南普陀廣論第 ${String(q[1]).split(".")[0]} 卷${cat?"・"+cat:""}`}
+function qCard(q,k){const who=tileWho(q[3]||"jie");return `<div class="qcard">${sticker(who,q[2]||"happy","tr","")}<p class="qc-t">「${esc(q[0])}」</p>
+  <p class="qc-src">${esc(qSource(q))}</p>${qUnit(q)!=null?`<button class="lk-inline qc-go" data-act="q-listen" data-k="${k}">▶ 聽這一段</button>`:""}</div>`}
+function drawCard(free){const Q=QS();if(!Q.length)return;const got=S.qcards||{};
+  const fresh=Q.map((q,i)=>i).filter(i=>!got[i]);const pool=fresh.length?fresh:Q.map((q,i)=>i);const k=pool[Math.floor(Math.random()*pool.length)];
+  if(free){const d=ensureDay(today());d.qfree=k}else S.spent=(S.spent||0)+CARD_COST;
+  S.qcards=S.qcards||{};const isNew=!S.qcards[k];if(isNew)S.qcards[k]=today();persist(today());
+  const L=document.getElementById("layer");
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qd-h"><div class="panel">
+    <span class="eyebrow">${free?"今天戒、定、慧都做了，送你一張":"用 "+CARD_COST+" 滴燈油換一張"}${isNew?"・新卡！":"・已經有了"}</span><h2 id="qd-h" class="sr">法語卡</h2>
+    ${qCard(Q[k],k)}
+    <div class="btns"><button class="btn primary" id="qdOk">收進法語集</button>${availOil()>=CARD_COST?`<button class="btn" id="qdMore">再抽一張（${CARD_COST} 滴）</button>`:""}</div>
+    <p class="mini-note">法語集 ${Object.keys(S.qcards).length}／${Q.length} 張・可用燈油 ${availOil()} 滴</p></div></div>`;
+  document.getElementById("qdOk").onclick=()=>{L.innerHTML="";render()};
+  const m=document.getElementById("qdMore");if(m)m.onclick=()=>drawCard(false)}
+function openQuote(k){const Q=QS();const q=Q[k];if(!q)return;const L=document.getElementById("layer");
+  L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qo-h"><div class="panel"><span class="eyebrow">法語集・${esc(S.qcards[k]||"")}</span><h2 id="qo-h" class="sr">法語卡</h2>${qCard(q,k)}
+    <div class="btns"><button class="btn primary" id="qoX">關閉</button></div></div></div>`;
+  document.getElementById("qoX").onclick=()=>{L.innerHTML=""}}
+function checkFreeCard(){if(!dayAllDone||route!=="today"||document.querySelector("#layer .sheet")||!QS().length)return;const d=day(today());if(d&&d.qfree!=null)return;drawCard(true)}
+function vCards(){const Q=QS();if(!Q.length)return "";const got=S.qcards||{};const n=Object.keys(got).length;const a=availOil();
+  const cells=Q.map((q,k)=>got[k]?`<button class="qmini" data-act="q-open" data-k="${k}"><span>「${esc(q[0].slice(0,14))}${q[0].length>14?"…":""}」</span></button>`:`<span class="qmini lock" aria-hidden="true">？</span>`).join("");
+  return `<section class="section"><div class="row between"><span class="eyebrow">法語集</span><span class="mini-note num">${n}／${Q.length} 張</span></div>
+  <div class="card has-tr">${sticker(tileWho("jie"),"love","tr","抽一張？")}
+    <p class="meta">師父講廣論的原話。用 ${CARD_COST} 滴燈油換一張；某天戒、定、慧都做了，送你一張。沒抽過的會先出來。<br>可用燈油 <b class="num">${a}</b> 滴（解鎖主題看的是累積燈油，抽卡不會影響）。</p>
+    <div class="btns"><button class="btn primary" data-act="q-draw" ${a>=CARD_COST?"":"disabled"}>${a>=CARD_COST?`抽一張（${CARD_COST} 滴）`:`還差 ${CARD_COST-a} 滴`}</button></div>
+    ${n?`<details class="qset"><summary>翻翻法語集</summary><div class="qgrid">${cells}</div></details>`:""}
+  </div></section>`}
 function vThemes(){const o=oil();const next=THEMES.find(t=>t.cost>o);const prev=[...THEMES].reverse().find(t=>t.cost<=o);const cur=curTheme();
   const pct=next?Math.round((o-prev.cost)/(next.cost-prev.cost)*100):100;
   return `<section class="section"><span class="eyebrow">燈油與主題</span>
   <div class="card has-tr">${sticker("zz","love","tr","收集中")}
     <div class="oilbar"><svg class="oil-drop" viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4c6 9 14 16 14 25a14 14 0 0 1-28 0c0-9 8-16 14-25z" fill="#ffad1f" stroke="#2b2350" stroke-width="2"/><ellipse cx="17" cy="28" rx="3" ry="5" fill="#fff" opacity=".6"/></svg>
-      <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴燈油</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
-    <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner(tileWho("jie",t.id),"happy",t.id)}${charInner(tileWho("ding",t.id),"happy",t.id)}${charInner(tileWho("hui",t.id),"happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${esc(t.zz.name)}＆${esc(t.an.name)}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
+      <div style="min-width:0;flex:1"><div class="oil-v">${o}<small style="font-size:14px;color:var(--mute)"> 滴燈油（累積）</small></div><div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mini-note">${next?`再 ${next.cost-o} 滴解鎖「${esc(next.name)}」`:"所有主題都解鎖了！"}</div></div></div>
+    <div class="themes">${THEMES.map(t=>{const ok=o>=t.cost;return `<button class="th ${t.id===cur?"on":""} ${ok?"":"lock"}" data-act="theme" data-id="${t.id}" aria-pressed="${t.id===cur}"><span class="pv">${charInner(tileWho("jie",t.id),"happy",t.id)}${charInner(tileWho("ding",t.id),"happy",t.id)}${charInner(tileWho("hui",t.id),"happy",t.id)}</span><b>${esc(t.name)}</b><small class="who">${["jie","ding","hui"].map(k=>`<span>${esc(t[tileWho(k,t.id)].name)}</span>`).join("・")}</small><small>${t.id===cur?"使用中":ok?"點一下換上":`需 ${t.cost} 滴`}</small></button>`}).join("")}</div>
     <p class="mini-note">${OIL_RULES}</p>
   </div></section>`}
 let openCp=null;
@@ -1469,6 +1516,9 @@ document.addEventListener("click",e=>{
     case "vg-flip": {const i=+b.dataset.i;vgFlip[i]=!vgFlip[i];b.classList.toggle("on",vgFlip[i]);const c=(window.VG_CARDS||[])[i];
       b.setAttribute("aria-pressed",vgFlip[i]);b.innerHTML=vgFlip[i]?`<b>${esc(c.t)}</b><span>${esc(c.d)}</span>${c.m?`<small>比喻：${esc(c.m)}</small>`:""}`:`<b>${esc(c.t)}</b><small>點一下翻面</small>`;break}
     case "vg-quiz": openVgQuiz();break;
+    case "q-draw": if(availOil()>=CARD_COST)drawCard(false);break;
+    case "q-open": openQuote(+b.dataset.k);break;
+    case "q-listen": {const q=QS()[+b.dataset.k];const i=q?qUnit(q):null;if(i!=null){document.getElementById("layer").innerHTML="";const u=LRA()[i];const cat=LRC()[u[6]];Audio_.unlock();LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i)})}break}
     case "vip-on": S.vipOn=true;S.vipOffered=true;go();toast("毗婆舍那已開啟");break;
     case "vip-later": S.vipOffered=true;go();break;
     case "vip-off": S.vipOn=false;if(listFilter==="vip")listFilter="intro";go();break;
