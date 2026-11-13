@@ -460,7 +460,10 @@ const esc_ = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&":
 function mySea(opts) {
   opts = opts || {};
   const info = skyInfo(opts.skyNo);
-  const skyNo = opts.scene ? (SCENES.findIndex((s) => s.key === opts.scene) + 1 || info.no) : info.no;
+  // 景：指定的 > 燈坊換來、設定裡選的（S.lampScene）> 依第幾片輪替
+  let chosen = opts.scene;
+  if (!chosen) { try { chosen = S.lampScene; } catch (e) { chosen = (window.S || {}).lampScene; } }
+  const skyNo = chosen ? (SCENES.findIndex((s) => s.key === chosen) + 1 || info.no) : info.no;
   const H = 1080;
   const spots = layoutOf(info.lamps, info.filled >= 108);
   const svg = skySVG({ layout: spots, filled: info.filled, reached: info.reached, skyNo, height: H });

@@ -94,7 +94,9 @@ function add(e) {
   d.shan = d.shan || [];
   if (d.shan.length >= MAX) return null;
   const now = new Date();
-  d.shan.push({ k: KINDS[e.k] ? e.k : "other", t: e.t || "", s: e.s || "", p: e.p || 0, at: String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") });
+  const k = KINDS[e.k] ? e.k : "other";
+  // c：類別的中文名稱（進度頁讀這個）；k：類別代號（這裡自己用）
+  d.shan.push({ c: KINDS[k].name, k, t: e.t || "", s: e.s || "", p: e.p || 0, at: String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0") });
   if (e.s) gS().shanSutra = e.s;
   save(date);
   const res = DDLamp.sync(date);
@@ -121,12 +123,66 @@ function stats() {
   for (const k in D) {
     const l = (D[k] && D[k].shan) || [];
     if (l.length) out.days++;
-    l.forEach((e) => { out.total++; out[e.k] = (out[e.k] || 0) + 1; out.pages += e.p || 0; });
+    l.forEach((e) => { out.total++; const k = kindOf(e); out[k] = (out[k] || 0) + 1; out.pages += e.p || 0; });
   }
   return out;
 }
 
-document.addEventListener("click", (e) => { if (e.target.closest("[data-shan-open]")) open(); });
+/** 類別代號：新資料有 k；只有中文名稱 c 的舊資料，從名稱查回來。 */
+function kindOf(e) {
+  if (e && KINDS[e.k]) return e.k;
+  const c = e && (e.c || e.type || e.cat);
+  return ORDER.find((k) => KINDS[k].name === c) || "other";
+}
 
-window.Shan = { KINDS, ORDER, MAX, strip, open, add, remove, entries, stats };
+/**
+ * 設定頁「善」分頁（index.html 有 Shan.settingsHTML 才會出現這個分頁）。
+ * 輸入框、按鈕都用自己的 data-shan-set，不經過 index.html 的 data-act。
+ */
+function settingsHTML() {
+  const S_ = gS(), st = stats();
+  const own = window.DDShop ? DDShop.owned() : { scenes: ["night"], patterns: [] };
+  const P = window.DDLamp ? DDLamp.PATTERNS : {};
+  const curPat = S_.lampPattern || "";
+  const SC = window.DDSky ? DDSky.SCENES : [];
+  const curSc = S_.lampScene || "night";
+  return `<section class="section"><div class="card shan-set">
+    <div class="shan-set-row"><span class="shan-k" aria-hidden="true">善</span><b>記一則善行</b><span class="mini-note">每天最多 ${MAX} 則</span></div>
+    <div class="shan-set-stats">${ORDER.map((k) => `<span><i>${KINDS[k].icon}</i>${st[k] || 0}</span>`).join("")}<span><i>📄</i>${st.pages} 頁</span></div>
+    <label class="shan-set-l" for="shan-sutra">誦經的預設經名</label>
+    <input id="shan-sutra" data-shan-set="sutra" value="${esc_(S_.shanSutra || "")}" placeholder="例如：大般若經" maxlength="30">
+  </div></section>
+  ${window.DDLamp ? `<section class="section"><div class="card shan-set">
+    <div class="shan-set-row"><span class="st-ic" aria-hidden="true">🪔</span><b>我的燈</b><span class="mini-note">在燈坊用燈油換更多</span></div>
+    <span class="shan-set-l">燈上的紋樣</span>
+    <div class="shan-set-pick">${["", ...Object.keys(P)].map((k) => {
+      const ok = !k || k === "plain" || own.patterns.includes(k);
+      return `<button data-shan-set="pattern" data-v="${k}" class="${curPat === k ? "on" : ""}" ${ok ? "" : "disabled"} aria-pressed="${curPat === k}">${k ? esc_(P[k].name) : "預設"}${ok ? "" : " 🔒"}</button>`;
+    }).join("")}</div>
+    <span class="shan-set-l">燈海的景</span>
+    <div class="shan-set-pick">${SC.map((s) => {
+      const ok = own.scenes.includes(s.key);
+      return `<button data-shan-set="scene" data-v="${s.key}" class="${curSc === s.key ? "on" : ""}" ${ok ? "" : "disabled"} aria-pressed="${curSc === s.key}">${esc_(s.name)}${ok ? "" : " 🔒"}</button>`;
+    }).join("")}</div>
+  </div></section>` : ""}`;
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-shan-open]")) { open(); return; }
+  const b = e.target.closest("button[data-shan-set]");
+  if (!b) return;
+  const S_ = gS(), k = b.dataset.shanSet;
+  if (k === "pattern") { if (b.dataset.v) S_.lampPattern = b.dataset.v; else delete S_.lampPattern; }
+  if (k === "scene") S_.lampScene = b.dataset.v;
+  save(); rerender();
+});
+document.addEventListener("change", (e) => {
+  const i = e.target.closest("input[data-shan-set=sutra]");
+  if (!i) return;
+  gS().shanSutra = i.value.trim().slice(0, 30);
+  save();
+  try { toast("記住了"); } catch (er) {}
+});
+
+window.Shan = { KINDS, ORDER, MAX, strip, open, add, remove, entries, stats, kindOf, settingsHTML };
 })();

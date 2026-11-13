@@ -10,6 +10,7 @@
 | `lamp.js` | `window.DDLamp` | 燈的畫法（20 形制、燈身色、焰色、描金鎏金、紋樣）、四學決定一盞燈、每件功課抽一次只往上、開獎畫面、點開某天看做了什麼 |
 | `shan.js` | `window.Shan` | 記一則善行（善行點滴／觀功念恩／誦經／其他，每天最多 3 則），自帶輸入彈層 |
 | `sky.js` | `window.DDSky` | 我的燈海（108 盞一片、景會長、可翻片）、燈譜（形制 20 種 × 顏色 5 種） |
+| `shop.js` | `window.DDShop` | 燈坊的「燈海的景」「燈上的紋樣」（用燈油換、換過可以換回來）、收藏裡的燈譜與我的燈海 |
 | `lamp.css` | | 上面全部的樣式；顏色優先用網站的 `--card`、`--ink`、`--mute`、`--shadow` |
 
 ## 一天一盞燈的規則
@@ -28,14 +29,15 @@
 
 ## 接進 index.html
 
-1. **引入**（放在 `hearing.js` 那幾行後面）：
+1. **引入**（放在 `hearing.js` 那幾行後面，順序要照這樣）：
    ```html
    <link rel="stylesheet" href="lamp/lamp.css">
    <script src="lamp/lamp.js"></script>
    <script src="lamp/shan.js"></script>
    <script src="lamp/sky.js"></script>
+   <script src="lamp/shop.js"></script>
    ```
-   `sw.js` 的 `CORE` 加上這四個檔，`CACHE` 版本加一。
+   `sw.js` 的 `CORE` 加上這五個檔，`CACHE` 版本加一。
 
 2. **每做完一件功課就點燈**：在所有「完成一件功課」的地方（聽完一段 `openLrAfter` 的 save、上座結束、保底、呼吸警報、睡前反省、聞法勝利、觀察修、聽完一講、小測驗答對）`persist()` 之後加：
    ```js
@@ -50,14 +52,19 @@
    - 三大塊下面加一條善行：`Shan.strip()`。點了會自己開「記一則」彈層，記完會自己 `persist()`、點燈、`render()`。
    - 「今天完成 n／3 塊」可以改成看 `DDLamp.countsOf(today()).kinds`。
 
-4. **燈坊**（新分頁）：
-   - 我的燈海：`<div data-ddsky-host>${DDSky.mySea()}</div>`（`data-ddsky-host` 讓「上一片／下一片」可以就地重畫）。換景：`DDSky.mySea({scene:"lake"})`。
-   - 燈譜：`DDSky.album()`。
-   - 燈和燈譜都可以點，點了自己開「那一天」的小卡（`data-ddl-open`）。
+4. **燈坊（#shop）**：已經照你在 index.html 留的掛勾做好：
+   - `DDShop.tiles()` → 兩格 `.shop-tile`：🌌 燈海的景（30 滴）、🪔 燈上的紋樣（20 滴）。點了開選單，有預覽；沒買過的按價錢買，買過的「換上」。
+   - `DDShop.collections()` → 兩列 `.coll-row`：🏮 燈譜（形制 n／20）、🌌 我的燈海（n／108）。點了開彈層。
+   - 花燈油照你的規則：`S.spent += 價錢`，不動 `oil()`；可用燈油讀 `availOil()`。買過的存 `S.lampOwned={scenes:[],patterns:[]}`，正在用的是 `S.lampScene`、`S.lampPattern`。
+   - 如果燈坊頁面上也想直接放一片燈海：`<div data-ddsky-host>${DDSky.mySea()}</div>`（會自動用 `S.lampScene`）。
+   - 燈、燈譜的格子都可以點，點了自己開「那一天」的小卡（`data-ddl-open`）。
+   - 這些按鈕全部用自己的 `data-ddshop*`、`data-ddl-*`、`data-ddsky` 屬性和自己的監聽，**不用在 index.html 的 data-act 加任何 case**。
 
-5. **進度頁「善」圓環**：`Shan.stats()` → `{total, days, pages, deed, grat, sutra, other}`。
+5. **進度頁「善」圓環**：每則善行都存了 `.c`＝「善行點滴／觀功念恩／誦經／其他」（也有 `.k` 代號）。也可以用 `Shan.stats()` → `{total, days, pages, deed, grat, sutra, other}`。
 
-6. **燈油**：`oil()` 加上 `DDLamp.oilBonus()`（善行每則 +1、每天最多 3；該做的幾學都做到 +3）。`OIL_RULES` 也要加這兩條。
+5b. **設定頁「善」分頁**：`Shan.settingsHTML()`：各類幾則、誦經的預設經名、我的燈（紋樣、燈海的景，只能選買過的）。按鈕和輸入框自己處理、自己 `persist()`＋`render()`。
+
+6. **燈油**：善行每則 +1（每天最多 3）、該做的幾學都做到 +3，**由你加進 `oil()`**（你說會加）。`DDLamp.oilBonus()` 算的就是這兩項加總，可以直接 `o += DDLamp.oilBonus()`；自己另外算就不要再加它，免得算兩次。燈油說明表也要加這兩條。
 
 7. **備份**：資料都在 `S`、`DAYS` 裡，原本的下載／上傳備份就包含了，不用另外處理。
 

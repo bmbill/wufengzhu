@@ -2,7 +2,7 @@
    顏色優先用網站本身的變數（--card、--ink、--mute、--shadow…），沒有就用後面的預設值。 */
 
 :root{
-  --x-jie:#ff7a59; --x-ding:#ffad1f; --x-hui:#6c8cff; --x-shan:#6E8F6B;
+  --x-jie:#ff7a59; --x-ding:#ffad1f; --x-hui:#6c8cff; --x-shan:#3fae8c;
   --gilt:#C9A227; --gilt-rim:#F2DFA8;
 }
 
@@ -106,3 +106,30 @@
 .ddalbum-cols i.on.c-hui{background:var(--x-hui)}.ddalbum-cols i.on.c-shan{background:var(--x-shan)}
 .ddalbum-cols i.on.c-gold{background:var(--gilt)}
 .ddalbum-c.on{cursor:pointer;background:var(--card,#fff);box-shadow:var(--shadow,0 2px 8px rgba(43,35,80,.08))}
+
+/* ── 燈坊（shop.js）── */
+button.coll-row{border:0;font:inherit;width:100%;text-align:left;cursor:pointer}
+.ddshop-h{margin:0 0 4px;font-size:20px;text-align:left}
+.ddshop-note{text-align:left;margin:0 0 10px}
+.ddshop-opts{display:grid;gap:8px}
+.ddshop-opts.scenes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ddshop-opts.patterns{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+.ddshop-opt{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card-2,rgba(43,35,80,.05));border-radius:14px;padding:8px 6px;border:2px solid transparent}
+.ddshop-opt.cur{border-color:var(--x-ding)}
+.ddshop-opt b{font-size:13px}
+.ddshop-thumb{width:100%;height:auto;border-radius:10px;display:block}
+.ddshop-st{font-size:12px;color:var(--mute,#6b6488);padding:5px 0}
+.ddshop-opt .btn.small{padding:4px 12px;font-size:13px}
+
+/* ── 設定「善」分頁（shan.js settingsHTML）── */
+.shan-set{display:flex;flex-direction:column;gap:6px}
+.shan-set-row{display:flex;align-items:center;gap:10px}
+.shan-set-row b{flex:1;font-size:15px}
+.shan-set-stats{display:flex;flex-wrap:wrap;gap:10px;font-size:14px;font-weight:600}
+.shan-set-stats i{font-style:normal;margin-right:3px}
+.shan-set-l{font-size:12px;color:var(--mute,#6b6488);margin-top:6px}
+.shan-set input{font:inherit;font-size:15px;border:1px solid rgba(43,35,80,.16);border-radius:12px;padding:8px 10px;background:var(--card,#fff);color:var(--ink,#2b2350)}
+.shan-set-pick{display:flex;flex-wrap:wrap;gap:6px}
+.shan-set-pick button{border:1px solid rgba(43,35,80,.15);background:var(--card,#fff);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;color:var(--ink,#2b2350);cursor:pointer}
+.shan-set-pick button.on{background:var(--x-ding);border-color:var(--x-ding);font-weight:700}
+.shan-set-pick button:disabled{opacity:.45;cursor:default}
