@@ -250,6 +250,17 @@ def main():
         if m:
             u[9] = m[0]
             u.append(m[1])
+    # 法類分界：照廣論科判校正過的起點（tools/cat_bounds.json：法類→起始段落識別碼），覆蓋上面「卷內第一次提到法類名」的估計
+    bp = os.path.join(ROOT, "tools", "cat_bounds.json")
+    if os.path.exists(bp):
+        BND = json.load(open(bp, encoding="utf-8"))
+        pos = {"%d.%d" % (u[0], u[4]): i for i, u in enumerate(units)}
+        starts = sorted((pos[v], CAT_NAMES.index(k)) for k, v in BND.items() if v in pos)
+        assert len(starts) == len(BND), "有法類起點找不到對應段落"
+        for n, (st, ci) in enumerate(starts):
+            end = starts[n + 1][0] if n + 1 < len(starts) else len(units)
+            for i in range(st, end):
+                units[i][6] = ci
     # 法類目錄
     cats = []
     for idx, u in enumerate(units):
