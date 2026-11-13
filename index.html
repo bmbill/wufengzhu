@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script>/* 出錯時不要整頁空白：顯示原因，並可下載備份、清快取重載（進度不會刪） */
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.__bip=e});
 window.__errs=[];addEventListener("error",e=>{__errs.push((e.message||"載入失敗")+" ＠"+String(e.filename||(e.target&&e.target.src)||"").split("/").pop()+":"+(e.lineno||""))},true);
 addEventListener("unhandledrejection",e=>{__errs.push("Promise: "+String(e.reason&&e.reason.message||e.reason))});
 function ddCrash(msg){const a=document.getElementById("app");if(!a)return;document.body.classList.add("sub");
@@ -73,6 +74,13 @@ body.sub .hero.wide{min-height:0;padding-top:max(30px,calc(env(safe-area-inset-t
 .hero .date{font-family:var(--f-num);letter-spacing:.12em;font-size:12px;color:var(--mute);text-transform:uppercase}
 .hero h1{font-size:32px;line-height:1.18}
 .hero .sub{color:var(--mute);font-size:14px}
+.hero-lamp{display:flex;align-items:center;gap:8px;align-self:flex-start}
+.share-lamp{width:40px;height:40px;border-radius:50%;border:0;background:var(--card-2);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--ink);cursor:pointer;flex:none}
+.share-lamp svg{width:20px;height:20px}
+.share-prev{display:grid;place-items:center;margin:10px 0}
+.share-prev img{max-width:100%;max-height:58vh;border-radius:14px;box-shadow:0 8px 24px rgba(43,35,80,.25)}
+.install-card{display:flex;flex-direction:column;gap:6px;margin-top:22px;background:linear-gradient(135deg,#fff8e1,#ffe9f0)}
+.ins-steps{padding-left:1.4em;line-height:2.1;font-size:16px}
 .stagepill{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:6px;padding:5px 12px 5px 5px;border-radius:999px;background:var(--card-2);box-shadow:var(--shadow);font-size:13px;font-weight:500;white-space:nowrap}
 .stagepill b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--ink);font-family:var(--f-num);font-size:12px}
 
@@ -553,6 +561,7 @@ body.in-session::before{background:transparent}
 <script src="lamp/shan.js"></script>
 <script src="lamp/sky.js"></script>
 <script src="lamp/shop.js"></script>
+<script src="share.js"></script>
 <script src="chars/files.js"></script>
 <script>
 /* ================= 資料 ================= */
@@ -1453,11 +1462,12 @@ function vToday(){
   <header class="hero">
     <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
     <h1>${greet()}，<br>今天也點一盞燈。</h1>
-    ${window.DDLamp?DDLamp.todayCard():`<div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>`}
+    ${window.DDLamp?`<div class="hero-lamp">${DDLamp.todayCard()}${DDLamp.lampOf(today())&&window.shareLamp?`<button class="share-lamp" data-act="share-lamp" aria-label="分享今天的燈"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`:""}</div>`:`<div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>`}
   </header>
   <section class="section tiles" aria-label="戒定慧">${tiles.join("")}</section>
   ${window.Shan?`<section class="section shan-sec">${Shan.strip()}</section>`:""}
   ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
+  ${window.installCard?installCard():""}
   <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
 }
 function subHead(eb,title,sub){return `<header class="hero wide subhead"><a class="back" href="#today">‹ 今日</a><div class="date">${esc(eb)}</div><h1>${esc(title)}</h1><p class="sub">${esc(sub)}</p></header>`}
@@ -1628,14 +1638,14 @@ function drawCard(free){const Q=QS();if(!Q.length)return;const got=S.qcards||{};
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qd-h"><div class="panel">
     <span class="eyebrow">${free?"今天戒、定、慧都做了，送你一張":"用 "+CARD_COST+" 滴燈油換一張"}${isNew?"・新卡！":"・已經有了"}</span><h2 id="qd-h" class="sr">法語卡</h2>
     <div class="flip" id="qdFlip"><div class="flip-in">${qBack(null)}${qCard(Q[k],k)}</div></div>
-    <div class="btns"><button class="btn primary" id="qdOk">收進法語集</button>${availOil()>=CARD_COST?`<button class="btn" id="qdMore">再抽一張（${CARD_COST} 滴）</button>`:""}</div>
+    <div class="btns"><button class="btn primary" id="qdOk">收進法語集</button><button class="btn" data-act="share-q" data-k="${k}">分享</button>${availOil()>=CARD_COST?`<button class="btn" id="qdMore">再抽一張（${CARD_COST} 滴）</button>`:""}</div>
     <p class="mini-note">法語集 ${Object.keys(S.qcards).length}／${Q.length} 張・可用燈油 ${availOil()} 滴</p></div></div>`;
   document.getElementById("qdOk").onclick=()=>{L.innerHTML="";render()};
   const m=document.getElementById("qdMore");if(m)m.onclick=()=>drawCard(false);
   const f=document.getElementById("qdFlip");setTimeout(()=>f&&f.classList.add("on"),450)}
 function openQuote(k){const Q=QS();const q=Q[k];if(!q)return;const L=document.getElementById("layer");
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qo-h"><div class="panel"><span class="eyebrow">集卡冊・${esc(S.qcards[k]||"")} 收集</span><h2 id="qo-h" class="sr">法語卡</h2>${qCard(q,k)}
-    <div class="btns"><button class="btn primary" id="qoX">關閉</button></div></div></div>`;
+    <div class="btns"><button class="btn primary" id="qoX">關閉</button><button class="btn" data-act="share-q" data-k="${k}">分享這張卡</button></div></div></div>`;
   document.getElementById("qoX").onclick=()=>{L.innerHTML=""}}
 function checkFreeCard(){if(!dayAllDone||route!=="today"||document.querySelector("#layer .sheet")||!QS().length)return;const d=day(today());if(d&&d.qfree!=null)return;drawCard(true)}
 let albumPart=-1;
@@ -1750,7 +1760,7 @@ function vAdjustParts(){
   </section>`;
   parts.all+=`<section class="section"><span class="eyebrow">資料</span>
     <div class="card"><p class="meta">進度只存在這支手機的瀏覽器裡，不會上傳到任何地方。${lastBackupNote()}</p>
-    <p class="mini-note">iPhone：用 Safari 開啟 →「分享」→「加入主畫面」，資料比較不會被系統清掉。Android：Chrome 選單 →「加到主畫面」。</p>
+    ${window.isInstalled&&isInstalled()?`<p class="mini-note">已經從主畫面打開，資料比較不會被系統清掉。</p>`:`<p class="mini-note">加到主畫面，像 App 一樣打開，資料比較不會被系統清掉。</p><div class="btns"><button class="btn small" data-act="install">加到主畫面</button></div>`}
     <div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button><button class="btn small" data-act="upload">從備份檔還原</button></div>
     <div class="btns"><button class="btn small" data-act="export">複製備份文字</button><button class="btn small" data-act="import">貼上備份文字</button><button class="btn ghost small" data-act="reset">全部重來</button></div>
     <input type="file" id="upfile" accept=".json,application/json,text/plain" hidden>
@@ -1837,6 +1847,10 @@ document.addEventListener("click",e=>{
     case "reset": doReset();break;
     case "reset-yes": S=blank();DAYS={};persist();render();break;
     case "download": doDownload();break;
+    case "install": installApp();break;
+    case "install-later": S.installHide=today();persist();render();break;
+    case "share-lamp": shareLamp();break;
+    case "share-q": shareQuote(+b.dataset.k);break;
     case "upload": document.getElementById("upfile").click();break;
     case "reset-no": document.getElementById("dataArea").innerHTML="";break;
   }
@@ -2176,7 +2190,7 @@ const Scene=(()=>{
     if(mode==="session"){const s=Math.min((.30*2*hh)/2.6,(.5*2*hw)/1.6);return {x:0,y:toY(.36),s,la:0,ca:1}}
     if(mode==="none"){const s=(.22*2*hh)/2.2;return {x:toX(sxr)+hw*3,y:toY(.2),s,la:0,ca:0}}
     if(mode==="lamps"){const ls=Math.min(.3*2*hh/3.8,.72*2*hw/4.6);return {x:toX(sxr)+hw*3,y:toY(.12),s:.5,la:1,ca:0,lx:0,ly:toY(.22),ls}}
-    const s=(.22*2*hh)/2.2;const scroll=(scrollY||0)/H*2*hh;return {x:toX(sxr),y:toY(.2)+scroll,s,la:0,ca:1}}
+    const s=(.22*2*hh)/2.2;const scroll=(scrollY||0)/H*2*hh;return {x:toX(sxr),y:toY(.235)+scroll,s,la:0,ca:1}}
   function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();const [hw,hh]=halfs();SU.uHW.value=hw;SU.uHH.value=hh}
   addEventListener("resize",size);size();
   api.setMode=m=>{mode=m};
