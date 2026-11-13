@@ -947,6 +947,7 @@ const END_SAY="這一講聽完了。趁印象還清楚，回答下面幾個問�
 const HANDS_SEG="這一段聽完了。先在心裡想一想，這段在講什麼？想好了就說「繼續」；想再聽一次，就說「重聽」。";
 const HANDS_END="這一講聽完了。在心裡做個結論：這一講在講什麼？想好了說「完成」；想再聽一次，說「重聽」。";
 const HANDS_LR="聽完了。對照這段的目標，在心裡做個結論。想好了說「完成」；想再聽一次，說「重聽」。";
+const HANDS_LR2="想好了，說「完成」記錄下來；想接著聽下一段，說「下一段」；想再聽一次，說「重聽」。";
 const BASIC_SAY="聽法之前，先發心：為了了脫自己和一切眾生的生死，來聽這一講。";
 const SEG_LEN=300;
 /* 每講的內容分段（segments.js，依逐字稿段落標題或廣論原文段＋講話停頓產生）；沒有資料時每 5 分鐘一段 */
@@ -1006,13 +1007,13 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
 const Hands={on:null,rec:null,tries:0,
   can(){return !!SR&&S.handsVoice!==false},
   /* o={next,repeat}：next＝繼續／完成，repeat＝重聽 */
-  async arm(o,say){this.disarm();this.on=o;this.tries=0;this.media(true);this.status("wait");if(say)await Voice.speak(say);if(this.on===o&&this.can())this.listen();else this.status()},
+  async arm(o,say){this.disarm();this.on=o;this.tries=0;this.media(true);this.status("wait");for(const s of [].concat(say||[])){if(this.on!==o)return;await Voice.speak(s)}if(this.on===o&&this.can())this.listen();else this.status()},
   disarm(){this.on=null;this.stop();this.media(false);this.status()},
   media(on){if(!("mediaSession" in navigator))return;try{navigator.mediaSession.setActionHandler("nexttrack",on?()=>this.fire("next"):null);navigator.mediaSession.setActionHandler("previoustrack",on?()=>this.fire("repeat"):null)}catch(e){}},
   fire(k){const o=this.on;if(!o)return;this.disarm();Voice.stop();if(o[k])o[k]()},
   listen(){if(!SR||!this.on)return;let r;try{r=new SR()}catch(e){return}r.lang="zh-TW";r.interimResults=true;r.continuous=false;r.maxAlternatives=3;
     r.onresult=e=>{let t="";for(const x of e.results)for(const a of x)t+=a.transcript+"|";
-      if(/重聽|再聽|重來|重新|從頭/.test(t))this.fire("repeat");else if(/繼續|下一|好了|完成|可以|點亮|OK|ok|okay/i.test(t))this.fire("next")};
+      if(/重聽|再聽|重來|重新|從頭/.test(t))this.fire("repeat");else if(this.on&&this.on.more&&/下一段|下一個|接著聽|繼續聽/.test(t))this.fire("more");else if(/繼續|下一|好了|完成|可以|點亮|OK|ok|okay/i.test(t))this.fire("next")};
     r.onerror=e=>{if(e&&(e.error==="not-allowed"||e.error==="service-not-allowed")){S.handsVoice=false;persist();this.status();toast("沒有麥克風權限，改用按鈕或耳機按鍵")}};
     r.onend=()=>{if(this.rec!==r)return;this.rec=null;if(this.on&&this.can()&&this.tries++<8)setTimeout(()=>{if(this.on&&!this.rec)this.listen()},250);else this.status()};
     this.rec=r;try{r.start();this.status("listen")}catch(e){this.rec=null}},
@@ -1027,7 +1028,7 @@ const Dict={rec:null,
     r.onend=()=>{if(this.rec===r)this.stop()};r.onerror=()=>{};this.rec=r;this.btn=btn;btn.classList.add("on");btn.textContent="■ 說完了";try{r.start()}catch(e){this.stop()}},
   stop(){const r=this.rec;this.rec=null;try{r&&r.stop()}catch(e){}if(this.btn){this.btn.classList.remove("on");this.btn.textContent="🎙 用說的";this.btn=null}if(Hands.on&&Hands.can()&&!Hands.rec)Hands.listen()}};
 const micBtn=id=>SR?`<button type="button" class="mic" data-act="dictate" data-for="${id}">🎙 用說的</button>`:"";
-function handsBar(words){return `<div class="hands off" aria-live="polite"><span class="hd-dot"></span><span class="hd-t">${SR&&S.handsVoice!==false?`說「${words[0]}」或「${words[1]}」・也可以按耳機的下一首／上一首`:`按下面的按鈕，或耳機的下一首（${words[0]}）／上一首（${words[1]}）`}</span><button type="button" class="lk-inline" data-act="hands-toggle">${SR?(S.handsVoice!==false?"關閉語音指令":"開啟語音指令"):""}</button></div>`}
+function handsBar(words){return `<div class="hands off" aria-live="polite"><span class="hd-dot"></span><span class="hd-t">${SR&&S.handsVoice!==false?`說${words.map(w=>"「"+w+"」").join("、").replace(/、([^、]*)$/,"或$1")}・也可以按耳機的下一首／上一首`:`按下面的按鈕，或耳機的下一首（${words[0]}）／上一首（${words[words.length-1]}）`}</span><button type="button" class="lk-inline" data-act="hands-toggle">${SR?(S.handsVoice!==false?"關閉語音指令":"開啟語音指令"):""}</button></div>`}
 const Study={
   sp(key){const nt=(S.notes||{})[key]||{};return nt.sp!=null?nt.sp:(nt.p||[]).length},
   /* 基本：完整聽一次（可以接著上次的位置），聽完心裡做結論 */
@@ -1175,6 +1176,23 @@ function openLrPick(){const L=document.getElementById("layer");const C=LRC();con
   L.querySelector(".pick-list").addEventListener("click",e=>{const b=e.target.closest(".pick-u");if(!b)return;const k=+b.dataset.k;
     S.lrMode="pick";S.lr=S.lr||{pos:null,done:{}};S.lr.pick=LRID(k);persist();L.innerHTML="";render();toast(`選好了：${lrTopic(k)}`)});
   document.getElementById("pkX").onclick=()=>{L.innerHTML=""}}
+/* 把「聽完能說出：…；想一想：…」唸成引導語 */
+function goalSay(g){if(!g)return "";const think=/^聽完想一想[:：]/.test(g);const s=g.replace(/^聽完(能說出|想一想)[:：]/,"");
+  const parts=s.split(/[；;]/).map(x=>x.trim()).filter(Boolean);if(!parts.length)return "";
+  let out=(think?"這一段，請想一想：":"透過這一段，我們可以知道：")+parts[0];
+  for(const x of parts.slice(1))out+=/^(想一想|想想)/.test(x)?"。也請"+x.replace(/^想想/,"想一想"):"。也可以知道："+x;
+  return out.replace(/[。！？]*$/,"。")}
+/* 播放器上方的小字＋語音 */
+async function lpSay(t){try{LP.$("lpSeg").textContent=t.length>34?t.slice(0,34)+"…":t}catch(e){}await Voice.speak(t);try{LP.$("lpSeg").textContent=""}catch(e){}}
+/* 戒的一整段：聞法勝利（開頭、結尾）→ 停 10 秒 → 正式段落（開頭）→ 聽完（結尾＋引導語）。skipHb＝說「下一段」接著聽時，不再聽聞法勝利 */
+function startHear(i,hiIn,skipHb){const H=window.HB||[];const hi=skipHb?null:hiIn!=null?hiIn:hbIdx();const hb=hi!=null?H[hi]:null;const u=LRA()[i];if(!u)return;const cat=LRC()[u[6]];
+  Audio_.unlock();Voice.unlock();
+  const main=async()=>{const o={key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i),noplay:true,onEnd:()=>openLrAfter(i,hi)};LP.openPlan(o);
+    await lpSay(`接下來，正式聽師父講${cat[0]}：${lrTopic(i)}。`);if(LP.po===o)LP.play()};
+  if(!hb){main();return}
+  const ho={key:"HB",label:"聞法勝利",title:hb[2],plan:hb[1],noRepeat:true,noplay:true,onEnd:async()=>{const t=today();const d=ensureDay(t);if(!d.hb){d.hb=true;persist(t)}
+    await lpSay(goalSay(hb[3]));if(LP.po===ho)LP.gap(10,"思惟剛才的聞法勝利，發心",main)}};
+  LP.openPlan(ho);lpSay(`聽法之前，我們先聽一段師父講聞法勝利：${hb[2]}。`).then(()=>{if(LP.po===ho)LP.play()})}
 /* 聽前：先聽聞法勝利（約 2 分鐘）→ 停 10 秒思惟 → 正式段落；聞法勝利不能跳過 */
 function openHear(i){const L=document.getElementById("layer");const H=window.HB||[];const hi=hbIdx();const hb=hi!=null?H[hi]:null;const u=LRA()[i];const cat=LRC()[u[6]];
   const mins=Math.max(1,Math.round(planSec(i)/60));
@@ -1184,31 +1202,29 @@ function openHear(i){const L=document.getElementById("layer");const H=window.HB|
     <ol class="flow"><li><b>聞法勝利</b>約 2 分鐘・師父講</li><li><b>停 10 秒</b>思惟剛才聽到的勝利，發心</li><li><b>${esc(lrTopic(i))}</b>${esc(cat[0])}・約 ${mins} 分鐘</li></ol>
     <div class="btns"><button class="btn primary" id="hbGo">▶ 開始</button><button class="btn ghost" id="hbX">取消</button></div></div></div>`;
   document.getElementById("hbX").onclick=()=>{L.innerHTML=""};
-  const main=()=>{LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i),onEnd:()=>openLrAfter(i,hi)})};
-  document.getElementById("hbGo").onclick=()=>{Audio_.unlock();L.innerHTML="";
-    if(!hb){main();return}
-    LP.openPlan({key:"HB",label:"聞法勝利",title:hb[2],plan:hb[1],noRepeat:true,onEnd:()=>{const t=today();const d=ensureDay(t);if(!d.hb){d.hb=true;persist(t)}
-      LP.gap(10,"思惟剛才的聞法勝利，發心",main)}})}}
+  document.getElementById("hbGo").onclick=()=>{L.innerHTML="";startHear(i,hi)}}
 /* 聽完：對照目標，一句話 */
 function openLrAfter(i,hi){const L=document.getElementById("layer");const u=LRA()[i];const cat=LRC()[u[6]];const nt=(S.notes||{})["L"+LRID(i)]||{};const hb=hi!=null?(window.HB||[])[hi]:null;
   L.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="la-h"><form class="panel" id="laf">${sticker("zz","cheer","tr","聽完了！")}
     <span class="eyebrow">${esc(cat[0])}・南普陀第 ${u[0]} 卷</span><h2 id="la-h">${esc(lrTopic(i))}</h2>
     <p class="root">${esc(u[1])}</p>
-    ${handsBar(["完成","重聽"])}
+    ${handsBar(["完成","下一段","重聽"])}
     <fieldset class="goalchk"><legend class="eyebrow">有沒有達到目標？</legend>
       ${hb?`<label><input type="checkbox" id="la-g1"><span><b>聞法勝利</b>${esc(hb[3])}</span></label>`:""}
       <label><input type="checkbox" id="la-g2"><span><b>這一段</b>${esc(lrGoal(i))}</span></label>
       <p class="mini-note">打不了勾也沒關係，按「再聽一次」，這次聽上一次沒聽到的。</p></fieldset>
     <label class="eyebrow" for="la-one">用自己的話，一句說這段原文在講什麼（選填）</label>${micBtn("la-one")}<textarea id="la-one" placeholder="先把原文和師父的理路聽清楚，不急著想生活例子">${esc(nt.one||"")}</textarea>
     <label class="eyebrow" for="la-moved">哪一句最打動你？（選填）</label><textarea id="la-moved" placeholder="抄下師父的話，或用自己的話寫">${esc(nt.moved||"")}</textarea>
-    <div class="btns"><button class="btn primary" type="submit">儲存，點亮這一段</button><button class="btn" type="button" id="laRe">再聽一次</button><button class="btn ghost" type="button" id="laX">不寫了</button></div></form></div>`;
+    <div class="btns"><button class="btn primary" type="submit">儲存，點亮這一段</button><button class="btn" type="button" id="laNext">下一段 ›</button><button class="btn" type="button" id="laRe">再聽一次</button><button class="btn ghost" type="button" id="laX">不寫了</button></div></form></div>`;
   const save=write=>{Hands.disarm();Dict.stop();S.notes=S.notes||{};const id=LRID(i);const n=S.notes["L"+id]=S.notes["L"+id]||{};
     if(write){const a=document.getElementById("la-one").value.trim(),b=document.getElementById("la-moved").value.trim();if(a)n.one=a;if(b)n.moved=b}
     const g1=document.getElementById("la-g1"),g2=document.getElementById("la-g2");n.g=[g1?g1.checked:null,g2.checked];
     n.p=n.p||[];n.p.push(today());S.lr=S.lr||{pos:null,done:{}};S.lr.done=S.lr.done||{};const first=!S.lr.done[id];S.lr.done[id]=today();
     if(lrMode()==="pick"&&i+1<LRA().length)S.lr.pick=LRID(i+1);
     persist(today());L.innerHTML="";render();toast(first?"這段點亮了，燈油 +2":"記下了");checkStamp(u[6])};
-  Hands.arm({next:()=>save(true),repeat:()=>document.getElementById("laRe").click()},HANDS_LR);
+  const goNext=()=>{save(true);const nx=lrCur();if(nx!=null&&nx!==i)setTimeout(()=>{document.getElementById("layer").innerHTML="";startHear(nx,null,true)},300);else toast("沒有下一段了")};
+  document.getElementById("laNext").onclick=goNext;
+  Hands.arm({next:()=>save(true),more:goNext,repeat:()=>document.getElementById("laRe").click()},[goalSay(lrGoal(i)),HANDS_LR2].filter(Boolean));
   document.getElementById("laX").onclick=()=>save(false);document.getElementById("laRe").onclick=()=>{Hands.disarm();Dict.stop();L.innerHTML="";LP.openPlan({key:"L"+LRID(i),label:cat[0],title:lrTopic(i),plan:unitPlan(i),onEnd:()=>openLrAfter(i,hi)})};
   document.getElementById("laf").onsubmit=e=>{e.preventDefault();save(true)}}
 /* 看師父講解（逐字稿向大慈恩讀取） */
