@@ -330,11 +330,26 @@ function renderLamp(lamp, opts = {}) {
     ? `--dark:${b.dark};--light:${b.light};--foot:${b.foot};--flame-outer:${f.outer};--flame-halo:${f.halo}`
     : '--dark:#DDD2BE;--light:#E6DDCB;--foot:#CFC2AA;--flame-outer:#DDD2BE;--flame-halo:#E6DDCB';
 
+  // 燈燈相續：光暈另外畫在外框外面（光沒有邊）；火焰本身收進有外框的那一組。
+  const halo = lit ? `<ellipse cx="22" cy="17" rx="10.5" ry="14" fill="${f.halo}" opacity=".45"/>` : '';
   const flame = lit
-    ? `<ellipse cx="22" cy="17" rx="10.5" ry="14" fill="${f.halo}" opacity=".45"/>
-       <path d="M22 5.5c4.4 6 6.8 9.3 6.8 12.9a6.8 6.8 0 0 1-13.6 0c0-3.6 2.4-6.9 6.8-12.9z" fill="${f.outer}"/>
+    ? `<path d="M22 5.5c4.4 6 6.8 9.3 6.8 12.9a6.8 6.8 0 0 1-13.6 0c0-3.6 2.4-6.9 6.8-12.9z" fill="${f.outer}"/>
        <path d="M22 13.6c2.1 3.3 3.1 5 3.1 6.6a3.1 3.1 0 0 1-6.2 0c0-1.6 1-3.3 3.1-6.6z" fill="${tier === 'rare' ? GILT.core : f.inner}"/>`
     : '';
+
+  // 燈燈相續：跟角色貼圖同一套畫風——深紫粗外框、缽上一張小臉。
+  // 外框用濾鏡沿著整個輪廓描一圈（各種形制都適用，不用一個個畫）；沒點亮的燈外框淡一點、在睡覺。
+  const INK = lit ? '#2B2350' : '#B9B0D2';
+  const fid = lit ? 'ddl-ink' : 'ddl-ink-g';
+  const outline = `<filter id="${fid}" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feMorphology in="SourceAlpha" operator="dilate" radius=".95" result="d"/>
+      <feFlood flood-color="${INK}"/><feComposite in2="d" operator="in" result="o"/>
+      <feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  const face = lit
+    ? `<circle cx="18.6" cy="34.4" r="1.05" fill="${INK}"/><circle cx="25.4" cy="34.4" r="1.05" fill="${INK}"/>
+       <path d="M20.4 36.3q1.6 1.5 3.2 0" stroke="${INK}" stroke-width=".9" stroke-linecap="round" fill="none"/>
+       <ellipse cx="15.6" cy="36.4" rx="1.6" ry=".9" fill="#FF8FA3" opacity=".6"/><ellipse cx="28.4" cy="36.4" rx="1.6" ry=".9" fill="#FF8FA3" opacity=".6"/>`
+    : `<path d="M17.4 34.6q1.2 .9 2.4 0M24.2 34.6q1.2 .9 2.4 0" stroke="${INK}" stroke-width=".85" stroke-linecap="round" fill="none"/>`;
 
   // xmlns 是必要的：內嵌在 HTML 裡沒差，但把這串 SVG 當成圖片載入
   // （分享圖卡會這樣做）時，少了它整張圖就不會 render。
@@ -355,13 +370,18 @@ function renderLamp(lamp, opts = {}) {
       : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 50 / 44)}" viewBox="0 0 44 50" fill="none" style="${vars}" role="img" aria-label="${lamp.name || '燈'}">
+    <defs>${outline}</defs>
     ${art.behind}
-    ${flame}
-    <path d="${BOWL}" fill="var(--dark)"/>
-    <path d="M8 31h28c0 2.5-.7 4.7-1.9 6.5H9.9C8.7 35.7 8 33.5 8 31z" fill="var(--light)"/>
+    ${halo}
+    <g filter="url(#${fid})">
+      ${flame}
+      <path d="${BOWL}" fill="var(--dark)"/>
+      <path d="M8 31h28c0 2.5-.7 4.7-1.9 6.5H9.9C8.7 35.7 8 33.5 8 31z" fill="var(--light)"/>
+      ${art.front}
+    </g>
     ${pattern}
     ${gilt}
-    ${art.front}
+    ${face}
   </svg>`;
 }
 
@@ -431,6 +451,9 @@ function sparkArt(lamp) {
     <path d="${SKY_LIT}" fill="${b.light}"/>
     <ellipse cx="14" cy="24.1" rx="3.9" ry="1.7" fill="${f.outer}"/>
     <ellipse cx="14" cy="24.3" rx="2" ry=".9" fill="${tier === 'rare' ? GILT.core : f.inner}"/>
+    <path d="${SKY_BODY}" fill="none" stroke="#2B2350" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="11.6" cy="13.6" r="1.05" fill="#2B2350"/><circle cx="16.4" cy="13.6" r="1.05" fill="#2B2350"/>
+    <path d="M12.8 15.6q1.2 1.1 2.4 0" stroke="#2B2350" stroke-width=".8" stroke-linecap="round" fill="none"/>
     ${gilt}`;
 }
 

@@ -117,7 +117,7 @@ function moonArt(date = new Date()) {
       <path d="${half}" fill="#fff"/>
       <ellipse cx="20" cy="20" rx="${rx}" ry="20" fill="${gibbous ? '#fff' : '#000'}"/>
     </mask>
-    <circle cx="20" cy="20" r="20" fill="#E8E2D2" mask="url(#${id})"/>`;
+    <circle cx="20" cy="20" r="20" fill="#FFF9EC" mask="url(#${id})"/>`;
 }
 
 /* ── 幾何：草、塔、山、人、船 ──
@@ -169,7 +169,7 @@ const WALKER_ART = `
 const MONK_ART = `
   <circle cx="9" cy="4" r="3.4"/>
   <path d="M9 7.4c-3.2 0-5 2.4-5.6 7.4L2 26h14l-1.4-11.2c-.6-5-2.4-7.4-5.6-7.4z"/>
-  <path d="M9 10.4l2.6 4.4H6.4z" fill="#0E1620" opacity=".55"/>`;
+  <path d="M9 10.4l2.6 4.4H6.4z" fill="#6E62AA" opacity=".55"/>`;
 
 /** 河燈。一盞小小的，飄在水上。 */
 const BOAT_ART = `
@@ -193,14 +193,15 @@ const SKY_W = 1080;
 
 /** 場景的底色。時辰會調，冬天會再冷一點。 */
 function skyPaint(scene, amb) {
+  // 燈燈相續：跟主頁一樣的柔和色調（淡紫到蜜桃的暮色），不用燈燈悅心原本的深藍夜空
   const base = {
-    night:  ['#1E2A38', '#16202C'],
-    lake:   ['#1B2740', '#101A2C'],
-    valley: ['#212C3A', '#141E29'],
-  }[scene] || ['#1E2A38', '#16202C'];
+    night:  ['#9C93D4', '#F3C9BF'],
+    lake:   ['#9A9FDA', '#E9C6D2'],
+    valley: ['#A497D2', '#F5D0B8'],
+  }[scene] || ['#9C93D4', '#F3C9BF'];
 
-  if (amb.tod === 'dawn') return ['#2B3A4E', '#3C4A55'];
-  if (amb.tod === 'dusk') return ['#2A2C3C', '#3B3040'];
+  if (amb.tod === 'dawn') return ['#B9B1E6', '#FAD9C4'];
+  if (amb.tod === 'dusk') return ['#9087C8', '#EDB8B4'];
   return base;
 }
 
@@ -239,11 +240,11 @@ function skySVG(o) {
     </linearGradient>
     <linearGradient id="ddsky-ground" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${c2}" stop-opacity="0"/>
-      <stop offset="1" stop-color="#0E1620" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#6E62AA" stop-opacity=".85"/>
     </linearGradient>
     <linearGradient id="ddsky-water" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2A3C5C" stop-opacity=".95"/>
-      <stop offset="1" stop-color="#0E1828" stop-opacity=".98"/>
+      <stop offset="0" stop-color="#8E95D0" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#6F75B8" stop-opacity=".98"/>
     </linearGradient>
     <linearGradient id="ddsky-fade" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#fff" stop-opacity=".95"/>
@@ -261,7 +262,7 @@ function skySVG(o) {
       const x = px(6 + 88 * ((i * 0.7548776662) % 1));
       const y = py(4 + 58 * ((i * 0.5698402909) % 1));
       const R = (0.9 + (i % 3) * 0.6) * k * 2.3;
-      return `<path d="${star4(x, y, R)}" fill="#E8E2D2" opacity="${(0.4 + (i % 4) * 0.15).toFixed(2)}"/>`;
+      return `<path d="${star4(x, y, R)}" fill="#FFF9EC" opacity="${(0.4 + (i % 4) * 0.15).toFixed(2)}"/>`;
     }).join(''));
   }
 
@@ -273,7 +274,7 @@ function skySVG(o) {
 
   // ── 雁 ──
   if (reached >= 540) {
-    parts.push(`<g fill="none" stroke="#5A6E85" stroke-width="${(1.6 * k).toFixed(1)}" stroke-linecap="round" opacity=".8">`
+    parts.push(`<g fill="none" stroke="#8378B8" stroke-width="${(1.6 * k).toFixed(1)}" stroke-linecap="round" opacity=".8">`
       + GEESE.map((g) => `<g transform="translate(${px(62) + g.x * k * 1.6} ${py(20) + g.y * k * 1.6}) scale(${(g.s * k * 1.5).toFixed(2)})"><path d="${GOOSE_ART}"/></g>`).join('')
       + `</g>`);
   }
@@ -282,8 +283,8 @@ function skySVG(o) {
   if (scene === 'valley') {
     const top = horizon - 86 * k;
     parts.push(`<g transform="translate(0 ${top}) scale(${(W / 320).toFixed(3)} ${((86 * k) / 40).toFixed(3)})">
-      <path d="${RANGE_FAR}" fill="#26364A"/>
-      <path d="${RANGE_NEAR}" fill="#1C2A3A"/>
+      <path d="${RANGE_FAR}" fill="#B3A6DA"/>
+      <path d="${RANGE_NEAR}" fill="#9D90CC"/>
     </g>`);
   }
 
@@ -300,7 +301,7 @@ function skySVG(o) {
     // 月光在水面拉出一道
     if (filled >= 108) {
       parts.push(`<rect x="${px(12) + moonBox / 2 - 9 * k}" y="${water}" width="${18 * k}" height="${H - water}"
-        fill="#E8E2D2" opacity=".07"/>`);
+        fill="#FFF9EC" opacity=".07"/>`);
     }
   }
 
@@ -309,8 +310,8 @@ function skySVG(o) {
     const pw = 52 * k;
     const ph = 74 * k;
     parts.push(`<g transform="translate(${W - px(9) - pw} ${horizon - 6 * k - ph}) scale(${(pw / 80).toFixed(3)} ${(ph / 96).toFixed(3)})"
-      fill="#33455A">${PAGODA_ART}
-      <rect x="35" y="69" width="10" height="11" rx="1.4" fill="#E8B45A" opacity=".9"/>
+      fill="#8E80C2">${PAGODA_ART}
+      <rect x="35" y="69" width="10" height="11" rx="1.4" fill="#FFC94D" opacity=".9"/>
     </g>`);
   }
 
@@ -330,8 +331,8 @@ function skySVG(o) {
   if (filled >= 21) {
     const gh = 16 * k * 1.6;
     parts.push(`<g transform="translate(0 ${horizon - gh}) scale(${(W / 320).toFixed(3)} ${(gh / 40).toFixed(3)})">
-      <path d="${grassPath(40, 24, 0)}" fill="#3B4E63"/>
-      <path d="${grassPath(26, 37, 4)}" fill="#2A3A4C"/>
+      <path d="${grassPath(40, 24, 0)}" fill="#9B8FCB"/>
+      <path d="${grassPath(26, 37, 4)}" fill="#7F72B6"/>
     </g>`);
   }
 
@@ -339,7 +340,7 @@ function skySVG(o) {
   if (reached >= 324) {
     [0.28, 0.52, 0.74].forEach((t, i) => {
       const s = k * 1.5 * (1 - i * 0.08);
-      parts.push(`<g transform="translate(${px(t * 100)} ${horizon - (4 + i * 3) * k}) scale(${s.toFixed(2)})" fill="#3E5268">${BOAT_ART}</g>`);
+      parts.push(`<g transform="translate(${px(t * 100)} ${horizon - (4 + i * 3) * k}) scale(${s.toFixed(2)})" fill="#8A7EC0">${BOAT_ART}</g>`);
     });
   }
 
@@ -347,11 +348,11 @@ function skySVG(o) {
   // 動畫定在「人剛好走到畫面裡」那一刻，不是省略不畫。
   if (filled >= 21) {
     const s = k * 1.5;
-    parts.push(`<g transform="translate(${px(34)} ${horizon - 21 * s}) scale(${s.toFixed(2)})" fill="#44586E">${WALKER_ART}</g>`);
+    parts.push(`<g transform="translate(${px(34)} ${horizon - 21 * s}) scale(${s.toFixed(2)})" fill="#7A6EB0">${WALKER_ART}</g>`);
   }
   if (reached >= 216) {
     const s = k * 1.7;
-    parts.push(`<g transform="translate(${px(58)} ${horizon - 26 * s}) scale(${s.toFixed(2)})" fill="#4E6076">${MONK_ART}</g>`);
+    parts.push(`<g transform="translate(${px(58)} ${horizon - 26 * s}) scale(${s.toFixed(2)})" fill="#857AB8">${MONK_ART}</g>`);
   }
 
   // ── 雪 ──
@@ -360,7 +361,7 @@ function skySVG(o) {
       const x = px((i * 37.7) % 100);
       const y = py((i * 61.3) % 96);
       const r = (0.8 + (i % 3) * 0.5) * k;
-      return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="#DCE6F0" opacity="${(0.25 + (i % 4) * 0.12).toFixed(2)}"/>`;
+      return `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" fill="#FFFFFF" opacity="${(0.25 + (i % 4) * 0.12).toFixed(2)}"/>`;
     }).join(''));
   }
 
