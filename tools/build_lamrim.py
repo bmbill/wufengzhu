@@ -21,7 +21,7 @@ API = "https://cdn.amec.amrtf.org/volume/B000027/%d"
 UA = {"User-Agent": "Mozilla/5.0 (dengdeng lamrim index)"}
 CACHE_DIR = os.path.join(ROOT, "tools", "cache", "nanputuo")
 LAST_LR = 284          # 第 285 卷起是《略論》止觀淺釋，屬於「定、慧」
-MIN_SEC, MAX_SEC, PIECE = 180, 330, 270   # 每段約 3～5 分鐘
+MIN_SEC, MAX_SEC, PIECE = 180, 300, 260   # 每段約 3～5 分鐘（超過 5 分鐘就切）
 
 # 法類（照廣論次第）：名稱、所屬部
 CATS = [
@@ -232,22 +232,52 @@ def main():
                 u.append(1)
             else:
                 u[8] = 1
-    # 太長的段（超過 MAX_SEC）照講解段落的時間再切成幾天，原文標（二）（三）……
+    # 太長的段（校準後超過 MAX_SEC）再切成幾天，原文標（二）（三）……
+    # 切點優先用 tools/meaning_cuts.json（AI 讀講解逐字稿、在師父換話題處選的段落）；沒有才照時間平均切。
+    # 長度用起點校準後的時間算（tools/start_fix.json），段落時間也照同一個差值修正。
     NUM = "一二三四五六七八九十"
+    FIX0 = {}
+    fp0 = os.path.join(ROOT, "tools", "start_fix.json")
+    if os.path.exists(fp0):
+        FIX0 = json.load(open(fp0, encoding="utf-8"))
+    mp = os.path.join(ROOT, "tools", "meaning_cuts.json")
+    MC = json.load(open(mp, encoding="utf-8")) if os.path.exists(mp) else {}
+    dump = []
     split = []
-    for u in units:
-        length = u[3] - u[2]
+    for ui, u in enumerate(units):
+        key = "%d.%d" % (u[0], u[4])
+        c0 = FIX0.get(key, u[2]) if u[2] > 1 else u[2]
+        nx = units[ui + 1] if ui + 1 < len(units) and units[ui + 1][0] == u[0] else None
+        c1 = (FIX0.get("%d.%d" % (nx[0], nx[4]), nx[2]) if nx else u[3])
+        delta = c0 - u[2]
+        length = c1 - c0
         if length <= MAX_SEC:
             split.append(u)
             continue
         ps = paras_of(data[u[0]])
-        timed = [(x, ps[x][1]) for x in range(u[4], u[5]) if ps[x][1] is not None and not ps[x][0]]
+        timed = [(x, ps[x][1] + delta) for x in range(u[4], u[5]) if ps[x][1] is not None and not ps[x][0]]
+        if "--dump" in sys.argv:
+            dump.append({"id": key, "cat": CATS[u[6]][0], "len": round(length), "q": u[1],
+                         "paras": [[x, (round(ps[x][1] + delta - c0) if ps[x][1] is not None else None), ps[x][2]]
+                                   for x in range(u[4], u[5]) if not ps[x][0] and ps[x][2]]})
+        if key in MC:
+            tx = dict(timed)
+            cuts = [(x, tx[x]) for x in MC[key] if x in tx and u[2] < tx[x] < u[3] + delta]
+            cuts.sort()
+            if cuts:
+                bounds = [(u[4], u[2])] + cuts + [(u[5], u[3])]
+                for j in range(len(bounds) - 1):
+                    q = u[1] if j == 0 else "%s（%s）" % (u[1].split(chr(10))[0][:40], NUM[j] if j < 10 else j + 1)
+                    split.append([u[0], q, round(bounds[j][1], 1), round(bounds[j + 1][1], 1),
+                                  bounds[j][0] if j else u[4], bounds[j + 1][0], u[6], u[7] if j == len(bounds) - 2 else 0,
+                                  1 if j else (u[8] if len(u) > 8 else 0)])
+                continue
         k = int(-(-length // PIECE))
         cuts = []
         for j in range(1, k):
-            target = u[2] + length * j / k
+            target = c0 + length * j / k
             best = min(timed, key=lambda xt: abs(xt[1] - target), default=None)
-            if best and best[1] - u[2] > 120 and u[3] - best[1] > 120 and (not cuts or best[0] > cuts[-1][0] and best[1] - cuts[-1][1] > 120):
+            if best and best[1] - c0 > 120 and c1 - best[1] > 120 and (not cuts or best[0] > cuts[-1][0] and best[1] - cuts[-1][1] > 120):
                 cuts.append(best)
         if not cuts:
             split.append(u)
@@ -259,6 +289,10 @@ def main():
                           bounds[j][0] if j else u[4], bounds[j + 1][0], u[6], u[7] if j == len(bounds) - 2 else 0,
                           1 if j else (u[8] if len(u) > 8 else 0)])
     units = [x if len(x) == 9 else x + [0] for x in split]
+    if "--dump" in sys.argv:
+        json.dump(dump, open(os.path.join(ROOT, "tools", "cache", "recut_long.json"), "w", encoding="utf-8"), ensure_ascii=False)
+        print("長段 %d 個（%d 字）" % (len(dump), sum(len(p[2]) for d in dump for p in d["paras"])))
+        return
     # 每段的主題（從原文自動摘出：科判句優先，其次是引文出處或第一句）
     for x, u in enumerate(units):
         if u[8]:

@@ -124,8 +124,14 @@ def locate(b, x, dur, a=None, z=None):
 def work(job):
     v, src, bounds = job
     out = os.path.join(CACHE, "v%03d.json" % v)
+    old = []
     if os.path.exists(out):
-        return json.load(open(out, encoding="utf8"))
+        # 已經校過的卷：只補新出現的分界（例如長段改照意思重切後的新切點）
+        old = json.load(open(out, encoding="utf8"))
+        have = {r["id"] for r in old}
+        bounds = [b for b in bounds if b["id"] not in have]
+        if not bounds:
+            return old
     import numpy as np
     raw = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"], capture_output=True).stdout
     x = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
@@ -144,6 +150,7 @@ def work(job):
         r = {"id": b["id"], "te": b["te"], "est": b["est"], "new": None if t is None else round(max(0.0, t - 0.3), 1), "how": how}
         r.update(sc)
         res.append(r)
+    res = old + res
     json.dump(res, open(out, "w", encoding="utf8"), ensure_ascii=False)
     return res
 
