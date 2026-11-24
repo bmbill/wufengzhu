@@ -31,7 +31,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--f-bo
 a{color:var(--sea-ink)}
 button{font:inherit;color:inherit;cursor:pointer}
 h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.35;margin:0}
-.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.wrap{max-width:760px;margin:0 auto;padding:0 max(20px,env(safe-area-inset-right)) 0 max(20px,env(safe-area-inset-left))}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 /* ---------- night sea band ---------- */
@@ -93,7 +93,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.35;margin:0}
 .rail .done svg{filter:drop-shadow(0 0 8px rgba(255,227,161,.7))}
 
 /* ---------- paper side ---------- */
-.paper{padding:8px 0 calc(var(--safe-b) + 60px)}
+.paper{padding-top:8px;padding-bottom:calc(var(--safe-b) + 60px)}
 .section-h{display:flex;align-items:baseline;gap:10px;margin:28px 0 12px}
 .section-h h2{font-size:21px}
 .section-h .n{font-family:var(--f-num);color:var(--faint);font-size:13px;letter-spacing:.1em}
