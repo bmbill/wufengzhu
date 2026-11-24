@@ -364,7 +364,7 @@ function stepHTML(X, S, s, i) {
             <button type="button" class="fav" data-fav="${j}" aria-pressed="${on}" aria-label="這場對我最有用">${on ? "♥" : "♡"}</button></div>
           ${x.head ? `<div class="s2-head">${inline(x.head)}</div>` : ""}
           ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡切入</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
-          ${x.brief && x.brief.length ? `<details class="more s2"><summary>法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
+          ${x.brief && x.brief.length ? `<details class="more s2"><summary>看法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
         </div>`;
       }).join("")}</div>
       <p class="chk-n">${fav != null && s.sessions[+fav] ? `最有用的一場：${esc(s.sessions[+fav].who)}` : "點 ♡ 選出對自己最有用的一場。"}</p>` +
