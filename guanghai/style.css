@@ -378,3 +378,15 @@ body.ph-0{--page:var(--page-1)} body.ph-1{--page:var(--page-2)} body.ph-2{--page
   .cast figure:nth-child(2) .chr{animation-delay:-1s}.cast figure:nth-child(3) .chr{animation-delay:-2s}.cast figure:nth-child(4) .chr{animation-delay:-3s}
   @keyframes chr-bob{50%{transform:translateY(-4px)}}
 }
+
+/* 每一步一張紙：手機上整片滿版（左右不留框），步與步之間露出該段的底色 */
+:root{--sheet:#ffffff}
+:root[data-theme="dark"]{--sheet:#1c2027}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sheet:#1c2027}}
+.step{background:var(--sheet);--raised:var(--page);
+  margin:28px calc(-1 * max(var(--gut),env(safe-area-inset-left))) 0 calc(-1 * max(var(--gut),env(safe-area-inset-left)));
+  padding:28px max(var(--gut),env(safe-area-inset-right)) 24px max(var(--gut),env(safe-area-inset-left))}
+.phase > .step:first-of-type{margin-top:24px}
+.step .bubble,.step .fb,.step .mplayer,.step .reveal,.step .logform{background:var(--page)}
+@media (min-width:728px){.step{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px;border-radius:20px}}
+@media print{.step{background:none;margin:24px 0 0;padding:0}}
