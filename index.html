@@ -526,6 +526,11 @@ body.in-session::before{background:transparent}
 .sheet .panel .sticker.tr{top:10px;right:14px}
 .sheet .panel h2{padding-right:80px}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 8px 30px rgba(43,35,80,.3)}
+.gh-entry{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0d1a36,#1c2f5c);color:#f6efdc;text-decoration:none;box-shadow:0 6px 18px rgba(13,26,54,.18)}
+.gh-entry svg{width:40px;height:40px;flex:none}
+.gh-entry b{display:block;font-family:"LXGW WenKai TC",serif;font-size:18px;letter-spacing:.04em}
+.gh-entry small{display:block;font-size:12.5px;color:#c9d2e8;margin-top:3px;line-height:1.5}
+.gh-entry i{font-style:normal;font-size:24px;margin-left:auto;color:#f3e3b0}
 .store-note{font-size:12px;color:var(--mute);text-align:center;margin-top:28px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (min-width:700px){.hero h1{font-size:40px}}
@@ -1466,6 +1471,7 @@ function vToday(){
   </header>
   <section class="section tiles" aria-label="戒定慧">${tiles.join("")}</section>
   ${window.Shan?`<section class="section shan-sec">${Shan.strip()}</section>`:""}
+  <section class="section"><a class="gh-entry" href="guanghai/"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="#f3e3b0"/><circle cx="26" cy="15" r="12" fill="#0d1a36"/></svg><span><b>廣海明月學習單</b><small>每一講一份，照六步走：聽前準備、聽師父、聽老師、共學、一週練習、四層核對</small></span><i aria-hidden="true">›</i></a></section>
   ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
   ${window.installCard?installCard():""}
   <p class="store-note">${store.ok?"進度存在這支手機的瀏覽器裡。建議「加到主畫面」並偶爾下載備份。":"這個瀏覽器無法儲存進度（可能是無痕模式）。請改用一般模式開啟。"}</p>`;
