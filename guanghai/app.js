@@ -434,7 +434,7 @@ function stepHTML(X, S, s, i) {
         </div>`;
       }).join("")}</div>
       <p class="chk-n">${fav != null && s.sessions[+fav] ? `最有用的一場：${esc(s.sessions[+fav].who)}` : "點 ♡ 選出對自己最有用的一場。"}</p>` +
-      (s.rest ? `<details class="more"><summary>${s.sessions.length <= 10 ? CN[s.sessions.length - 1] : s.sessions.length} 場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
+      (s.rest ? `<details class="more"><summary>${s.sessions.length <= 10 ? CN[s.sessions.length - 1] : s.sessions.length + " "}場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
       (s.closing ? `<div class="q core" style="margin-top:14px"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "practice") {
     b = `<div class="q"><div class="lab"><span><strong>觸發點</strong>：每天都會遇到的小事（點一下，直接記一筆）</span></div>
