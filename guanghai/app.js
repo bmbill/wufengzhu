@@ -176,7 +176,7 @@ async function renderLesson(id) {
   const done = k => !!S.done[k];
   app.innerHTML = `
   <div class="mini" id="mini"><div class="wrap"><a class="iconbtn" href="#/" aria-label="回目錄">${ICON.back}</a>
-    <b>第 ${X.no} 講・${esc(X.title)}</b><span style="flex:1"></span><span id="miniMoon">${moon(progress(id))}</span></div></div>
+    <nav class="ph-tabs mini-tabs" aria-label="三段">${phaseTabs(X, S)}</nav><span id="miniMoon">${moon(progress(id))}</span></div></div>
   <section class="sea"><div class="stars"></div><div class="wrap">
     <div class="topbar"><a class="iconbtn" href="#/" aria-label="回目錄">${ICON.back}</a><a class="brand" href="#/">廣海明月學習單</a></div>
     <div class="lhero">
@@ -190,17 +190,61 @@ async function renderLesson(id) {
       <nav class="rail" aria-label="六個步驟">${X.steps.map((s, i) => `<button data-go="${s.key}" class="${done(s.key) ? "done" : ""}">${moon((i + 1) / 6)}<b>${PHASES[i] || s.title}</b></button>`).join("")}</nav>
     </div></div>${waves()}</section>
   <div class="wrap paper">
-    ${X.intro ? `<div class="intro md">${md(X.intro)}</div>` : ""}
-    ${meta.length ? `<details class="meta"><summary>這一講在廣論的哪裡</summary><dl class="metagrid">
-      ${meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd class="md">${inline(v)}</dd></div>`).join("")}</dl></details>` : ""}
-    ${X.steps.map((s, i) => stepHTML(X, S, s, i)).join("")}
-    <div id="full"></div>
+    <nav class="ph-tabs ph-main" aria-label="三段">${phaseTabs(X, S)}</nav>
+    ${PH.map((g, pi) => `<div class="phase" data-ph="${pi}"${pi === curPh(S) ? "" : " hidden"}>
+      <p class="ph-sub">${esc(g.sub)}</p>
+      ${pi === 0 && X.intro ? `<details class="meta"><summary>這張學習單怎麼用</summary><div class="intro md">${md(X.intro)}</div></details>` : ""}
+      ${pi === 0 && meta.length ? `<details class="meta"><summary>這一講在廣論的哪裡</summary><dl class="metagrid">
+        ${meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd class="md">${inline(v)}</dd></div>`).join("")}</dl></details>` : ""}
+      ${g.steps.filter(i => X.steps[i]).map(i => stepHTML(X, S, X.steps[i], i)).join("")}
+      ${pi < PH.length - 1 ? `<button type="button" class="ph-next" data-toph="${pi + 1}">下一段：${esc(PH[pi + 1].name)}<span>${esc(PH[pi + 1].sub)}</span>${ICON.go}</button>` : `<div id="full"></div>`}
+    </div>`).join("")}
     ${footer()}
   </div>`;
   wireLesson(X, S);
   wireFooter();
 }
 
+// 六步分成三段，手機上一次只看一段
+const PH = [
+  { name: "聽聞前行", sub: "先想想自己，再寫下現在的理解", steps: [0] },
+  { name: "正聽", sub: "先聽師父，再聽老師怎麼講", steps: [1, 2] },
+  { name: "聽之後", sub: "讀共學、平常練、核對有沒有學會", steps: [3, 4, 5] },
+];
+const curPh = S => Math.min(Math.max(+S.ph || 0, 0), PH.length - 1);
+function phaseTabs(X, S) {
+  return PH.map((g, pi) => {
+    const ks = g.steps.filter(i => X.steps[i]).map(i => X.steps[i].key), d = ks.filter(k => S.done[k]).length;
+    return `<button type="button" data-toph="${pi}" aria-pressed="${pi === curPh(S)}"><b>${esc(g.name)}</b><span class="dots">${ks.map(k => `<i class="${S.done[k] ? "on" : ""}"></i>`).join("")}</span></button>`;
+  }).join("");
+}
+// 整講音檔的分段播放（第三步每一步、第四步每一場的切入處）
+const segBtn = (sg, label = "") => sg ? `<button type="button" class="segp" data-s="${sg[0]}" data-e="${sg[1]}" aria-label="播放 ${mmss(sg[0])}–${mmss(sg[1])}">${ICON.play}<span>${label ? esc(label) + " " : ""}${mmss(sg[0])}–${mmss(sg[1])}</span><i></i></button>` : "";
+let segAudio = null, segCur = null;
+function stopSeg() { if (segAudio) segAudio.pause(); }
+function wireSegs(X) {
+  if (!X.lecture) { app.querySelectorAll(".segp").forEach(b => b.remove()); return; }
+  const ui = () => app.querySelectorAll(".segp").forEach(b => {
+    const on = b === segCur && segAudio && !segAudio.paused;
+    b.classList.toggle("on", on); b.querySelector("svg").outerHTML = on ? ICON.pause : ICON.play;
+    const s = +b.dataset.s, e = +b.dataset.e, p = b === segCur && segAudio ? Math.min(Math.max((segAudio.currentTime - s) / (e - s), 0), 1) : 0;
+    b.style.setProperty("--p", (p * 100) + "%");
+  });
+  app.querySelectorAll(".segp").forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    if (!segAudio) {
+      segAudio = new Audio(X.lecture); segAudio.preload = "auto";
+      segAudio.addEventListener("timeupdate", () => { if (segCur && segAudio.currentTime >= +segCur.dataset.e) { segAudio.pause(); } ui(); });
+      ["play", "pause"].forEach(e => segAudio.addEventListener(e, ui));
+      segAudio.addEventListener("error", () => toast("音檔載入失敗，請確認網路"));
+    }
+    if (segCur === b && !segAudio.paused) { segAudio.pause(); return; }
+    document.dispatchEvent(new Event("gh-play"));
+    const s = +b.dataset.s, e = +b.dataset.e;
+    if (segCur !== b || segAudio.currentTime < s || segAudio.currentTime >= e - 0.3) segAudio.currentTime = s;
+    segCur = b; segAudio.play().catch(() => toast("無法播放，請確認網路")); ui();
+  });
+}
 function field(S, key, ph = "寫在這裡…", rows = 2) {
   return `<textarea data-k="${key}" rows="${rows}" placeholder="${esc(ph)}">${esc(S.a[key] || "")}</textarea>`;
 }
@@ -236,7 +280,8 @@ function wirePlayer(el) {
     a.currentTime = s; return a;
   };
   const go = sec => { const x = get(); x.currentTime = s + Math.min(Math.max(sec, 0), len - 0.5); ui(); };
-  btn.onclick = () => { const x = get(); if (x.paused) { if (x.currentTime < s || x.currentTime >= e) x.currentTime = s; x.play().catch(() => toast("無法播放，請確認網路")); } else x.pause(); };
+  document.addEventListener("gh-play", () => { if (a && !a.paused) a.pause(); });
+  btn.onclick = () => { const x = get(); if (x.paused) { stopSeg(); if (x.currentTime < s || x.currentTime >= e) x.currentTime = s; x.play().catch(() => toast("無法播放，請確認網路")); } else x.pause(); };
   el.querySelector(".mp-re").onclick = () => { go(0); const x = get(); if (x.paused) x.play().catch(() => {}); };
   bar.onclick = ev => { const r = bar.getBoundingClientRect(); go((ev.clientX - r.left) / r.width * len); };
   bar.onkeydown = ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { ev.preventDefault(); go((a ? a.currentTime - s : 0) + (ev.key === "ArrowRight" ? 5 : -5)); } };
@@ -277,9 +322,9 @@ function stepHTML(X, S, s, i) {
   } else if (s.kind === "checklist") {
     const got = s.checks.filter((c, j) => S.a[`${k}.c${j}`]).length;
     b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
-      `<div class="checks">${s.checks.map((c, j) => `<button type="button" class="chk" data-c="${k}.c${j}" aria-pressed="${!!S.a[`${k}.c${j}`]}">
-        <span class="chk-t"><b>${esc(c.label)}</b>${c.time ? `<span class="tc">${esc(c.time)}</span>` : ""}<span class="chk-d">${inline(c.text)}</span></span>
-        <span class="chk-b" aria-hidden="true">${ICON.check}</span></button>`).join("")}</div>
+      `<div class="checks">${s.checks.map((c, j) => `<div class="chk${S.a[`${k}.c${j}`] ? " on" : ""}">
+        <div class="chk-t"><b>${esc(c.label)}</b>${c.seg && X.lecture ? "" : c.time ? `<span class="tc">${esc(c.time)}</span>` : ""}<span class="chk-d">${inline(c.text)}</span>${segBtn(c.seg, "聽這一段")}</div>
+        <button type="button" class="chk-b" data-c="${k}.c${j}" aria-pressed="${!!S.a[`${k}.c${j}`]}" aria-label="${esc(c.label)}：我也有做到">${ICON.check}</button></div>`).join("")}</div>
       <p class="chk-n" id="chkn-${k}">${chkNote(got, s.checks.length)}</p>` +
       (s.closing ? `<div class="q core"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "compare") {
@@ -288,28 +333,23 @@ function stepHTML(X, S, s, i) {
         ${s.cols.map((c, ci) => `<div><label>${esc(c)}</label>${field(S, `${k}.${j}.${ci}`, ci ? "聽完老師再寫" : "先寫我的")}</div>`).join("")}</div></div>`).join("") +
       (s.closing ? `<div class="q"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`)}</div>` : "");
   } else if (s.kind === "sessions") {
-    // 有聽共學：帶焦點去聽、記一點；沒聽：直接讀每場重點，記下對自己有用的
-    const canRead = s.sessions.some(x => x.brief);
-    const filled = s.sessions.some((x, j) => x.brief && S.a[`${k}.${j}`]);
-    const mode = canRead ? (S.a[`${k}.mode`] || (filled ? "heard" : "read")) : "heard";
-    const read = mode === "read";
-    const seg = canRead ? `<div class="seg two" role="group" aria-label="共學">
-        <button type="button" data-mode="heard" aria-pressed="${!read}">我聽了共學</button>
-        <button type="button" data-mode="read" aria-pressed="${read}">還沒聽，先讀重點</button></div>` : "";
-    const lead = read
-      ? `<div class="lead">沒參加共學也沒關係。下面是 ${s.sessions.filter(x => x.brief).length} 位法師各自的切入點。讀一讀，點選<strong>對我最有用的一場</strong>，最後寫一句結論就好。${s.recording ? `有福智學員帳號的話，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>`
-      : (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "");
-    b = seg + lead +
-      s.sessions.map((x, j) => {
-        const m = x.who.match(/^(\d{1,2}\/\d{1,2})\s*(.*)$/);
-        const date = `<div class="date">${m ? esc(m[1]) + `<b>${esc(m[2])}</b>` : `<b>${esc(x.who)}</b>`}</div>`;
-        if (read && x.brief) return `<div class="sess">${date}<div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div>
-          <button type="button" class="fav" data-fav="${j}" aria-pressed="${S.a[`${k}.fav`] === String(j)}">${S.a[`${k}.fav`] === String(j) ? "♥ 這場對我最有用" : "♡ 這場對我最有用"}</button></div>`;
-        const core = /^★/.test(x.focus), focus = x.focus.replace(/^★\s*/, "");
-        if (core) return `<div class="sess core">${read ? date.replace("聽完", "讀完") : date}<div class="focus"><i class="star">★</i>${inline(read ? focus.replace(/^.*?(這一講)/, "$1") : focus)}</div>${field(S, `${k}.${j}`, "寫一句就好")}</div>`;
-        return `<div class="sess">${date}<div class="focus">${inline(focus)}</div>${field(S, `${k}.${j}`, "法師講到、我沒想到的一點（有聽的場次再寫）")}</div>`;
-      }).join("") +
-      (s.reveal ? (read && s.reveal.rest ? `<div class="together md">${md(s.reveal.rest)}</div>` : reveal(`${k}.rv`, "", s.reveal.md, s.reveal.title)) : "");
+    // 預設使用者沒聽過共學：每場一張卡，先看「從這一講的哪裡切入」（可以聽那一段），細節收起來
+    const fav = S.a[`${k}.fav`];
+    const [first, ...more] = (s.lead || "").split("\n");
+    b = `<div class="lead">${inline(first.replace(/（[^）]*）/g, ""))}${s.recording ? ` 有福智學員帳號，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>` +
+      `<div class="sess2s">${s.sessions.map((x, j) => {
+        const m = x.who.match(/^(\d{1,2}\/\d{1,2})\s*(.*)$/), on = fav === String(j);
+        return `<div class="sess2${on ? " fav-on" : ""}">
+          <div class="s2-top"><span class="s2-who">${m ? `<span class="num">${esc(m[1])}</span>${esc(m[2])}` : esc(x.who)}</span>
+            <button type="button" class="fav" data-fav="${j}" aria-pressed="${on}" aria-label="這場對我最有用">${on ? "♥" : "♡"}</button></div>
+          ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
+          ${x.head ? `<div class="s2-head"><span class="arr" aria-hidden="true">↓</span>帶出的主題：${inline(x.head)}</div>` : ""}
+          ${x.brief && x.brief.length ? `<details class="more s2"><summary>法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
+        </div>`;
+      }).join("")}</div>
+      <p class="chk-n">${fav != null && s.sessions[+fav] ? `最有用的一場：${esc(s.sessions[+fav].who)}` : "點 ♡ 選出對自己最有用的一場。"}</p>` +
+      (s.rest ? `<details class="more"><summary>四場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
+      (s.closing ? `<div class="q core" style="margin-top:14px"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "practice") {
     b = `<div class="q"><div class="lab"><span><strong>觸發點</strong>：每天都會遇到的小事（點一下，直接記一筆）</span></div>
         <div class="chips">${s.triggers.map((t, j) => `<button type="button" class="chip" data-pick="${j}">${esc(t)}</button>`).join("")}</div></div>
@@ -351,7 +391,16 @@ function stepHTML(X, S, s, i) {
 function wireLesson(X, S) {
   const id = X.id;
   app.querySelectorAll(".mplayer").forEach(wirePlayer);
-  app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const k = b.closest(".step").id.slice(2); S.a[`${k}.mode`] = b.dataset.mode; save(); const y = scrollY; route().then(() => scrollTo(0, y)); });
+  wireSegs(X);
+  // 三段切換
+  const showPh = (pi, scroll = true) => {
+    S.ph = pi; save();
+    app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== pi);
+    app.querySelectorAll(".ph-tabs [data-toph]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.toph === pi));
+    stopSeg();
+    if (scroll) { const top = $(".ph-main").getBoundingClientRect().top + scrollY - 8; if (scrollY > top) scrollTo({ top, behavior: "instant" }); }
+  };
+  app.querySelectorAll("[data-toph]").forEach(b => b.onclick = () => showPh(+b.dataset.toph));
   // 點選題
   app.querySelectorAll(".q.choice").forEach(box => {
     const [k, j] = box.dataset.q.split("."), q = X.steps.find(s => s.key === k).items[+j];
@@ -366,9 +415,9 @@ function wireLesson(X, S) {
     });
   });
   // 第三步：老師的步驟，我也做到就打勾
-  app.querySelectorAll(".chk").forEach(c => c.onclick = () => {
+  app.querySelectorAll(".chk-b").forEach(c => c.onclick = () => {
     const key = c.dataset.c, on = !S.a[key]; if (on) S.a[key] = "y"; else delete S.a[key]; save();
-    c.setAttribute("aria-pressed", on);
+    c.setAttribute("aria-pressed", on); c.closest(".chk").classList.toggle("on", on);
     const k = key.split(".")[0], st = X.steps.find(s => s.key === k);
     $("#chkn-" + CSS.escape(k)).textContent = chkNote(st.checks.filter((x, j) => S.a[`${k}.c${j}`]).length, st.checks.length);
   });
@@ -376,7 +425,9 @@ function wireLesson(X, S) {
   app.querySelectorAll("[data-fav]").forEach(b => b.onclick = () => {
     const k = b.closest(".step").id.slice(2), key = `${k}.fav`, on = S.a[key] !== b.dataset.fav;
     if (on) S.a[key] = b.dataset.fav; else delete S.a[key]; save();
-    app.querySelectorAll("[data-fav]").forEach(x => { const p = on && x === b; x.setAttribute("aria-pressed", p); x.textContent = (p ? "♥" : "♡") + " 這場對我最有用"; });
+    app.querySelectorAll("[data-fav]").forEach(x => { const p = on && x === b; x.setAttribute("aria-pressed", p); x.textContent = p ? "♥" : "♡"; x.closest(".sess2").classList.toggle("fav-on", p); });
+    const st = X.steps.find(s => s.key === k), n = b.closest(".step").querySelector(".chk-n");
+    if (n) n.textContent = on ? `最有用的一場：${st.sessions[+b.dataset.fav].who}` : "點 ♡ 選出對自己最有用的一場。";
   });
   // textareas: autosize + autosave
   const grow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
@@ -385,7 +436,11 @@ function wireLesson(X, S) {
     t.addEventListener("input", () => { grow(t); S.a[t.dataset.k] = t.value; if (!t.value) delete S.a[t.dataset.k]; save(); });
   });
   // rail jump
-  app.querySelectorAll("[data-go]").forEach(b => b.onclick = () => $("#s-" + CSS.escape(b.dataset.go)).scrollIntoView({ behavior: "smooth" }));
+  app.querySelectorAll("[data-go]").forEach(b => b.onclick = () => {
+    const i = X.steps.findIndex(s => s.key === b.dataset.go), pi = PH.findIndex(g => g.steps.includes(i));
+    if (pi >= 0) showPh(pi, false);
+    $("#s-" + CSS.escape(b.dataset.go)).scrollIntoView({ behavior: "smooth" });
+  });
   // reveals
   app.querySelectorAll(".reveal > button").forEach(b => b.onclick = () => {
     const r = b.parentElement, open = r.classList.toggle("open"); b.setAttribute("aria-expanded", open);
@@ -395,6 +450,7 @@ function wireLesson(X, S) {
     const p = progress(id, X.steps.length);
     $("#miniMoon").innerHTML = moon(p);
     app.querySelectorAll(".rail [data-go]").forEach(b => b.classList.toggle("done", !!S.done[b.dataset.go]));
+    app.querySelectorAll(".ph-tabs").forEach(n => { n.innerHTML = phaseTabs(X, S); n.querySelectorAll("[data-toph]").forEach(b => b.onclick = () => showPh(+b.dataset.toph)); });
     $("#full").innerHTML = p >= 1 ? `<div class="fullmoon">${moon(1)}<h2>月圓了</h2><p>第 ${X.no} 講六步都走過一輪。把「留一個問題去請益」帶去研討班吧。</p></div>` : "";
   };
   app.querySelectorAll("[data-done]").forEach(b => b.onclick = () => {
@@ -455,7 +511,7 @@ function wireLesson(X, S) {
     if (a3) a3.textContent = `練習紀錄：有用一句法、也寫了結果的 ${turned} 次`;
   }
   // print
-  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more").forEach(d => d.open = true); print(); };
+  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more, details.meta").forEach(d => d.open = true); app.querySelectorAll(".phase").forEach(el => el.hidden = false); print(); app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== curPh(S)); };
   // mini bar
   const mini = $("#mini"), hero = $(".sea");
   new IntersectionObserver(([e]) => mini.classList.toggle("on", !e.isIntersecting), { threshold: 0 }).observe(hero);

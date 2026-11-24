@@ -74,6 +74,13 @@ def head_title(s):
     s = re.sub(r"（\d+\s*分鐘）", "", s).strip()
     return s, mins
 
+SEG = re.compile(r"\[(\d{1,2}):(\d{2})\s*[–~-]\s*(\d{1,2}):(\d{2})\]")
+
+def seg_of(s):
+    """「[01:16–02:11]」→ [76, 131]（秒），沒有就 None。"""
+    m = SEG.search(s or "")
+    return [int(m.group(1)) * 60 + int(m.group(2)), int(m.group(3)) * 60 + int(m.group(4))] if m else None
+
 CHOICE = re.compile(r"^選項(（可複選）)?[：:]\s*(.+)$")
 
 def items_of(body):
@@ -121,6 +128,7 @@ def parse(path):
     m = re.search(r"(\d{1,2}):(\d{2})\s*[–~-]\s*(\d{1,2}):(\d{2})\s*(https?://\S+)", meta.get("師父原音", ""))
     if m:
         L["master"] = {"src": m.group(5), "start": int(m.group(1)) * 60 + int(m.group(2)), "end": int(m.group(3)) * 60 + int(m.group(4))}
+        L["lecture"] = m.group(5)  # 整講音檔：第三步、第四步可以分段播
     verse = re.search(r"「([^」]{8,})」", meta.get("廣論段落", ""))
     L["verse"] = verse.group(1) if verse else ""
     appendix = ""
@@ -151,30 +159,32 @@ def parse(path):
                 for it in numbered(body):
                     m = re.match(r"\*\*(.+?)\*\*\s*(?:（(\[[^）]+\])）)?[：:]\s*(.*)", " ".join(it))
                     if m:
-                        st["checks"].append({"label": m.group(1), "time": (m.group(2) or "").strip("[]").replace("]–[", "–"), "text": m.group(3)})
+                        st["checks"].append({"label": m.group(1), "time": (m.group(2) or "").strip("[]").replace("]–[", "–"), "seg": seg_of(m.group(2)), "text": m.group(3)})
         elif key == "四":
+            # 共學：預設使用者沒聽過，每場一張卡——從這一講的哪裡切入（可播那一段）、切入點、怎麼帶、獨有的一點
             st["kind"] = "sessions"
-            main, _, reveal = body.partition("\n### ")
-            st["lead"] = paras_before(main, lambda l: l.startswith("|"))
-            tb = tables(main)
-            st["sessions"] = [{"who": r[0], "focus": r[1]} for r in tb[0][1:]] if tb else []
-            if reveal:
-                rt, _, rb = reveal.partition("\n")
-                # 指向本機資料夾的說明在網頁上沒用，拿掉
-                rb = re.sub(r"各場詳細內容見[^。]*。", "", rb)
-                st["reveal"] = {"title": rt.strip(), "md": rb.strip()}
-                # 沒聽共學的人：把比較表的每一列配回各場，表格之後的段落（共同點等）直接給看
-                ct = tables(rb)
-                if ct:
-                    hdr = ct[0][0]
-                    rows = {r[0]: r for r in ct[0][1:]}
-                    for x in st["sessions"]:
-                        r = rows.get(x["who"])
-                        if r:
-                            x["brief"] = [[hdr[c], r[c]] for c in range(1, len(r)) if r[c]]
-                    after = rb.splitlines()
-                    last = max(i for i, l in enumerate(after) if l.strip().startswith("|"))
-                    st["reveal"]["rest"] = chr(10).join(after[last + 1:]).strip()
+            st["lead"] = paras_before(body, lambda l: l.startswith("|"))
+            tb = tables(body)
+            st["sessions"] = []
+            if tb:
+                hdr = tb[0][0]
+                for r in tb[0][1:]:
+                    x = {"who": r[0], "brief": []}
+                    for h, v in zip(hdr[1:], r[1:]):
+                        if "切入" in h and "哪裡" in h:
+                            x["from"] = re.sub(r"（\[[^\]]+\]）", "", v).strip()
+                            x["seg"] = seg_of(v)
+                        elif h == "切入點":
+                            x["head"] = v
+                        elif v:
+                            x["brief"].append([h, v])
+                    st["sessions"].append(x)
+            lines = body.splitlines()
+            last = max((i for i, l in enumerate(lines) if l.strip().startswith("|")), default=-1)
+            rest = [l for l in lines[last + 1:] if not l.startswith("★")]
+            st["rest"] = chr(10).join(rest).strip()
+            m = re.search(r"^★.*?\*\*(.+?)\*\*", body, re.M)
+            st["closing"] = m.group(1) if m else ""
             m = re.search(r"https?://\S+?(?=[\s）)]|$)", L["meta"].get("共學錄影", ""))
             if m:
                 st["recording"] = m.group(0)
