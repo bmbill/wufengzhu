@@ -72,12 +72,6 @@ const ICON = {
   check: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   ear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/></svg>',
 };
-function waves() {
-  const path = y => { let d = `M0 ${y}`; for (let x = 0; x <= 1600; x += 100) d += ` Q${x + 50} ${y - 7} ${x + 100} ${y} T${x + 200} ${y}`; return d; };
-  return `<svg class="waves" viewBox="0 0 800 70" preserveAspectRatio="none" aria-hidden="true">
-    <path class="w1" d="${path(20)}"/><path class="w2" d="${path(34)}"/><path class="w3" d="${path(46)}"/>
-    <path class="shore" d="M0 58 Q200 50 400 58 T800 58 V70 H0Z"/></svg>`;
-}
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2200); }
 const progress = (id, n = 6) => { const d = (DB.lessons[id] || {}).done || {}; return Math.min(1, Object.values(d).filter(Boolean).length / n); };
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
@@ -97,7 +91,7 @@ async function route() {
     else await renderHome();
   } catch (e) {
     app.innerHTML = `<section class="sea"><div class="wrap"><div class="topbar"><a class="brand" href="#/">廣海明月學習單</a></div>
-      <p style="padding:30px 0">這一講還沒有學習單，或是網路沒有連上。</p></div>${waves()}</section>
+      <p style="padding:30px 0">這一講還沒有學習單，或是網路沒有連上。</p></div></section>
       <div class="wrap paper"><a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" href="#/">回目錄</a></div>`;
   }
 }
@@ -110,31 +104,30 @@ async function renderHome() {
   const units = [];
   for (const x of list) { const u = x.unit || "其他"; let g = units.find(g => g.u === u); if (!g) units.push(g = { u, items: [] }); g.items.push(x); }
   app.innerHTML = `
-  <section class="sea"><div class="stars"></div><div class="moonlight"></div><div class="wrap">
-    <div class="topbar"><a class="brand" href="../">燈燈相續</a><span class="sp"></span>
-      <button class="iconbtn" id="install" hidden>安裝到手機</button></div>
+  <section class="sea"><div class="wrap">
+    <div class="topbar"><a class="brand" href="../">燈燈相續</a></div>
     <div class="hero">
-      <div><h1><small>真如老師 · 廣海明月</small>廣海明月<br>學習單</h1>
-        <p>每一講一份，照著做：聽前準備、先聽師父、再聽老師、共學、一週練習、四層核對。每完成一步，月亮就亮一分；做完一講，月就圓了。</p></div>
+      <div><div class="by">真如老師・廣海明月</div><h1>廣海明月學習單</h1>
+        <p>每一講一份，分三段走：聽聞前行、正聽、聽之後。每做完一步，月亮亮一分；六步做完，月就圓了。</p></div>
       ${moon(overall, "moon-big")}
-    </div></div>${waves()}</section>
+    </div></div></section>
   <div class="wrap paper">
     ${last ? `<a class="card continue" href="#/${last.no}">${moon(progress(last.id))}
       <div><div class="k">接著學</div><h3>第 ${last.no} 講・${esc(last.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
     ${units.map(g => `<div class="unit"><div class="unit-h">${esc(g.u)}</div>
       ${g.items.map(x => `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
         <div><h3>${esc(x.title)}</h3><p>${esc(x.verse || x.kepan)}</p></div>${moon(progress(x.id))}</a>`).join("")}</div>`).join("")}
-    <div class="howto">
-      ${PHASES.map((p, i) => `<div>${moon((i + 1) / 6)}<b>${p}</b><span>${["寫下想處理的煩惱，接上一講", "只聽師父原音，先自己答", "聽老師講解，看他停在哪裡", "每場共學帶一個問題去聽", "三種小事當觸發點，每天記一筆", "說得出、認得出、轉得動、生得起"][i]}</span></div>`).join("")}
-    </div>
+    <section class="howto"><h2>六步怎麼走</h2><ol>
+      ${PHASES.map((p, i) => `<li>${moon((i + 1) / 6)}<b>${p}</b><span>${["想想這週被什麼帶走，寫下現在的理解", "只聽師父原音，點選作答", "聽老師講解，逐段對照他做了哪幾步", "讀法師各從哪裡切入", "三種小事當觸發點，每天記一筆", "說得出、認得出、轉得動、生得起"][i]}</span></li>`).join("")}
+    </ol></section>
     ${footer()}
   </div>`;
-  wireFooter(); wireInstall();
+  wireFooter();
 }
 
 function footer() {
   return `<footer><button class="btn ghost" data-act="export">匯出備份</button><button class="btn ghost" data-act="import">匯入備份</button>
-    <span style="flex:1"></span><span>寫的內容只存在這台裝置</span></footer>`;
+    <span class="note">寫的內容只存在這台裝置；換手機前先匯出備份。</span></footer>`;
 }
 function wireFooter() {
   app.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
@@ -154,19 +147,6 @@ function wireFooter() {
     }
   });
 }
-function wireInstall() {
-  const b = $("#install"); if (!b) return;
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  if (standalone) return;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if (window.__bip || ios) b.hidden = false;
-  b.onclick = async () => {
-    if (window.__bip) { window.__bip.prompt(); await window.__bip.userChoice; window.__bip = null; b.hidden = true; }
-    else toast("iPhone：點下方分享鈕，選「加入主畫面」");
-  };
-}
-addEventListener("beforeinstallprompt", e => { e.preventDefault(); window.__bip = e; const b = $("#install"); if (b) b.hidden = false; });
-
 /* ---------- lesson ---------- */
 async function renderLesson(id) {
   const X = await lesson(id), S = L(id);
@@ -175,29 +155,26 @@ async function renderLesson(id) {
   const meta = Object.entries(X.meta || {}).filter(([k]) => !/原音/.test(k));
   const done = k => !!S.done[k];
   app.innerHTML = `
-  <div class="mini" id="mini"><div class="wrap"><a class="iconbtn" href="#/" aria-label="回目錄">${ICON.back}</a>
-    <nav class="ph-tabs mini-tabs" aria-label="三段">${phaseTabs(X, S)}</nav><span id="miniMoon">${moon(progress(id))}</span></div></div>
-  <section class="sea"><div class="stars"></div><div class="wrap">
-    <div class="topbar"><a class="iconbtn" href="#/" aria-label="回目錄">${ICON.back}</a><a class="brand" href="#/">廣海明月學習單</a></div>
+  <section class="sea"><div class="wrap">
+    <div class="topbar"><a class="brand" href="#/">廣海明月學習單</a></div>
     <div class="lhero">
-      <div class="lno"><span>第</span>${X.no}<span>講</span></div>
+      <div class="lno">第<b>${X.no}</b>講</div>
       <h1>${esc(X.title)}</h1>
       ${X.verse ? `<div class="verse">${esc(X.verse)}</div>` : ""}
       <div class="lactions">
         <a class="pill solid" href="${esc(X.audio)}" target="_blank" rel="noopener">${ICON.play}原音與逐字稿</a>
         <button class="pill" id="print">${ICON.print}印出來寫</button>
       </div>
-      <nav class="rail" aria-label="六個步驟">${X.steps.map((s, i) => `<button data-go="${s.key}" class="${done(s.key) ? "done" : ""}">${moon((i + 1) / 6)}<b>${PHASES[i] || s.title}</b></button>`).join("")}</nav>
-    </div></div>${waves()}</section>
+    </div></div></section>
+  <div class="ph-bar"><div class="wrap"><a class="iconbtn" href="#/" aria-label="回目錄">${ICON.back}</a>
+    <nav class="ph-tabs" aria-label="三段">${phaseTabs(X, S)}</nav></div></div>
   <div class="wrap paper">
-    <nav class="ph-tabs ph-main" aria-label="三段">${phaseTabs(X, S)}</nav>
     ${PH.map((g, pi) => `<div class="phase" data-ph="${pi}"${pi === curPh(S) ? "" : " hidden"}>
       <p class="ph-sub">${esc(g.sub)}</p>
-      ${pi === 0 && X.intro ? `<details class="meta"><summary>這張學習單怎麼用</summary><div class="intro md">${md(X.intro)}</div></details>` : ""}
       ${pi === 0 && meta.length ? `<details class="meta"><summary>這一講在廣論的哪裡</summary><dl class="metagrid">
         ${meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd class="md">${inline(v)}</dd></div>`).join("")}</dl></details>` : ""}
       ${g.steps.filter(i => X.steps[i]).map(i => stepHTML(X, S, X.steps[i], i)).join("")}
-      ${pi < PH.length - 1 ? `<button type="button" class="ph-next" data-toph="${pi + 1}">下一段：${esc(PH[pi + 1].name)}<span>${esc(PH[pi + 1].sub)}</span>${ICON.go}</button>` : `<div id="full"></div>`}
+      ${pi < PH.length - 1 ? `<button type="button" class="ph-next" data-toph="${pi + 1}"><b>下一段：${esc(PH[pi + 1].name)}</b><span>${esc(PH[pi + 1].sub)}</span>${ICON.go}</button>` : `<div id="full"></div>`}
     </div>`).join("")}
     ${footer()}
   </div>`;
@@ -215,7 +192,7 @@ const curPh = S => Math.min(Math.max(+S.ph || 0, 0), PH.length - 1);
 function phaseTabs(X, S) {
   return PH.map((g, pi) => {
     const ks = g.steps.filter(i => X.steps[i]).map(i => X.steps[i].key), d = ks.filter(k => S.done[k]).length;
-    return `<button type="button" data-toph="${pi}" aria-pressed="${pi === curPh(S)}"><b>${esc(g.name)}</b><span class="dots">${ks.map(k => `<i class="${S.done[k] ? "on" : ""}"></i>`).join("")}</span></button>`;
+    return `<button type="button" data-toph="${pi}" aria-pressed="${pi === curPh(S)}"><b>${esc(g.name)}</b><span class="pm">${g.steps.filter(i => X.steps[i]).map(i => `<span class="${S.done[X.steps[i].key] ? "on" : ""}">${moon((i + 1) / 6)}</span>`).join("")}</span><span class="sr">完成 ${d}／${ks.length} 步</span></button>`;
   }).join("");
 }
 // 整講音檔的分段播放（第三步每一步、第四步每一場的切入處）
@@ -289,7 +266,7 @@ function wirePlayer(el) {
 const chkNote = (g, n) => g ? `我也做到了 ${g}／${n} 步。沒打勾的，就是下次聽師父時可以試試的。` : "做到的就點一下打勾。";
 function qItem(S, k, q, j, no) {
   const key = `${k}.${j}`, core = q.role === "core";
-  const head = `<div class="lab"><i>${no}</i><span>${q.label ? `<strong>${esc(q.label)}</strong>　` : ""}${inline(q.prompt)}${q.multi ? `<em class="tagm">可複選</em>` : ""}</span></div>`;
+  const head = `<div class="lab">${no === "★" ? '<i class="must">必寫</i>' : ""}<span>${q.label ? `<strong>${esc(q.label)}</strong>　` : ""}${inline(q.prompt)}${q.multi ? `<em class="tagm">可複選</em>` : ""}</span></div>`;
   if (q.options) {
     const v = (S.a[key] || "").split("｜").filter(Boolean);
     // 舊版是寫字題：寫過的字不在選項裡，照樣留著給他看
@@ -326,12 +303,12 @@ function stepHTML(X, S, s, i) {
         <div class="chk-t"><b>${esc(c.label)}</b>${c.seg && X.lecture ? "" : c.time ? `<span class="tc">${esc(c.time)}</span>` : ""}<span class="chk-d">${inline(c.text)}</span>${segBtn(c.seg, "聽這一段")}</div>
         <button type="button" class="chk-b" data-c="${k}.c${j}" aria-pressed="${!!S.a[`${k}.c${j}`]}" aria-label="${esc(c.label)}：我也有做到">${ICON.check}</button></div>`).join("")}</div>
       <p class="chk-n" id="chkn-${k}">${chkNote(got, s.checks.length)}</p>` +
-      (s.closing ? `<div class="q core"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
+      (s.closing ? `<div class="q core"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "compare") {
     b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
       s.rows.map((r, j) => `<div class="cmp-row"><b>${inline(r)}</b><div class="cmp">
         ${s.cols.map((c, ci) => `<div><label>${esc(c)}</label>${field(S, `${k}.${j}.${ci}`, ci ? "聽完老師再寫" : "先寫我的")}</div>`).join("")}</div></div>`).join("") +
-      (s.closing ? `<div class="q"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`)}</div>` : "");
+      (s.closing ? `<div class="q"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`)}</div>` : "");
   } else if (s.kind === "sessions") {
     // 預設使用者沒聽過共學：每場一張卡，先看「從這一講的哪裡切入」（可以聽那一段），細節收起來
     const fav = S.a[`${k}.fav`];
@@ -342,14 +319,14 @@ function stepHTML(X, S, s, i) {
         return `<div class="sess2${on ? " fav-on" : ""}">
           <div class="s2-top"><span class="s2-who">${m ? `<span class="num">${esc(m[1])}</span>${esc(m[2])}` : esc(x.who)}</span>
             <button type="button" class="fav" data-fav="${j}" aria-pressed="${on}" aria-label="這場對我最有用">${on ? "♥" : "♡"}</button></div>
-          ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
-          ${x.head ? `<div class="s2-head"><span class="arr" aria-hidden="true">↓</span>帶出的主題：${inline(x.head)}</div>` : ""}
+          ${x.head ? `<div class="s2-head">${inline(x.head)}</div>` : ""}
+          ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡切入</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
           ${x.brief && x.brief.length ? `<details class="more s2"><summary>法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
         </div>`;
       }).join("")}</div>
       <p class="chk-n">${fav != null && s.sessions[+fav] ? `最有用的一場：${esc(s.sessions[+fav].who)}` : "點 ♡ 選出對自己最有用的一場。"}</p>` +
       (s.rest ? `<details class="more"><summary>四場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
-      (s.closing ? `<div class="q core" style="margin-top:14px"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
+      (s.closing ? `<div class="q core" style="margin-top:14px"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "practice") {
     b = `<div class="q"><div class="lab"><span><strong>觸發點</strong>：每天都會遇到的小事（點一下，直接記一筆）</span></div>
         <div class="chips">${s.triggers.map((t, j) => `<button type="button" class="chip" data-pick="${j}">${esc(t)}</button>`).join("")}</div></div>
@@ -372,11 +349,11 @@ function stepHTML(X, S, s, i) {
       <div class="entries" id="entries"></div>
       ${s.reminder ? `<div class="quote md">${md("**提醒**：" + s.reminder)}</div>` : ""}`;
   } else if (s.kind === "levels") {
-    b = `<div class="card" style="box-shadow:none;padding:4px 18px">${s.levels.map((v, j) => `<div class="lvl">
+    b = `<div class="lvls">${s.levels.map((v, j) => `<div class="lvl">
         <button class="tick" data-lvl="${j}" aria-pressed="${!!S.lvl[j]}" aria-label="${esc(v.name)}做到了">${ICON.check}</button>
         <h3>${j + 1}. ${esc(v.name)}</h3><div class="how">${inline(v.how)}</div><div class="pass">${inline(v.pass)}</div>
         <div class="auto" data-auto="${j}"></div><details class="more lv"${S.a[`${k}.${j}`] ? " open" : ""}><summary>寫一點我的狀況（選做）</summary>${field(S, `${k}.${j}`, "我的狀況", 1)}</details></div>`).join("")}</div>
-      ${s.closing ? `<div class="q core" style="margin-top:16px"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.ask`)}</div>` : ""}`;
+      ${s.closing ? `<div class="q core" style="margin-top:16px"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.ask`)}</div>` : ""}`;
   } else {
     b = `<div class="md">${md(s.md || "")}</div>`;
   }
@@ -398,7 +375,7 @@ function wireLesson(X, S) {
     app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== pi);
     app.querySelectorAll(".ph-tabs [data-toph]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.toph === pi));
     stopSeg();
-    if (scroll) { const top = $(".ph-main").getBoundingClientRect().top + scrollY - 8; if (scrollY > top) scrollTo({ top, behavior: "instant" }); }
+    if (scroll) { const top = $(".ph-bar").getBoundingClientRect().top + scrollY; if (scrollY > top) scrollTo({ top, behavior: "instant" }); }
   };
   app.querySelectorAll("[data-toph]").forEach(b => b.onclick = () => showPh(+b.dataset.toph));
   // 點選題
@@ -448,7 +425,6 @@ function wireLesson(X, S) {
   // step done
   const refresh = () => {
     const p = progress(id, X.steps.length);
-    $("#miniMoon").innerHTML = moon(p);
     app.querySelectorAll(".rail [data-go]").forEach(b => b.classList.toggle("done", !!S.done[b.dataset.go]));
     app.querySelectorAll(".ph-tabs").forEach(n => { n.innerHTML = phaseTabs(X, S); n.querySelectorAll("[data-toph]").forEach(b => b.onclick = () => showPh(+b.dataset.toph)); });
     $("#full").innerHTML = p >= 1 ? `<div class="fullmoon">${moon(1)}<h2>月圓了</h2><p>第 ${X.no} 講六步都走過一輪。把「留一個問題去請益」帶去研討班吧。</p></div>` : "";
@@ -512,9 +488,6 @@ function wireLesson(X, S) {
   }
   // print
   $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more, details.meta").forEach(d => d.open = true); app.querySelectorAll(".phase").forEach(el => el.hidden = false); print(); app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== curPh(S)); };
-  // mini bar
-  const mini = $("#mini"), hero = $(".sea");
-  new IntersectionObserver(([e]) => mini.classList.toggle("on", !e.isIntersecting), { threshold: 0 }).observe(hero);
   refresh();
 }
 
