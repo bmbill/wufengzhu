@@ -142,6 +142,23 @@ details.meta[open] summary:before{content:"－"}
 .step-h h2{font-size:22px}
 .step-h .min{font-family:var(--f-num);font-size:13px;color:var(--faint);margin-left:8px;font-weight:300}
 .lead{background:var(--sea-soft);border-radius:16px;padding:12px 16px;margin:0 0 14px;font-size:15px}
+.mplayer{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;margin:0 0 6px;color:var(--moon);
+  background:radial-gradient(120% 140% at 0% 0%,#2a4a8a,var(--night));box-shadow:var(--shadow)}
+.mp-btn{flex:none;width:52px;height:52px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--glow);color:var(--night);box-shadow:0 0 0 0 rgba(243,227,176,.5)}
+.mplayer.on .mp-btn{animation:mpglow 2.4s ease-in-out infinite}
+@keyframes mpglow{50%{box-shadow:0 0 0 8px rgba(243,227,176,0)}0%{box-shadow:0 0 0 0 rgba(243,227,176,.45)}}
+.mp-btn svg{width:24px;height:24px}
+.mp-mid{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:6px 8px}
+.mp-mid b{font-family:var(--f-display);font-size:17px;letter-spacing:.04em;white-space:nowrap}
+.mp-t{font-family:var(--f-num);font-size:13px;color:rgba(248,239,212,.75)}
+.mp-bar{grid-column:1 / -1;height:22px;display:flex;align-items:center;cursor:pointer;position:relative}
+.mp-bar::before{content:"";position:absolute;left:0;right:0;height:4px;border-radius:4px;background:rgba(248,239,212,.22)}
+.mp-bar i{position:relative;height:4px;border-radius:4px;background:var(--glow);width:0}
+.mp-re{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(248,239,212,.3);background:none;color:var(--moon);display:grid;place-items:center;padding:0}
+.mp-re svg{width:20px;height:20px}
+.mp-note{margin:0 0 14px}
+@media (prefers-reduced-motion:reduce){.mplayer.on .mp-btn{animation:none}}
+@media print{.mplayer,.mp-note{display:none}}
 .q{margin:0 0 14px}
 .q .lab{display:flex;gap:10px;align-items:baseline;font-weight:500}
 .q .lab i{font-style:normal;font-family:var(--f-num);color:var(--gold-ink);font-weight:500;min-width:1.2em}

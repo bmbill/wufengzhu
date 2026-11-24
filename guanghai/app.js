@@ -65,6 +65,7 @@ const ICON = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   go: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
   print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>',
   eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   chev: '<svg class="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
@@ -207,6 +208,39 @@ function reveal(id, title, body, note = "寫完了，看老師怎麼講") {
   return `<div class="reveal" data-r="${id}"><button aria-expanded="false">${ICON.eye}<span>${esc(note)}</span>${ICON.chev}</button>
     <div class="body md">${title ? `<p><strong>${esc(title)}</strong></p>` : ""}${md(body)}</div></div>`;
 }
+// 師父原音：只播 start～end 這一段，播完停下、回到開頭
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+function player(m) {
+  return `<div class="mplayer" data-src="${esc(m.src)}" data-s="${m.start}" data-e="${m.end}">
+    <button class="mp-btn" aria-label="播放師父原音">${ICON.play}</button>
+    <div class="mp-mid"><b>師父原音</b><span class="mp-t">0:00 / ${mmss(m.end - m.start)}</span>
+      <div class="mp-bar" role="slider" aria-label="播放位置" aria-valuemin="0" aria-valuemax="${m.end - m.start}" aria-valuenow="0" tabindex="0"><i></i></div></div>
+    <button class="mp-re" aria-label="從頭再聽" title="從頭再聽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button></div>
+  <p class="hint mp-note">只播師父那一段（${mmss(m.start)}–${mmss(m.end)}），播完會自動停下，不會接到老師的講解。需要連網。</p>`;
+}
+function wirePlayer(el) {
+  const s = +el.dataset.s, e = +el.dataset.e, len = e - s;
+  const btn = el.querySelector(".mp-btn"), bar = el.querySelector(".mp-bar"), fill = bar.firstElementChild, tt = el.querySelector(".mp-t");
+  let a = null;
+  const ui = () => {
+    const p = a ? Math.min(Math.max(a.currentTime - s, 0), len) : 0;
+    fill.style.width = (p / len * 100) + "%"; tt.textContent = `${mmss(p)} / ${mmss(len)}`; bar.setAttribute("aria-valuenow", Math.round(p));
+    const on = a && !a.paused; btn.innerHTML = on ? ICON.pause : ICON.play; btn.setAttribute("aria-label", on ? "暫停" : "播放師父原音"); el.classList.toggle("on", !!on);
+  };
+  const get = () => {
+    if (a) return a;
+    a = new Audio(el.dataset.src); a.preload = "auto";
+    a.addEventListener("timeupdate", () => { if (a.currentTime >= e) { a.pause(); a.currentTime = s; } ui(); });
+    ["play", "pause", "loadedmetadata"].forEach(ev => a.addEventListener(ev, ui));
+    a.addEventListener("error", () => toast("師父原音載入失敗，請確認網路"));
+    a.currentTime = s; return a;
+  };
+  const go = sec => { const x = get(); x.currentTime = s + Math.min(Math.max(sec, 0), len - 0.5); ui(); };
+  btn.onclick = () => { const x = get(); if (x.paused) { if (x.currentTime < s || x.currentTime >= e) x.currentTime = s; x.play().catch(() => toast("無法播放，請確認網路")); } else x.pause(); };
+  el.querySelector(".mp-re").onclick = () => { go(0); const x = get(); if (x.paused) x.play().catch(() => {}); };
+  bar.onclick = ev => { const r = bar.getBoundingClientRect(); go((ev.clientX - r.left) / r.width * len); };
+  bar.onkeydown = ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { ev.preventDefault(); go((a ? a.currentTime - s : 0) + (ev.key === "ArrowRight" ? 5 : -5)); } };
+}
 function stepHTML(X, S, s, i) {
   const k = s.key, n = CN[i] || i + 1;
   let b = "";
@@ -214,7 +248,7 @@ function stepHTML(X, S, s, i) {
     b = s.items.map((it, j) => `<div class="q"><div class="lab"><i>${j + 1}</i><span>${it.label ? `<strong>${esc(it.label)}</strong>　` : ""}${inline(it.prompt)}</span></div>
       ${field(S, `${k}.${j}`)}${it.hint ? `<p class="hint">${esc(it.hint)}</p>` : ""}</div>`).join("");
   } else if (s.kind === "questions") {
-    b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
+    b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") + (i === 1 && X.master ? player(X.master) : "") +
       s.items.map((it, j) => `<div class="q"><div class="lab"><i>${j + 1}</i><span>${inline(it.prompt)}</span></div>${field(S, `${k}.${j}`)}</div>`).join("");
   } else if (s.kind === "compare") {
     b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
@@ -269,6 +303,7 @@ function stepHTML(X, S, s, i) {
 
 function wireLesson(X, S) {
   const id = X.id;
+  app.querySelectorAll(".mplayer").forEach(wirePlayer);
   // textareas: autosize + autosave
   const grow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
   app.querySelectorAll("textarea[data-k]").forEach(t => {
