@@ -413,7 +413,8 @@ function wireLesson(X, S) {
   app.querySelectorAll(".mplayer").forEach(wirePlayer);
   wireSegs(X);
   // 三段切換
-  const toTop = () => { const top = $(".ph-bar").getBoundingClientRect().top + scrollY; if (scrollY > top) scrollTo({ top, behavior: "instant" }); };
+  // 換段、換步：捲到分頁列剛好貼在頂端（分頁列是 sticky，要用夜海區塊的高度算它原本的位置）
+  const toTop = () => { const top = $(".sea").offsetHeight; if (scrollY > top) scrollTo({ top, behavior: "instant" }); };
   const showStep = (i, scroll = true) => {
     const pi = PH.findIndex(g => g.steps.includes(i)); if (pi < 0) return;
     S.stp = S.stp || {}; S.stp[pi] = i;
