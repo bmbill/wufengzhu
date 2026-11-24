@@ -1533,7 +1533,7 @@ function vHui(){const d=day(today())||{};
 let pgTab="jie";
 function xueDays(){const jie=new Set(),hui=new Set();for(const id in lrDone())jie.add(lrDone()[id]);
   for(const n in (S.vheard||{}))hui.add(S.vheard[n]);return {jie,hui}}
-function dayXue(k,X){const d=DAYS[k]||{};return {jie:!!(d.night||d.hb)||X.jie.has(k),ding:!!((d.sits&&d.sits.length)||d.min||d.breath),hui:!!d.vthink||X.hui.has(k),shan:!!(d.shan&&d.shan.length)}}
+function dayXue(k,X){const d=DAYS[k]||{};return {jie:!!(d.night||d.hb)||X.jie.has(k),ding:!!((d.sits&&d.sits.length)||d.min||d.breath),hui:!!d.vthink||X.hui.has(k),shan:!!(d.shan&&d.shan.length)||!!(window.Shan&&Shan.autoOf&&Shan.autoOf(k).length)}}
 function ring(pct,color,big,small,label,on,k){const r=26,c=2*Math.PI*r;const p=Math.max(0,Math.min(1,pct||0));
   return `<button class="ring ${on?"on":""}" data-act="pg-tab" data-v="${k}" aria-pressed="${on}" aria-label="${label}"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(43,35,80,.09)" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
     <span class="ring-k" style="color:${color}">${label}</span><span class="ring-v num">${big}</span><span class="ring-s">${small}</span></button>`}
@@ -1546,7 +1546,7 @@ function cpOpenCard(list){const g=list.find(x=>x.cp&&x.id===openCp);return g?cpC
 function vProgress(){
   const t=today();const X=xueDays();const L=LRA();const ldone=Object.keys(lrDone()).length;
   let sitDays=0;for(const k in DAYS){if(practiced(DAYS[k]))sitDays++}
-  const sh=shanEntries();const sh30=new Set(sh.filter(([k])=>daysBetween(k,t)<30).map(([k])=>k)).size;
+  const sh=shanEntries();const sh30=new Set([...sh.map(([k])=>k),...Object.keys(DAYS).filter(k=>window.Shan&&Shan.autoOf&&Shan.autoOf(k).length)].filter(k=>daysBetween(k,t)<30)).size;
   const rings=[ring(L.length?ldone/L.length:0,XUE.jie[1],ldone,`／${L.length} 段`,"戒",pgTab==="jie","jie"),
     ring(stage().n/9,XUE.ding[1],sitDays,"天上座","定",pgTab==="ding","ding"),
     ring(S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,XUE.hui[1],S.vipOn?vheardCount():"—",S.vipOn?`／${vipNums().length} 講`:"還沒開啟","慧",pgTab==="hui","hui"),
@@ -2022,6 +2022,9 @@ const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
   init(){const a=this.a;
     a.addEventListener("loadedmetadata",()=>{if(this.pending&&this.pending<a.duration-10)a.currentTime=this.pending;this.pending=0;this.ui()});
     ["timeupdate","play","pause"].forEach(ev=>a.addEventListener(ev,()=>this.ui()));
+    /* 聽音檔就是善行：實際播了多久，記進今天的「自動記到」 */
+    let lt=null;a.addEventListener("timeupdate",()=>{const c=a.currentTime;if(!a.paused&&lt!=null&&window.Shan&&Shan.listened)Shan.listened(c-lt);lt=c});
+    ["pause","seeking","ended"].forEach(ev=>a.addEventListener(ev,()=>{lt=null}));
     a.addEventListener("ended",()=>{if(this.mode==="plan"){this.nextPart();return}if(this.study){Study.finish();return}this.ui();if(!this.heardNow()){this.$("lpDone").hidden=false;if(!S.lrepeat)toast("聽完了！按「聽完了」點亮這一講")}if(S.lrepeat)this.startRepeat()});
     a.addEventListener("play",()=>{if(!this.gapCb)this.cancelRepeat()});
     a.addEventListener("error",()=>{if(this.n||this.mode==="plan")toast("音檔載入失敗，可以改到大慈恩網站聽")});
@@ -2231,6 +2234,10 @@ const Scene=(()=>{
 const ROUTE_ALIAS={check:"progress",adjust:"settings"};
 function onHash(){let h=(location.hash||"").slice(1);h=ROUTE_ALIAS[h]||h;route=TABS.some(t=>t[0]===h)||SUBS.includes(h)||h==="album"?h:"today";render();scrollTo(0,0)}
 addEventListener("hashchange",onHash);
+/* 廣海明月學習單那邊做的事（dd-act）併進來，算成今天自動記到的善行；從學習單切回來也再併一次 */
+try{if(window.Shan&&Shan.pull)Shan.pull()}catch(e){}
+addEventListener("pageshow",ev=>{if(ev.persisted)try{if(Shan.pull())render()}catch(e){}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)try{if(window.Shan&&Shan.pull())render()}catch(e){}});
 onHash();
 askPersist();
 if("serviceWorker" in navigator&&location.protocol==="https:"){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}

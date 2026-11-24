@@ -39,11 +39,11 @@ function entries(date) { const d = gDays()[date || todayK()]; return (d && d.sha
 /** 首頁的一條：「善」＋記一則＋今天幾則（三個小點）。 */
 function strip() {
   const n = entries().length;
-  return `<div class="shan-strip">
+  return `<div class="shan-box"><div class="shan-strip">
     <span class="shan-k" aria-hidden="true">善</span>
     <button class="shan-add" data-shan-open>${n >= MAX ? "今天記滿了" : "＋ 記一則"}</button>
     <span class="shan-n" aria-label="今天記了 ${n} 則，最多 ${MAX} 則">${[0, 1, 2].map((i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>
-  </div>`;
+  </div>${autoLine()}</div>`;
 }
 
 let picked = "deed";
@@ -65,6 +65,7 @@ function open() {
     ${mic}<textarea id="shan-t" rows="2" maxlength="${MAXLEN}" placeholder="一句話就好"></textarea>
     <div class="btns"><button class="btn primary" id="shan-ok">記下來</button><button class="btn ghost" data-ddl-close>取消</button></div>`}
     ${list.length ? `<ul class="shan-list">${list.map((e, i) => `<li><span class="i">${KINDS[e.k] ? KINDS[e.k].icon : ""}</span><span class="t">${esc_(e.t || KINDS[e.k].name)}${e.p ? `<small>${esc_(e.s || "")} ${e.p} 頁</small>` : ""}</span><button class="x" data-del="${i}" aria-label="移掉這一則">✕</button></li>`).join("")}</ul>` : ""}
+    ${autoLine()}
     ${full ? `<div class="btns"><button class="btn" data-ddl-close>關閉</button></div>` : ""}`);
 
   L.querySelectorAll(".shan-kinds [data-k]").forEach((b) => {
@@ -184,5 +185,79 @@ document.addEventListener("change", (e) => {
   try { toast("記住了"); } catch (er) {}
 });
 
-window.Shan = { KINDS, ORDER, MAX, strip, open, add, remove, entries, stats, kindOf, settingsHTML };
+/* ── 自動記到的善行 ──
+ * 在網站上聽法、打坐、反省、做學習單，本身都是善行，不用自己再記一次。
+ * 大多從原本就有的紀錄算出來；另外兩個要額外記：
+ *   DAYS[日期].auto.lis：燈燈相續裡聽音檔的秒數（index.html 的播放器記）
+ *   DAYS[日期].auto.gh ：廣海明月學習單（guanghai/ 另存在 localStorage「dd-act」，這裡併進來，備份才帶得走）
+ * 自動記的不佔「記一則」每天 3 則的名額，也不另外加燈油（聽法、打坐本身已經有燈油）。
+ */
+const ACT = "dd-act";
+
+/** 把學習單那邊記的（dd-act）併進 DAYS，回傳有沒有變。 */
+function pull() {
+  let A = {};
+  try { A = JSON.parse(localStorage.getItem(ACT) || "{}") || {}; } catch (e) { return false; }
+  const D = gDays(); let ch = false;
+  for (const k in A) {
+    const src = A[k] || {}; if (!src.gh && !src.lis) continue;
+    if (!D[k]) D[k] = { sits: [] };
+    const a = D[k].auto = D[k].auto || {};
+    if ((src.lis || 0) > (a.ghLis || 0)) { a.ghLis = src.lis; ch = true; }
+    for (const no in src.gh || {}) {
+      const g = src.gh[no], o = (a.gh = a.gh || {})[no] = a.gh[no] || {};
+      for (const f of ["v", "st"]) if ((g[f] || 0) > (o[f] || 0)) { o[f] = g[f]; ch = true; }
+    }
+  }
+  if (ch) save();
+  return ch;
+}
+
+/** 燈燈相續的播放器每播一段就呼叫（秒數）；累積到 DAYS[今天].auto.lis，約 30 秒存一次。 */
+let lisBuf = 0;
+function listened(sec) {
+  if (!(sec > 0) || sec > 5) return;
+  const date = todayK(), D = gDays();
+  if (!D[date]) D[date] = { sits: [] };
+  const a = D[date].auto = D[date].auto || {};
+  a.lis = (a.lis || 0) + sec; lisBuf += sec;
+  if (lisBuf >= 30) { lisBuf = 0; save(date); }
+}
+
+const on_ = (obj, date) => Object.keys(obj || {}).filter((k) => obj[k] === date);
+
+/** 某一天自動記到的善行：[{i:圖示, t:文字}]。 */
+function autoOf(date) {
+  date = date || todayK();
+  const S_ = gS(), d = gDays()[date] || {}, a = d.auto || {}, out = [];
+  const min = Math.round(((a.lis || 0) + (a.ghLis || 0)) / 60);
+  if (min >= 1) out.push({ i: "🎧", t: `聽法 ${min} 分鐘` });
+  const lr = on_(S_.lr && S_.lr.done, date).length;
+  if (lr) out.push({ i: "📿", t: `聽廣論 ${lr} 段` });
+  if (d.hb) out.push({ i: "🌸", t: "聽聞法勝利" });
+  on_(S_.heard, date).forEach((n) => out.push({ i: "🪔", t: `聽完廣論第 ${n} 講` }));
+  on_(S_.vheard, date).forEach((n) => out.push({ i: "🪔", t: `聽完毗缽舍那第 ${n} 講` }));
+  const sits = (d.sits || []).length;
+  if (sits) out.push({ i: "🧘", t: `打坐 ${sits} 座` });
+  else if (d.min) out.push({ i: "🧘", t: "保底打坐" });
+  if (d.breath) out.push({ i: "🌬️", t: "呼吸警報" });
+  if (d.vthink) out.push({ i: "🔍", t: "觀察修" });
+  const q = on_(S_.vquiz, date).length;
+  if (q) out.push({ i: "✅", t: `小測驗答對 ${q} 題` });
+  if (d.night) out.push({ i: "🌙", t: "睡前反省" });
+  for (const no in a.gh || {}) {
+    const g = a.gh[no];
+    out.push({ i: "🌊", t: `廣海明月第 ${no} 講學習單${g.st ? `，做完 ${g.st} 步` : ""}` });
+  }
+  return out;
+}
+
+/** 首頁「善」那一條底下：今天自動記到的。 */
+function autoLine() {
+  const l = autoOf();
+  if (!l.length) return `<p class="shan-auto none">在這裡聽法、打坐、做學習單，都會自動記成善行。</p>`;
+  return `<p class="shan-auto"><b>自動記到</b>${l.map((e) => `<span>${e.i} ${esc_(e.t)}</span>`).join("")}</p>`;
+}
+
+window.Shan = { KINDS, ORDER, MAX, strip, open, add, remove, entries, stats, kindOf, settingsHTML, pull, listened, autoOf, autoLine };
 })();

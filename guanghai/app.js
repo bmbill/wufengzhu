@@ -18,6 +18,31 @@ function save(now) {
 }
 const L = id => (DB.lessons[id] = DB.lessons[id] || { a: {}, done: {}, log: [], lvl: {} });
 
+/* 燈燈相續首頁的「善」會自動記：今天打開了哪一講、做完幾步、聽了多久。
+   存在 localStorage「dd-act」（同一個網站，燈燈相續讀得到）：{日期:{gh:{講次:{v:1, st:做完幾步}}, lis:秒}} */
+const ACT = "dd-act";
+const dayK = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+function act(f) {
+  try {
+    const A = JSON.parse(localStorage.getItem(ACT) || "{}") || {}, k = dayK();
+    f(A[k] = A[k] || {});
+    const ks = Object.keys(A).sort(); while (ks.length > 120) delete A[ks.shift()];  // 只留最近 120 天，燈燈相續那邊已經併進去了
+    localStorage.setItem(ACT, JSON.stringify(A));
+  } catch (e) {}
+}
+const actLesson = (no, f) => act(d => { const g = (d.gh = d.gh || {})[no] = d.gh[no] || {}; g.v = 1; if (f) f(g); });
+/** 聽音檔：實際播了多久，累積到今天（每 15 秒寫一次）。 */
+let lisBuf = 0;
+function trackListen(a) {
+  let lt = null;
+  a.addEventListener("timeupdate", () => {
+    const c = a.currentTime, dt = c - lt;
+    if (!a.paused && lt != null && dt > 0 && dt <= 5) { lisBuf += dt; if (lisBuf >= 15) { const s = lisBuf; lisBuf = 0; act(d => d.lis = (d.lis || 0) + s); } }
+    lt = c;
+  });
+  ["pause", "seeking", "ended"].forEach(ev => a.addEventListener(ev, () => { lt = null; if (lisBuf > 1) { const s = lisBuf; lisBuf = 0; act(d => d.lis = (d.lis || 0) + s); } }));
+}
+
 /* ---------- helpers ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function inline(s) {
@@ -115,9 +140,12 @@ async function renderHome() {
   const last = DB.last && list.find(x => x.id === DB.last);
   const started = list.some(x => progress(x.id) > 0);
   const lp = last ? progress(last.id) : 0;
+  // 上次那講圓了，「接著學」就換到下一講還沒圓的（先往後找，再從頭找）
+  const nextUp = last && lp >= 1 ? (list.find(x => x.no > last.no && progress(x.id) < 1) || list.find(x => progress(x.id) < 1)) : null;
   const greet = !last ? `從第 ${list[0] ? list[0].no : ""} 講開始吧！每做完一步，我就亮一分；六步做完，我就圓了。`
-    : lp >= 1 ? `第 ${last.no} 講已經月圓了！帶著那一個請益的問題，去研討班問問看。`
+    : lp >= 1 ? `第 ${last.no} 講已經月圓了！帶著那一個請益的問題，去研討班問問看。` + (nextUp ? `也可以接著學第 ${nextUp.no} 講。` : "")
     : `第 ${last.no} 講亮到 ${Math.round(lp * 6)}／6 了，接著學吧。`;
+  const cont = nextUp || last;
   const units = [];
   for (const x of list) { const u = x.unit || "其他"; let g = units.find(g => g.u === u); if (!g) units.push(g = { u, items: [] }); g.items.push(x); }
   app.innerHTML = `
@@ -131,8 +159,8 @@ async function renderHome() {
     </div></section>
   <div class="wrap paper">
     ${say("yuan", started ? "happy" : "cheer", greet)}
-    ${last ? `<a class="card continue" href="#/${last.no}">${moon(progress(last.id))}
-      <div><div class="k">接著學</div><h3>第 ${last.no} 講・${esc(last.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
+    ${cont ? `<a class="card continue" href="#/${cont.no}">${moon(progress(cont.id))}
+      <div><div class="k">接著學</div><h3>第 ${cont.no} 講・${esc(cont.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
     ${units.map(g => `<div class="unit"><div class="unit-h">${esc(g.u)}</div>
       ${g.items.map(x => `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
         <div><h3>${esc(x.title)}</h3><p>${esc(x.verse || x.kepan)}</p></div>${moon(progress(x.id))}</a>`).join("")}</div>`).join("")}
@@ -171,6 +199,7 @@ function wireFooter() {
 async function renderLesson(id) {
   const X = await lesson(id), S = L(id);
   DB.last = id; save();
+  actLesson(X.no);  // 打開學習單讀一讀，也是善行
   document.title = `第 ${X.no} 講・${X.title}｜廣海明月學習單`;
   const meta = Object.entries(X.meta || {}).filter(([k]) => !/原音/.test(k));
   const done = k => !!S.done[k];
@@ -244,7 +273,7 @@ function wireSegs(X) {
   app.querySelectorAll(".segp").forEach(b => b.onclick = ev => {
     ev.stopPropagation();
     if (!segAudio) {
-      segAudio = new Audio(X.lecture); segAudio.preload = "auto";
+      segAudio = new Audio(X.lecture); segAudio.preload = "auto"; trackListen(segAudio);
       segAudio.addEventListener("timeupdate", () => { if (segCur && segAudio.currentTime >= +segCur.dataset.e) { segAudio.pause(); } ui(); });
       ["play", "pause"].forEach(e => segAudio.addEventListener(e, ui));
       segAudio.addEventListener("error", () => toast("音檔載入失敗，請確認網路"));
@@ -284,7 +313,7 @@ function wirePlayer(el) {
   };
   const get = () => {
     if (a) return a;
-    a = new Audio(el.dataset.src); a.preload = "auto";
+    a = new Audio(el.dataset.src); a.preload = "auto"; trackListen(a);
     a.addEventListener("timeupdate", () => { if (a.currentTime >= e) { a.pause(); a.currentTime = s; } ui(); });
     ["play", "pause", "loadedmetadata"].forEach(ev => a.addEventListener(ev, ui));
     a.addEventListener("error", () => toast("師父原音載入失敗，請確認網路"));
@@ -491,6 +520,7 @@ function wireLesson(X, S) {
   };
   app.querySelectorAll("[data-done]").forEach(b => b.onclick = () => {
     const k = b.dataset.done, on = !S.done[k]; S.done[k] = on; if (!on) delete S.done[k]; save(true);
+    actLesson(X.no, g => g.st = Object.values(S.done).filter(Boolean).length);
     b.setAttribute("aria-pressed", on); b.querySelector("span").textContent = on ? "這一步完成了" : "這一步做完了";
     refresh(); if (on) toast(progress(id, X.steps.length) >= 1 ? "月圓了" : "月亮又亮了一分");
   });

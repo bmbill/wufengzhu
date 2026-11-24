@@ -496,7 +496,8 @@ function countsOf(date) {
     jie: on(S_.lr && S_.lr.done) + (d.hb ? 1 : 0) + (d.night ? 1 : 0),
     ding: (d.sits || []).length + (d.min ? 1 : 0) + (d.breath ? 1 : 0) + on(S_.heard),
     hui: (d.vthink ? 1 : 0) + on(S_.vheard) + on(S_.vquiz),
-    shan: (d.shan || []).length,
+    // 自己記的每則算一件；網站上自動記到的（聽法、打坐、學習單…）合起來算一件
+    shan: (d.shan || []).length + (window.Shan && Shan.autoOf && Shan.autoOf(date).length ? 1 : 0),
   };
   c.total = c.jie + c.ding + c.hui + c.shan;
   c.kinds = XUE_KEYS.filter((k) => c[k] > 0).length;
@@ -532,7 +533,7 @@ function activeDates() {
   const set = new Set(), S_ = gS(), D = gDays();
   for (const k in D) {
     const d = D[k];
-    if (d && ((d.sits || []).length || d.min || d.breath || d.night || d.hb || d.vthink || (d.shan || []).length)) set.add(k);
+    if (d && ((d.sits || []).length || d.min || d.breath || d.night || d.hb || d.vthink || (d.shan || []).length || d.auto)) set.add(k);
   }
   [S_.lr && S_.lr.done, S_.heard, S_.vheard, S_.vquiz].forEach((o) => { for (const k in o || {}) if (o[k]) set.add(o[k]); });
   return set;
@@ -690,12 +691,14 @@ function reveal(res) {
 function openDay(date) {
   const l = lampOf(date), c = countsOf(date), d = gDays()[date] || {};
   const shan = (d.shan || []).map((e) => `<li class="ddl-shan"><span class="k">${esc_((window.Shan && Shan.KINDS[e.k] || {}).icon || "")}</span>${esc_(e.t || "")}${e.p ? `<small>${esc_(e.s || "")} ${e.p} 頁</small>` : ""}</li>`).join("");
+  const auto = (window.Shan && Shan.autoOf ? Shan.autoOf(date) : []).map((e) => `<li class="ddl-shan"><span class="k">${e.i}</span>${esc_(e.t)}</li>`).join("");
   const rows = XUE_KEYS.filter((k) => c[k]).map((k) => `<span class="ddl-row x-${k}"><i>${XUE[k].name}</i>${c[k]}</span>`).join("");
   overlay(`<div class="ddl-reveal">${renderLamp(l || GREY, { size: 110, lit: !!l })}</div>
     <h2 class="ddl-date">${Number(date.slice(5, 7))}／${Number(date.slice(8))}</h2>
     <p class="ddl-sub">${l ? `${esc_(l.name)}・${TIER_LABEL[l.tier]}` : "這一天還沒點燈"}</p>
     ${rows ? `<div class="ddl-rows">${rows}</div>` : ""}
     ${shan ? `<ul class="ddl-shans">${shan}</ul>` : ""}
+    ${auto ? `<ul class="ddl-shans auto">${auto}</ul>` : ""}
     <div class="btns"><button class="btn" data-ddl-close>關閉</button></div>`);
 }
 
