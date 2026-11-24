@@ -1,7 +1,10 @@
 // 廣海明月學習單 service worker：離線也能開。頁面、程式、講次資料先連網拿最新版，連不上就用快取；字型用快取。
-const CACHE = "gh-v8";
+const CACHE = "gh-v10";
 const CORE = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest",
-  "./icon-192.png", "./icon-512.png", "./icon-180.png", "./lessons/index.json"];
+  "./icon-192.png", "./icon-512.png", "./icon-180.png", "./lessons/index.json",
+  // 主題角色（燈燈相續的角色圖）
+  ...["moon/guide-calm", "moon/guide-gentle", "moon/guide-happy", "moon/guide-think", "moon/learner-sit", "moon/learner-distracted",
+    "moon/wise-happy", "moon/wise-cheer", "ocean/wise-happy"].map(f => `../chars/${f}.png`)];
 self.addEventListener("install", e => {
   // 連同每一講的資料一起存，手機離線也能開沒看過的講
   e.waitUntil(caches.open(CACHE).then(async c => {
