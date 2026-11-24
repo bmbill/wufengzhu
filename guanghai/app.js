@@ -385,6 +385,10 @@ function stepHTML(X, S, s, i) {
     // 預設使用者沒聽過共學：每場一張卡，先看「從這一講的哪裡切入」（可以聽那一段），細節收起來
     const fav = S.a[`${k}.fav`];
     const [first, ...more] = (s.lead || "").split("\n");
+    if (!s.sessions.length) {  // 共學還沒整理好：先說一聲，不放空表格
+      b = say("yuyu", "gentle", `${esc(first || "共學還在進行，場次齊了再整理。")}這段時間，可以先把第三步老師的講解再聽一遍。`) +
+        (s.recording ? `<p class="hint">有福智學員帳號，可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>先聽共學。</p>` : "");
+    } else
     b = `<div class="lead">${inline(first.replace(/（[^）]*）/g, ""))}${s.recording ? ` 有福智學員帳號，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>` +
       `<div class="sess2s">${s.sessions.map((x, j) => {
         const m = x.who.match(/^(\d{1,2}\/\d{1,2})\s*(.*)$/), on = fav === String(j);
@@ -397,7 +401,7 @@ function stepHTML(X, S, s, i) {
         </div>`;
       }).join("")}</div>
       <p class="chk-n">${fav != null && s.sessions[+fav] ? `最有用的一場：${esc(s.sessions[+fav].who)}` : "點 ♡ 選出對自己最有用的一場。"}</p>` +
-      (s.rest ? `<details class="more"><summary>四場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
+      (s.rest ? `<details class="more"><summary>${s.sessions.length <= 10 ? CN[s.sessions.length - 1] : s.sessions.length} 場合起來看</summary><div class="together md">${md(s.rest)}</div>${more.filter(l => l.trim()).map(l => `<p class="hint">${inline(l)}</p>`).join("")}</details>` : "") +
       (s.closing ? `<div class="q core" style="margin-top:14px"><div class="lab"><i class="must">必寫</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "practice") {
     b = `<div class="q"><div class="lab"><span><strong>觸發點</strong>：每天都會遇到的小事（點一下，直接記一筆）</span></div>
