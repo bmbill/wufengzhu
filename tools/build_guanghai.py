@@ -125,10 +125,15 @@ def parse(path):
     url = re.search(r"https?://\S+?(?=[\s）)]|$)", meta.get("原音與逐字稿", ""))
     L["audio"] = url.group(0) if url else f"https://www.amrtf.org/zh-hant/clear-moonlight-great-ocean-{no:04d}/"
     # 師父原音：「00:00–01:16 https://cdn...」→ 第二步只播這一段
-    m = re.search(r"(\d{1,2}):(\d{2})\s*[–~-]\s*(\d{1,2}):(\d{2})\s*(https?://\S+)", meta.get("師父原音", ""))
-    if m:
-        L["master"] = {"src": m.group(5), "start": int(m.group(1)) * 60 + int(m.group(2)), "end": int(m.group(3)) * 60 + int(m.group(4))}
-        L["lecture"] = m.group(5)  # 整講音檔：第三步、第四步可以分段播
+    # 師父分幾段時（老師中間插講）：「00:08–02:00、05:16–06:56 https://cdn...」→ parts，播放器只播這幾段
+    mm = meta.get("師父原音", "")
+    src = re.search(r"https?://\S+", mm)
+    parts = [[int(a) * 60 + int(b), int(c) * 60 + int(d)] for a, b, c, d in re.findall(r"(\d{1,2}):(\d{2})\s*[–~-]\s*(\d{1,2}):(\d{2})", mm.split("http")[0])]
+    if src and parts:
+        L["master"] = {"src": src.group(0), "start": parts[0][0], "end": parts[-1][1]}
+        if len(parts) > 1:
+            L["master"]["parts"] = parts
+        L["lecture"] = src.group(0)  # 整講音檔：第三步、第四步可以分段播
     verse = re.search(r"「([^」]{8,})」", meta.get("廣論段落", ""))
     L["verse"] = verse.group(1) if verse else ""
     appendix = ""

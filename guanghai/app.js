@@ -316,37 +316,48 @@ function reveal(id, title, body, note = "寫完了，看老師怎麼講") {
 }
 // 師父原音：只播 start～end 這一段，播完停下、回到開頭
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+// 師父原音：可以是一段，也可以分幾段（例如 567 講老師中間插講，師父分兩段）；只播師父，播完一段直接跳到下一段
+const partsOf = m => m.parts && m.parts.length ? m.parts : [[m.start, m.end]];
 function player(m) {
-  return `<div class="mplayer" data-src="${esc(m.src)}" data-s="${m.start}" data-e="${m.end}">
+  const P = partsOf(m), len = P.reduce((n, [s, e]) => n + e - s, 0);
+  return `<div class="mplayer" data-src="${esc(m.src)}" data-parts="${esc(JSON.stringify(P))}">
     <button class="mp-btn" aria-label="播放師父原音">${ICON.play}</button>
-    <div class="mp-mid"><b>師父原音</b><span class="mp-t">0:00 / ${mmss(m.end - m.start)}</span>
-      <div class="mp-bar" role="slider" aria-label="播放位置" aria-valuemin="0" aria-valuemax="${m.end - m.start}" aria-valuenow="0" tabindex="0"><i></i></div></div>
+    <div class="mp-mid"><b>師父原音</b><span class="mp-t">0:00 / ${mmss(len)}</span>
+      <div class="mp-bar" role="slider" aria-label="播放位置" aria-valuemin="0" aria-valuemax="${len}" aria-valuenow="0" tabindex="0"><i></i></div></div>
     <button class="mp-re" aria-label="從頭再聽" title="從頭再聽"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button></div>
-  <p class="hint mp-note">只播師父那一段（${mmss(m.start)}–${mmss(m.end)}），播完會自動停下，不會接到老師的講解。需要連網。</p>`;
+  <p class="hint mp-note">只播師父${P.length > 1 ? `的 ${P.length} 段` : "那一段"}（${P.map(([s, e]) => `${mmss(s)}–${mmss(e)}`).join("、")}），${P.length > 1 ? "中間老師的話會跳過，" : ""}播完會自動停下，不會接到老師的講解。需要連網。</p>`;
 }
 function wirePlayer(el) {
-  const s = +el.dataset.s, e = +el.dataset.e, len = e - s;
+  const P = JSON.parse(el.dataset.parts), len = P.reduce((n, [s, e]) => n + e - s, 0), s0 = P[0][0];
+  // 實際秒數 ↔ 師父原音裡的第幾秒
+  const toV = t => { let v = 0; for (const [s, e] of P) { if (t < s) return v; if (t <= e) return v + t - s; v += e - s; } return len; };
+  const toR = v => { for (const [s, e] of P) { if (v <= e - s) return s + v; v -= e - s; } return P[P.length - 1][1]; };
   const btn = el.querySelector(".mp-btn"), bar = el.querySelector(".mp-bar"), fill = bar.firstElementChild, tt = el.querySelector(".mp-t");
   let a = null;
   const ui = () => {
-    const p = a ? Math.min(Math.max(a.currentTime - s, 0), len) : 0;
+    const p = a ? Math.min(Math.max(toV(a.currentTime), 0), len) : 0;
     fill.style.width = (p / len * 100) + "%"; tt.textContent = `${mmss(p)} / ${mmss(len)}`; bar.setAttribute("aria-valuenow", Math.round(p));
     const on = a && !a.paused; btn.innerHTML = on ? ICON.pause : ICON.play; btn.setAttribute("aria-label", on ? "暫停" : "播放師父原音"); el.classList.toggle("on", !!on);
   };
   const get = () => {
     if (a) return a;
     a = new Audio(el.dataset.src); a.preload = "auto"; trackListen(a);
-    a.addEventListener("timeupdate", () => { if (a.currentTime >= e) { a.pause(); a.currentTime = s; } ui(); });
+    a.addEventListener("timeupdate", () => {
+      const t = a.currentTime, i = P.findIndex(([s, e]) => t < e);
+      if (i < 0) { a.pause(); a.currentTime = s0; }          // 最後一段播完
+      else if (t < P[i][0] - 0.3) a.currentTime = P[i][0];    // 落在老師插講的地方：跳到下一段師父
+      ui();
+    });
     ["play", "pause", "loadedmetadata"].forEach(ev => a.addEventListener(ev, ui));
     a.addEventListener("error", () => toast("師父原音載入失敗，請確認網路"));
-    a.currentTime = s; return a;
+    a.currentTime = s0; return a;
   };
-  const go = sec => { const x = get(); x.currentTime = s + Math.min(Math.max(sec, 0), len - 0.5); ui(); };
+  const go = v => { const x = get(); x.currentTime = toR(Math.min(Math.max(v, 0), len - 0.5)); ui(); };
   document.addEventListener("gh-play", () => { if (a && !a.paused) a.pause(); });
-  btn.onclick = () => { const x = get(); if (x.paused) { stopSeg(); if (x.currentTime < s || x.currentTime >= e) x.currentTime = s; x.play().catch(() => toast("無法播放，請確認網路")); } else x.pause(); };
+  btn.onclick = () => { const x = get(); if (x.paused) { stopSeg(); if (toV(x.currentTime) >= len - 0.3 || x.currentTime < s0) x.currentTime = s0; x.play().catch(() => toast("無法播放，請確認網路")); } else x.pause(); };
   el.querySelector(".mp-re").onclick = () => { go(0); const x = get(); if (x.paused) x.play().catch(() => {}); };
   bar.onclick = ev => { const r = bar.getBoundingClientRect(); go((ev.clientX - r.left) / r.width * len); };
-  bar.onkeydown = ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { ev.preventDefault(); go((a ? a.currentTime - s : 0) + (ev.key === "ArrowRight" ? 5 : -5)); } };
+  bar.onkeydown = ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { ev.preventDefault(); go((a ? toV(a.currentTime) : 0) + (ev.key === "ArrowRight" ? 5 : -5)); } };
 }
 const chkNote = (g, n) => g ? `我也做到了 ${g}／${n} 步。沒打勾的，就是下次聽師父時可以試試的。` : "做到的就點一下打勾。";
 function qItem(S, k, q, j, no) {
