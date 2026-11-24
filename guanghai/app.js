@@ -146,8 +146,29 @@ async function renderHome() {
     : lp >= 1 ? `第 ${last.no} 講已經月圓了！帶著那一個請益的問題，去研討班問問看。` + (nextUp ? `也可以接著學第 ${nextUp.no} 講。` : "")
     : `第 ${last.no} 講亮到 ${Math.round(lp * 6)}／6 了，接著學吧。`;
   const cont = nextUp || last;
-  const units = [];
-  for (const x of list) { const u = x.unit || "其他"; let g = units.find(g => g.u === u); if (!g) units.push(g = { u, items: [] }); g.items.push(x); }
+  // 分兩層：科判（例如「思惟聞法勝利」）→ 偈頌單元（例如「若由聞法發信意」一偈）→ 各講。
+  // 單元預設收起來，只打開「接著學」那一講所在的；自己打開、收起的會記住。
+  const secs = [];
+  for (const x of list) {
+    const kp = (x.kepan || "").split("→").map(s => s.trim()).filter(Boolean);
+    const sk = kp.length ? kp[kp.length - 1] : "其他";
+    let s = secs.find(s => s.k === sk); if (!s) secs.push(s = { k: sk, path: kp.slice(0, -1).join(" → "), units: [] });
+    const u = (x.unit || "其他").replace(/^[\d–\-~ ]+講[：:]\s*/, "");
+    let g = s.units.find(g => g.u === u); if (!g) s.units.push(g = { u, items: [] }); g.items.push(x);
+  }
+  const uopen = DB.uopen || {};
+  const isOpen = g => g.u in uopen ? uopen[g.u] : cont ? g.items.includes(cont) : g === secs[0].units[0];
+  const unitHTML = g => {
+    const nos = g.items.map(x => x.no), full = g.items.filter(x => progress(x.id) >= 1).length;
+    const range = nos.length > 1 ? `${Math.min(...nos)}–${Math.max(...nos)} 講` : `${nos[0]} 講`;
+    return `<details class="unit" data-u="${esc(g.u)}"${isOpen(g) ? " open" : ""}>
+      <summary><div class="u-t"><b>${esc(g.u)}</b><span>${range}・${full ? `月圓 ${full}／${g.items.length}` : `共 ${g.items.length} 講`}</span></div>
+        <span class="u-moons" aria-hidden="true">${g.items.map(x => moon(progress(x.id))).join("")}</span></summary>
+      ${g.items[0].verse ? `<p class="u-verse">${esc(g.items[0].verse)}</p>` : ""}
+      ${g.items.map(x => { const p = progress(x.id); return `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
+        <div><h3>${esc(x.title)}</h3><p>${p >= 1 ? "月圓了" : p > 0 ? `亮到 ${Math.round(p * 6)}／6` : "還沒開始"}</p></div>${moon(p)}</a>`; }).join("")}
+    </details>`;
+  };
   app.innerHTML = `
   <section class="sea"><div class="wrap">
     <div class="topbar"><a class="brand" href="../">燈燈相續</a></div>
@@ -161,15 +182,16 @@ async function renderHome() {
     ${say("yuan", started ? "happy" : "cheer", greet)}
     ${cont ? `<a class="card continue" href="#/${cont.no}">${moon(progress(cont.id))}
       <div><div class="k">接著學</div><h3>第 ${cont.no} 講・${esc(cont.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
-    ${units.map(g => `<div class="unit"><div class="unit-h">${esc(g.u)}</div>
-      ${g.items.map(x => `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
-        <div><h3>${esc(x.title)}</h3><p>${esc(x.verse || x.kepan)}</p></div>${moon(progress(x.id))}</a>`).join("")}</div>`).join("")}
+    ${secs.map(s => `<section class="ksec"><div class="ksec-h">${s.path ? `<span>${esc(s.path)}</span>` : ""}<h2>${esc(s.k)}</h2></div>
+      ${s.units.map(unitHTML).join("")}</section>`).join("")}
     <section class="howto"><h2>每一講分三段</h2><ol>
       ${PH.map(g => `<li>${chr(g.host[0], g.host[1], 56)}<div><b>${esc(g.name)}</b><span class="who">${CHARS[g.host[0]].name}帶你</span>
         <span>${g.steps.map(i => PHASES[i]).join("・")}：${esc(g.sub)}</span></div></li>`).join("")}
     </ol></section>
     ${footer()}
   </div>`;
+  // 只記使用者自己點的（剛畫出來時預設打開的那一個，瀏覽器也會發 toggle，要略過）
+  app.querySelectorAll("details.unit").forEach(d => { const init = d.open; d.addEventListener("toggle", () => { if (d.open === init && !(d.dataset.u in (DB.uopen || {}))) return; DB.uopen = Object.assign(DB.uopen || {}, { [d.dataset.u]: d.open }); save(); }); });
   wireFooter();
 }
 

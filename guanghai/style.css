@@ -304,8 +304,25 @@ details.more.lv > summary{min-height:40px;font-size:14px}
 .continue .k{font-size:13px;color:var(--muted)}
 .continue h3{font-size:18px}
 .continue .go{margin-left:auto;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--sea);color:#fff;flex:none}
-.unit{margin-top:32px}
-.unit-h{font-size:14px;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--rule)}
+/* 首頁兩層：科判 → 偈頌單元（可收合）→ 各講 */
+.ksec{margin-top:36px}
+.ksec-h{padding-bottom:4px}
+.ksec-h span{display:block;font-size:13px;color:var(--muted);line-height:1.5}
+.ksec-h h2{font-family:var(--f-display);font-size:22px;margin-top:2px}
+.ksec .unit:last-child{border-bottom:1px solid var(--rule)}
+.unit > summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 0;cursor:pointer;border-top:1px solid var(--rule)}
+.unit > summary::-webkit-details-marker{display:none}
+.unit > summary::before{content:"";flex:none;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);margin:0 4px 0 2px;transition:transform .15s}
+.unit[open] > summary::before{transform:rotate(45deg)}
+.u-t{flex:1;min-width:0}
+.u-t b{display:block;font-size:17px;font-weight:600}
+.u-t span{font-size:13px;color:var(--muted)}
+.u-moons{display:flex;gap:3px;flex:none;max-width:40%;flex-wrap:wrap;justify-content:flex-end}
+.u-moons svg{width:14px;height:14px}
+.unit[open] .u-moons{display:none}
+.u-verse{font-size:14px;color:var(--muted);line-height:1.7;padding:0 0 4px 26px}
+.unit .lrow{padding-left:26px}
+.unit .lrow:last-child{border-bottom:0}
 .lrow{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);text-decoration:none;color:inherit}
 .lrow .no{font-family:var(--f-display);font-size:24px;font-weight:700;min-width:2.2em}
 .lrow h3{font-size:18px}
@@ -362,7 +379,7 @@ footer .note{flex-basis:100%}
 /* 三段底色 */
 body.ph-0{--page:var(--page-1)} body.ph-1{--page:var(--page-2)} body.ph-2{--page:var(--page-3)}
 .ph-bar{border-bottom-color:var(--raised-2)}
-.checks,.chk,.sess2s,.sess2,.ladder,.ladder li,.step .lvls,.lvl,.entry,.unit-h,.lrow,.howto ol,.howto li,footer{border-color:var(--raised-2)!important}
+.checks,.chk,.sess2s,.sess2,.ladder,.ladder li,.step .lvls,.lvl,.entry,.unit,.unit > summary,.lrow,.howto ol,.howto li,footer{border-color:var(--raised-2)!important}
 @media print{body{background:#fff!important}}
 
 /* 首頁角色 */
