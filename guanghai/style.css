@@ -390,3 +390,15 @@ body.ph-0{--page:var(--page-1)} body.ph-1{--page:var(--page-2)} body.ph-2{--page
 .step .bubble,.step .fb,.step .mplayer,.step .reveal,.step .logform{background:var(--page)}
 @media (min-width:728px){.step{margin-left:-24px;margin-right:-24px;padding-left:24px;padding-right:24px;border-radius:20px}}
 @media print{.step{background:none;margin:24px 0 0;padding:0}}
+
+/* 一頁一步：段內的步驟切換 */
+.stepper{display:flex;gap:8px;margin-top:20px;overflow-x:auto;scrollbar-width:none}
+.stepper::-webkit-scrollbar{display:none}
+.stepper button{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--control);background:var(--sheet);color:var(--ink);font-size:14px;white-space:nowrap}
+.stepper button svg{width:16px;height:16px}
+.stepper button[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:#fff}
+:root[data-theme="dark"] .stepper button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .stepper button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}}
+.stp > .step{margin-top:20px}
+.stp > .ph-next{margin-top:24px}
+@media print{.stepper{display:none!important}.stp{display:block!important}}

@@ -193,8 +193,8 @@ async function renderLesson(id) {
       ${g.host ? say(g.host[0], g.host[1], esc(g.host[2])) : `<p class="ph-sub">${esc(g.sub)}</p>`}
       ${pi === 0 && meta.length ? `<details class="meta"><summary>這一講在廣論的哪裡</summary><dl class="metagrid">
         ${meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd class="md">${inline(v)}</dd></div>`).join("")}</dl></details>` : ""}
-      ${g.steps.filter(i => X.steps[i]).map(i => stepHTML(X, S, X.steps[i], i)).join("")}
-      ${pi < PH.length - 1 ? `<button type="button" class="ph-next" data-toph="${pi + 1}"><b>下一段：${esc(PH[pi + 1].name)}</b><span>${esc(PH[pi + 1].sub)}</span>${ICON.go}</button>` : `<div id="full"></div>`}
+      ${stepper(X, S, pi)}
+      ${g.steps.filter(i => X.steps[i]).map(i => `<div class="stp" data-st="${i}"${i === curStep(X, S, pi) ? "" : " hidden"}>${stepHTML(X, S, X.steps[i], i)}${nextBtn(X, pi, i)}</div>`).join("")}
     </div>`).join("")}
     ${footer()}
   </div>`;
@@ -210,6 +210,19 @@ const PH = [
   { name: "聽之後", sub: "讀共學、平常練、核對有沒有學會", steps: [3, 4, 5], host: ["deng", "happy", "每位法師都有自己的光。挑一盞對你最有用的，再帶著它去練一週。"] },
 ];
 const curPh = S => Math.min(Math.max(+S.ph || 0, 0), PH.length - 1);
+// 一頁一步：每段記住看到哪一步
+const stepsOf = (X, pi) => PH[pi].steps.filter(i => X.steps[i]);
+const curStep = (X, S, pi) => { const ss = stepsOf(X, pi), v = (S.stp || {})[pi]; return ss.includes(v) ? v : ss[0]; };
+function stepper(X, S, pi) {
+  const ss = stepsOf(X, pi); if (ss.length < 2) return "";
+  return `<nav class="stepper" aria-label="${esc(PH[pi].name)}的步驟">${ss.map(i => `<button type="button" data-tostep="${i}" aria-pressed="${i === curStep(X, S, pi)}">${moon((i + 1) / 6)}<span>${ss.length > 2 ? "" : `第${CN[i]}步・`}${PHASES[i]}</span></button>`).join("")}</nav>`;
+}
+function nextBtn(X, pi, i) {
+  const ss = stepsOf(X, pi), k = ss.indexOf(i);
+  if (k < ss.length - 1) { const n = ss[k + 1]; return `<button type="button" class="ph-next" data-tostep="${n}"><b>下一步：第${CN[n]}步</b><span>${esc(X.steps[n].title)}</span>${ICON.go}</button>`; }
+  if (pi < PH.length - 1) return `<button type="button" class="ph-next" data-toph="${pi + 1}"><b>下一段：${esc(PH[pi + 1].name)}</b><span>${esc(PH[pi + 1].sub)}</span>${ICON.go}</button>`;
+  return `<div id="full"></div>`;
+}
 function phaseTabs(X, S) {
   return PH.map((g, pi) => {
     const ks = g.steps.filter(i => X.steps[i]).map(i => X.steps[i].key), d = ks.filter(k => S.done[k]).length;
@@ -400,14 +413,25 @@ function wireLesson(X, S) {
   app.querySelectorAll(".mplayer").forEach(wirePlayer);
   wireSegs(X);
   // 三段切換
+  const toTop = () => { const top = $(".ph-bar").getBoundingClientRect().top + scrollY; if (scrollY > top) scrollTo({ top, behavior: "instant" }); };
+  const showStep = (i, scroll = true) => {
+    const pi = PH.findIndex(g => g.steps.includes(i)); if (pi < 0) return;
+    S.stp = S.stp || {}; S.stp[pi] = i;
+    showPh(pi, false);
+    const ph = app.querySelector(`.phase[data-ph="${pi}"]`);
+    ph.querySelectorAll(".stp").forEach(el => el.hidden = +el.dataset.st !== i);
+    ph.querySelectorAll("[data-tostep]").forEach(b => { if (b.closest(".stepper")) b.setAttribute("aria-pressed", +b.dataset.tostep === i); });
+    if (scroll) toTop();
+  };
   const showPh = (pi, scroll = true) => {
     S.ph = pi; save(); document.body.className = "ph-" + pi;
     app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== pi);
     app.querySelectorAll(".ph-tabs [data-toph]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.toph === pi));
     stopSeg();
-    if (scroll) { const top = $(".ph-bar").getBoundingClientRect().top + scrollY; if (scrollY > top) scrollTo({ top, behavior: "instant" }); }
+    if (scroll) toTop();
   };
   app.querySelectorAll("[data-toph]").forEach(b => b.onclick = () => showPh(+b.dataset.toph));
+  app.querySelectorAll("[data-tostep]").forEach(b => b.onclick = () => showStep(+b.dataset.tostep));
   // 點選題
   app.querySelectorAll(".q.choice").forEach(box => {
     const [k, j] = box.dataset.q.split("."), q = X.steps.find(s => s.key === k).items[+j], key = box.dataset.q;
@@ -450,7 +474,7 @@ function wireLesson(X, S) {
   // rail jump
   app.querySelectorAll("[data-go]").forEach(b => b.onclick = () => {
     const i = X.steps.findIndex(s => s.key === b.dataset.go), pi = PH.findIndex(g => g.steps.includes(i));
-    if (pi >= 0) showPh(pi, false);
+    if (pi >= 0) showStep(i, false);
     $("#s-" + CSS.escape(b.dataset.go)).scrollIntoView({ behavior: "smooth" });
   });
   // reveals
@@ -523,7 +547,7 @@ function wireLesson(X, S) {
     if (a3) a3.textContent = `練習紀錄：有用一句法、也寫了結果的 ${turned} 次`;
   }
   // print
-  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more, details.meta").forEach(d => d.open = true); app.querySelectorAll(".phase").forEach(el => el.hidden = false); print(); app.querySelectorAll(".phase").forEach(el => el.hidden = +el.dataset.ph !== curPh(S)); };
+  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more, details.meta").forEach(d => d.open = true); const hid = [...app.querySelectorAll(".phase, .stp")].filter(el => el.hidden); hid.forEach(el => el.hidden = false); print(); hid.forEach(el => el.hidden = true); };
   refresh();
 }
 
