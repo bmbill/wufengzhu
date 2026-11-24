@@ -74,6 +74,33 @@ def head_title(s):
     s = re.sub(r"（\d+\s*分鐘）", "", s).strip()
     return s, mins
 
+CHOICE = re.compile(r"^選項(（可複選）)?[：:]\s*(.+)$")
+
+def items_of(body):
+    """一、二步的題目：★ 開頭＝核心題（要寫）；續行「選項：A｜B」＝點選題（「選項（可複選）：」可複選）；
+    其他寫字題＝選做。"""
+    out = []
+    for it in numbered(body):
+        first = it[0]
+        core = first.startswith("★")
+        first = first.lstrip("★ ").strip()
+        m = re.match(r"\*\*(.+?)\*\*[：:]?\s*(.*)", first)
+        label, prompt = (m.group(1), m.group(2)) if m else ("", first)
+        opts, multi, hint = None, False, []
+        for x in it[1:]:
+            c = CHOICE.match(x)
+            if c:
+                opts = [o.strip() for o in c.group(2).split("｜") if o.strip()]; multi = bool(c.group(1))
+            elif not BLANK.fullmatch(x.strip()):
+                hint.append(x)
+        q = {"label": label, "prompt": clean(prompt), "hint": " ".join(hint).strip("（）() ")}
+        if opts:
+            q["options"] = opts
+            if multi: q["multi"] = True
+        q["role"] = "core" if core else ("choice" if opts else "extra")
+        out.append(q)
+    return out
+
 def parse(path):
     text = open(path, encoding="utf-8").read()
     no = int(re.search(r"第\s*(\d+)\s*講", os.path.basename(path)).group(1))
@@ -104,27 +131,27 @@ def parse(path):
         t, mins = head_title(head)
         key = head[:1]
         st = {"key": key, "title": t, "minutes": mins}
-        if key == "一":
-            st["kind"] = "prompts"
-            st["items"] = []
-            for it in numbered(body):
-                first = it[0]
-                m = re.match(r"\*\*(.+?)\*\*[：:]?\s*(.*)", first)
-                label, prompt = (m.group(1), m.group(2)) if m else ("", first)
-                hint = " ".join(x for x in it[1:] if not BLANK.fullmatch(x.strip()))
-                st["items"].append({"label": label, "prompt": clean(prompt), "hint": hint.strip("（）() ")})
-        elif key == "二":
+        if key in "一二":
             st["kind"] = "questions"
             st["lead"] = paras_before(body, lambda l: re.match(r"^\d+[.、]", l))
-            st["items"] = [{"prompt": clean(" ".join(it))} for it in numbered(body)]
+            st["items"] = items_of(body)
         elif key == "三":
-            st["kind"] = "compare"
-            st["lead"] = paras_before(body, lambda l: l.startswith("|"))
-            tb = tables(body)
-            st["cols"] = tb[0][0][1:] if tb else ["我", "老師"]
-            st["rows"] = [r[0] for r in tb[0][1:]] if tb else []
             m = re.search(r"\*\*(.+?)\*\*\s*＿", body)
             st["closing"] = m.group(1) if m else ""
+            if tables(body):  # 舊格式：我／老師對照表
+                st["kind"] = "compare"
+                st["lead"] = paras_before(body, lambda l: l.startswith("|"))
+                tb = tables(body)
+                st["cols"] = tb[0][0][1:]
+                st["rows"] = [r[0] for r in tb[0][1:]]
+            else:  # 新格式：老師的步驟清單，逐條打勾「我也有做到」
+                st["kind"] = "checklist"
+                st["lead"] = paras_before(body, lambda l: re.match(r"^\d+[.、]", l))
+                st["checks"] = []
+                for it in numbered(body):
+                    m = re.match(r"\*\*(.+?)\*\*\s*(?:（(\[[^）]+\])）)?[：:]\s*(.*)", " ".join(it))
+                    if m:
+                        st["checks"].append({"label": m.group(1), "time": (m.group(2) or "").strip("[]").replace("]–[", "–"), "text": m.group(3)})
         elif key == "四":
             st["kind"] = "sessions"
             main, _, reveal = body.partition("\n### ")
@@ -175,7 +202,7 @@ def parse(path):
             st["levels"] = [{"name": re.sub(r"^\d+\.\s*", "", r[0]), "how": r[1], "pass": r[2]} for r in tb[0][1:]] if tb else []
             m = re.search(r"\*\*(留一個問題.+?)\*\*", body)
             st["closing"] = re.sub(r"\*\*", "", body[body.find("最後"):].split("\n")[0]).strip("＿：: ") if "最後" in body else ""
-            st["closing"] = clean(st["closing"])
+            st["closing"] = clean(st["closing"]).lstrip("★ ")
         else:
             st["kind"] = "md"; st["md"] = body
         L["steps"].append(st)
@@ -189,6 +216,19 @@ def parse(path):
         for st in L["steps"]:
             if st["key"] in found:
                 st["answer"] = found[st["key"]]
+                # 點選題：附錄同號的條目當「選完看老師怎麼說」；開頭「答：X。」＝老師的答案（可複選用｜分隔）
+                if st.get("items"):
+                    ans = [" ".join(a) for a in numbered(found[st["key"]]["md"])]
+                    for j, q in enumerate(st["items"]):
+                        if q.get("options") and j < len(ans):
+                            m = re.match(r"答[：:]\s*(.+?)。\s*(.*)", ans[j])
+                            if m:
+                                q["answer"] = [x.strip() for x in m.group(1).split("｜")]
+                                q["explain"] = m.group(2)
+                            else:
+                                q["explain"] = ans[j]
+                    # 全部答案的「看老師怎麼講」不重複「答：X。」
+                    st["answer"]["md"] = re.sub(r"^(\d+[.、]\s+)答[：:][^。]*。\s*", r"\1", st["answer"]["md"], flags=re.M)
         if lead:
             L["appendixLead"] = lead
     return L

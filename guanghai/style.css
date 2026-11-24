@@ -292,3 +292,42 @@ footer a{min-height:44px;display:inline-flex;align-items:center}
   textarea{border:0;border-bottom:1px solid #999;border-radius:0;background:none;min-height:60px}
   .phrase{background:none;color:#000;border:1px solid #999}
 }
+/* 核心題、點選題、選做 */
+.q.core{background:linear-gradient(90deg,rgba(214,160,60,.13),rgba(214,160,60,.03));border:1px solid rgba(214,160,60,.35);border-radius:16px;padding:12px 14px}
+.q.core .lab i,.star{font-style:normal;color:var(--gold);font-weight:700}
+.star{margin-right:6px}
+.tagm{font-style:normal;font-size:12px;font-weight:400;color:var(--sea-ink);background:var(--sea-soft);border-radius:6px;padding:0 6px;margin-left:6px;white-space:nowrap}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.opt{min-height:44px;padding:8px 14px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:15px;line-height:1.5;text-align:left;position:relative}
+.opt[aria-pressed="true"]{background:var(--sea);color:#fff;border-color:var(--sea)}
+.opt.teach{box-shadow:inset 0 0 0 2px var(--gold)}
+.opt.teach::after{content:"老師";position:absolute;top:-9px;right:8px;font-size:11px;line-height:1;padding:3px 6px;border-radius:6px;background:var(--gold);color:#fff}
+.fb{font-size:14.5px;line-height:1.7;color:var(--mute);margin-top:10px}
+.fb:empty{display:none}
+.fb b{color:var(--ink);font-weight:500;margin-right:4px}
+.fb b.ok{color:var(--sea-ink)}
+details.more{margin:6px 0 0;border-top:1px dashed var(--line);padding-top:6px}
+details.more > summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--mute);font-size:15px;list-style:none}
+details.more > summary::-webkit-details-marker{display:none}
+details.more > summary::before{content:"＋";color:var(--gold-ink);font-weight:700}
+details.more[open] > summary::before{content:"－"}
+details.more .q{margin-top:6px}
+details.more.lv{border:0;padding:0;margin:4px 0 0;grid-column:2}
+details.more.lv > summary{min-height:36px;font-size:14px}
+.checks{display:grid;gap:8px}
+.chk{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit}
+.chk-t{flex:1;min-width:0;display:block;line-height:1.65}
+.chk-t b{font-weight:500;margin-right:6px}
+.chk-t .tc{font-family:var(--f-num);font-size:.82em;color:var(--gold-ink);background:rgba(214,160,60,.12);border-radius:6px;padding:0 5px;white-space:nowrap}
+.chk-d{display:block;font-size:14.5px;color:var(--mute);margin-top:2px}
+.chk-b{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;margin-top:2px}
+.chk-b svg{width:20px;height:20px}
+.chk[aria-pressed="true"]{border-color:var(--gold);background:linear-gradient(90deg,rgba(214,160,60,.12),transparent)}
+.chk[aria-pressed="true"] .chk-b{background:var(--glow);border-color:var(--gold);color:var(--night)}
+.chk-n{font-size:14px;color:var(--mute);margin:10px 0 14px}
+.fav{grid-column:2;justify-self:start;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--mute);font:inherit;font-size:14.5px;margin-top:4px}
+.fav[aria-pressed="true"]{background:#fbe9e7;border-color:#e9a79c;color:#b4473a}
+.sess.core .focus{font-weight:500}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fav[aria-pressed="true"]{background:rgba(233,167,156,.15);color:#f3b2a6;border-color:rgba(233,167,156,.5)}}
+:root[data-theme="dark"] .fav[aria-pressed="true"]{background:rgba(233,167,156,.15);color:#f3b2a6;border-color:rgba(233,167,156,.5)}
+@media print{.opts .opt{border:1px solid #999}.fb,.chk-n{display:none}.chk-b{border:1.5px solid #999}}

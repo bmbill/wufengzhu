@@ -241,15 +241,47 @@ function wirePlayer(el) {
   bar.onclick = ev => { const r = bar.getBoundingClientRect(); go((ev.clientX - r.left) / r.width * len); };
   bar.onkeydown = ev => { if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") { ev.preventDefault(); go((a ? a.currentTime - s : 0) + (ev.key === "ArrowRight" ? 5 : -5)); } };
 }
+const chkNote = (g, n) => g ? `我也做到了 ${g}／${n} 步。沒打勾的，就是下次聽師父時可以試試的。` : "做到的就點一下打勾。";
+function qItem(S, k, q, j, no) {
+  const key = `${k}.${j}`, core = q.role === "core";
+  const head = `<div class="lab"><i>${no}</i><span>${q.label ? `<strong>${esc(q.label)}</strong>　` : ""}${inline(q.prompt)}${q.multi ? `<em class="tagm">可複選</em>` : ""}</span></div>`;
+  if (q.options) {
+    const v = (S.a[key] || "").split("｜").filter(Boolean);
+    // 舊版是寫字題：寫過的字不在選項裡，照樣留著給他看
+    const old = v.length && !v.some(x => q.options.includes(x)) ? S.a[key] : "";
+    if (old) return `<div class="q">${head}${field(S, key)}</div>`;
+    return `<div class="q choice" data-q="${key}">${head}<div class="opts">${q.options.map(o => `<button type="button" class="opt${v.length && q.answer && q.answer.includes(o) ? " teach" : ""}" data-v="${esc(o)}" aria-pressed="${v.includes(o)}">${inline(o)}</button>`).join("")}</div>
+      <div class="fb" aria-live="polite">${fbHTML(q, v)}</div></div>`;
+  }
+  return `<div class="q${core ? " core" : ""}">${head}${field(S, key, core ? "寫一句就好" : "寫在這裡…")}${q.hint ? `<p class="hint">${esc(q.hint)}</p>` : ""}</div>`;
+}
+function fbHTML(q, v) {
+  if (!v.length) return "";
+  let h = "";
+  if (q.answer && !q.multi) h = v[0] === q.answer[0] ? `<b class="ok">和老師想的一樣。</b>` : `<b>老師的看法是：${inline(q.answer[0])}</b>`;
+  else if (q.answer) { const same = v.filter(x => q.answer.includes(x)).length; h = `<b>${same ? `有 ${same} 個和老師一樣。` : "和老師停的地方不一樣，比一比。"}</b>標「老師」的是老師停下來的。`; }
+  return h + (q.explain ? ` ${inline(q.explain)}` : "");
+}
 function stepHTML(X, S, s, i) {
   const k = s.key, n = CN[i] || i + 1;
   let b = "";
-  if (s.kind === "prompts") {
-    b = s.items.map((it, j) => `<div class="q"><div class="lab"><i>${j + 1}</i><span>${it.label ? `<strong>${esc(it.label)}</strong>　` : ""}${inline(it.prompt)}</span></div>
-      ${field(S, `${k}.${j}`)}${it.hint ? `<p class="hint">${esc(it.hint)}</p>` : ""}</div>`).join("");
-  } else if (s.kind === "questions") {
+  if (s.kind === "prompts" || s.kind === "questions") {
+    // 要寫的只有 ★ 核心題；點選題點一下；其他寫字題收進「選做」
+    const its = s.items.map((q, j) => [q, j]);
+    const shown = its.filter(([q]) => (q.role || "core") !== "extra"), extra = its.filter(([q]) => q.role === "extra");
+    let n = 0;
     b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") + (i === 1 && X.master ? player(X.master) : "") +
-      s.items.map((it, j) => `<div class="q"><div class="lab"><i>${j + 1}</i><span>${inline(it.prompt)}</span></div>${field(S, `${k}.${j}`)}</div>`).join("");
+      shown.map(([q, j]) => qItem(S, k, q, j, q.role === "core" ? "★" : ++n)).join("") +
+      (extra.length ? `<details class="more"${extra.some(([q, j]) => S.a[`${k}.${j}`]) ? " open" : ""}><summary>想多想一點（選做 ${extra.length} 題）</summary>
+        ${extra.map(([q, j], m) => qItem(S, k, q, j, m + 1)).join("")}</details>` : "");
+  } else if (s.kind === "checklist") {
+    const got = s.checks.filter((c, j) => S.a[`${k}.c${j}`]).length;
+    b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
+      `<div class="checks">${s.checks.map((c, j) => `<button type="button" class="chk" data-c="${k}.c${j}" aria-pressed="${!!S.a[`${k}.c${j}`]}">
+        <span class="chk-t"><b>${esc(c.label)}</b>${c.time ? `<span class="tc">${esc(c.time)}</span>` : ""}<span class="chk-d">${inline(c.text)}</span></span>
+        <span class="chk-b" aria-hidden="true">${ICON.check}</span></button>`).join("")}</div>
+      <p class="chk-n" id="chkn-${k}">${chkNote(got, s.checks.length)}</p>` +
+      (s.closing ? `<div class="q core"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`, "寫一句就好")}</div>` : "");
   } else if (s.kind === "compare") {
     b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
       s.rows.map((r, j) => `<div class="cmp-row"><b>${inline(r)}</b><div class="cmp">
@@ -265,16 +297,17 @@ function stepHTML(X, S, s, i) {
         <button type="button" data-mode="heard" aria-pressed="${!read}">我聽了共學</button>
         <button type="button" data-mode="read" aria-pressed="${read}">還沒聽，先讀重點</button></div>` : "";
     const lead = read
-      ? `<div class="lead">沒參加共學也沒關係。下面是 ${s.sessions.filter(x => x.brief).length} 位法師各自的切入點，讀完每一場，記下<strong>對我最有用的一點</strong>。${s.recording ? `有福智學員帳號的話，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>`
+      ? `<div class="lead">沒參加共學也沒關係。下面是 ${s.sessions.filter(x => x.brief).length} 位法師各自的切入點。讀一讀，點選<strong>對我最有用的一場</strong>，最後寫一句結論就好。${s.recording ? `有福智學員帳號的話，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>`
       : (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "");
     b = seg + lead +
       s.sessions.map((x, j) => {
         const m = x.who.match(/^(\d{1,2}\/\d{1,2})\s*(.*)$/);
         const date = `<div class="date">${m ? esc(m[1]) + `<b>${esc(m[2])}</b>` : `<b>${esc(x.who)}</b>`}</div>`;
         if (read && x.brief) return `<div class="sess">${date}<div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div>
-          ${field(S, `${k}.r${j}`, "對我最有用的一點")}</div>`;
-        if (read) return `<div class="sess">${date.replace("聽完", "讀完")}<div class="focus">${inline(x.focus.replace(/^.*?(這一講)/, "$1"))}</div>${field(S, `${k}.${j}`, "寫一句")}</div>`;
-        return `<div class="sess">${date}<div class="focus">${inline(x.focus)}</div>${field(S, `${k}.${j}`, "法師講到、我沒想到的一點")}</div>`;
+          <button type="button" class="fav" data-fav="${j}" aria-pressed="${S.a[`${k}.fav`] === String(j)}">${S.a[`${k}.fav`] === String(j) ? "♥ 這場對我最有用" : "♡ 這場對我最有用"}</button></div>`;
+        const core = /^★/.test(x.focus), focus = x.focus.replace(/^★\s*/, "");
+        if (core) return `<div class="sess core">${read ? date.replace("聽完", "讀完") : date}<div class="focus"><i class="star">★</i>${inline(read ? focus.replace(/^.*?(這一講)/, "$1") : focus)}</div>${field(S, `${k}.${j}`, "寫一句就好")}</div>`;
+        return `<div class="sess">${date}<div class="focus">${inline(focus)}</div>${field(S, `${k}.${j}`, "法師講到、我沒想到的一點（有聽的場次再寫）")}</div>`;
       }).join("") +
       (s.reveal ? (read && s.reveal.rest ? `<div class="together md">${md(s.reveal.rest)}</div>` : reveal(`${k}.rv`, "", s.reveal.md, s.reveal.title)) : "");
   } else if (s.kind === "practice") {
@@ -302,8 +335,8 @@ function stepHTML(X, S, s, i) {
     b = `<div class="card" style="box-shadow:none;padding:4px 18px">${s.levels.map((v, j) => `<div class="lvl">
         <button class="tick" data-lvl="${j}" aria-pressed="${!!S.lvl[j]}" aria-label="${esc(v.name)}做到了">${ICON.check}</button>
         <h3>${j + 1}. ${esc(v.name)}</h3><div class="how">${inline(v.how)}</div><div class="pass">${inline(v.pass)}</div>
-        <div class="auto" data-auto="${j}"></div>${field(S, `${k}.${j}`, "我的狀況", 1)}</div>`).join("")}</div>
-      ${s.closing ? `<div class="q" style="margin-top:16px"><div class="lab"><i>？</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.ask`)}</div>` : ""}`;
+        <div class="auto" data-auto="${j}"></div><details class="more lv"${S.a[`${k}.${j}`] ? " open" : ""}><summary>寫一點我的狀況（選做）</summary>${field(S, `${k}.${j}`, "我的狀況", 1)}</details></div>`).join("")}</div>
+      ${s.closing ? `<div class="q core" style="margin-top:16px"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.ask`)}</div>` : ""}`;
   } else {
     b = `<div class="md">${md(s.md || "")}</div>`;
   }
@@ -319,6 +352,32 @@ function wireLesson(X, S) {
   const id = X.id;
   app.querySelectorAll(".mplayer").forEach(wirePlayer);
   app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const k = b.closest(".step").id.slice(2); S.a[`${k}.mode`] = b.dataset.mode; save(); const y = scrollY; route().then(() => scrollTo(0, y)); });
+  // 點選題
+  app.querySelectorAll(".q.choice").forEach(box => {
+    const [k, j] = box.dataset.q.split("."), q = X.steps.find(s => s.key === k).items[+j];
+    box.querySelectorAll(".opt").forEach(o => o.onclick = () => {
+      let v = (S.a[box.dataset.q] || "").split("｜").filter(Boolean);
+      const x = o.dataset.v;
+      v = q.multi ? (v.includes(x) ? v.filter(y => y !== x) : [...v, x]) : (v[0] === x ? [] : [x]);
+      if (v.length) S.a[box.dataset.q] = v.join("｜"); else delete S.a[box.dataset.q];
+      save();
+      box.querySelectorAll(".opt").forEach(b => { b.setAttribute("aria-pressed", v.includes(b.dataset.v)); b.classList.toggle("teach", !!(v.length && q.answer && q.answer.includes(b.dataset.v))); });
+      box.querySelector(".fb").innerHTML = fbHTML(q, v);
+    });
+  });
+  // 第三步：老師的步驟，我也做到就打勾
+  app.querySelectorAll(".chk").forEach(c => c.onclick = () => {
+    const key = c.dataset.c, on = !S.a[key]; if (on) S.a[key] = "y"; else delete S.a[key]; save();
+    c.setAttribute("aria-pressed", on);
+    const k = key.split(".")[0], st = X.steps.find(s => s.key === k);
+    $("#chkn-" + CSS.escape(k)).textContent = chkNote(st.checks.filter((x, j) => S.a[`${k}.c${j}`]).length, st.checks.length);
+  });
+  // 第四步：最有用的一場
+  app.querySelectorAll("[data-fav]").forEach(b => b.onclick = () => {
+    const k = b.closest(".step").id.slice(2), key = `${k}.fav`, on = S.a[key] !== b.dataset.fav;
+    if (on) S.a[key] = b.dataset.fav; else delete S.a[key]; save();
+    app.querySelectorAll("[data-fav]").forEach(x => { const p = on && x === b; x.setAttribute("aria-pressed", p); x.textContent = (p ? "♥" : "♡") + " 這場對我最有用"; });
+  });
   // textareas: autosize + autosave
   const grow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
   app.querySelectorAll("textarea[data-k]").forEach(t => {
@@ -396,7 +455,7 @@ function wireLesson(X, S) {
     if (a3) a3.textContent = `練習紀錄：有用一句法、也寫了結果的 ${turned} 次`;
   }
   // print
-  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); print(); };
+  $("#print").onclick = () => { app.querySelectorAll(".reveal").forEach(r => r.classList.add("open")); app.querySelectorAll("details.more").forEach(d => d.open = true); print(); };
   // mini bar
   const mini = $("#mini"), hero = $(".sea");
   new IntersectionObserver(([e]) => mini.classList.toggle("on", !e.isIntersecting), { threshold: 0 }).observe(hero);
