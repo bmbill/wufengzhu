@@ -136,6 +136,21 @@ def parse(path):
                 # 指向本機資料夾的說明在網頁上沒用，拿掉
                 rb = re.sub(r"各場詳細內容見[^。]*。", "", rb)
                 st["reveal"] = {"title": rt.strip(), "md": rb.strip()}
+                # 沒聽共學的人：把比較表的每一列配回各場，表格之後的段落（共同點等）直接給看
+                ct = tables(rb)
+                if ct:
+                    hdr = ct[0][0]
+                    rows = {r[0]: r for r in ct[0][1:]}
+                    for x in st["sessions"]:
+                        r = rows.get(x["who"])
+                        if r:
+                            x["brief"] = [[hdr[c], r[c]] for c in range(1, len(r)) if r[c]]
+                    after = rb.splitlines()
+                    last = max(i for i, l in enumerate(after) if l.strip().startswith("|"))
+                    st["reveal"]["rest"] = chr(10).join(after[last + 1:]).strip()
+            m = re.search(r"https?://\S+?(?=[\s）)]|$)", L["meta"].get("共學錄影", ""))
+            if m:
+                st["recording"] = m.group(0)
         elif key == "五":
             st["kind"] = "practice"
             m = re.search(r"\*\*觸發點\*\*[：:]\s*(.+)", body)

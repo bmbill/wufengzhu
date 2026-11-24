@@ -256,13 +256,27 @@ function stepHTML(X, S, s, i) {
         ${s.cols.map((c, ci) => `<div><label>${esc(c)}</label>${field(S, `${k}.${j}.${ci}`, ci ? "聽完老師再寫" : "先寫我的")}</div>`).join("")}</div></div>`).join("") +
       (s.closing ? `<div class="q"><div class="lab"><i>★</i><span><strong>${esc(s.closing)}</strong></span></div>${field(S, `${k}.end`)}</div>` : "");
   } else if (s.kind === "sessions") {
-    b = (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "") +
+    // 有聽共學：帶焦點去聽、記一點；沒聽：直接讀每場重點，記下對自己有用的
+    const canRead = s.sessions.some(x => x.brief);
+    const filled = s.sessions.some((x, j) => x.brief && S.a[`${k}.${j}`]);
+    const mode = canRead ? (S.a[`${k}.mode`] || (filled ? "heard" : "read")) : "heard";
+    const read = mode === "read";
+    const seg = canRead ? `<div class="seg two" role="group" aria-label="共學">
+        <button type="button" data-mode="heard" aria-pressed="${!read}">我聽了共學</button>
+        <button type="button" data-mode="read" aria-pressed="${read}">還沒聽，先讀重點</button></div>` : "";
+    const lead = read
+      ? `<div class="lead">沒參加共學也沒關係。下面是 ${s.sessions.filter(x => x.brief).length} 位法師各自的切入點，讀完每一場，記下<strong>對我最有用的一點</strong>。${s.recording ? `有福智學員帳號的話，也可以到<a href="${esc(s.recording)}" target="_blank" rel="noopener">線上課程</a>補聽。` : ""}</div>`
+      : (s.lead ? `<div class="lead md">${md(s.lead)}</div>` : "");
+    b = seg + lead +
       s.sessions.map((x, j) => {
         const m = x.who.match(/^(\d{1,2}\/\d{1,2})\s*(.*)$/);
-        return `<div class="sess"><div class="date">${m ? esc(m[1]) + `<b>${esc(m[2])}</b>` : `<b>${esc(x.who)}</b>`}</div>
-          <div class="focus">${inline(x.focus)}</div>${field(S, `${k}.${j}`, "法師講到、我沒想到的一點")}</div>`;
+        const date = `<div class="date">${m ? esc(m[1]) + `<b>${esc(m[2])}</b>` : `<b>${esc(x.who)}</b>`}</div>`;
+        if (read && x.brief) return `<div class="sess">${date}<div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div>
+          ${field(S, `${k}.r${j}`, "對我最有用的一點")}</div>`;
+        if (read) return `<div class="sess">${date.replace("聽完", "讀完")}<div class="focus">${inline(x.focus.replace(/^.*?(這一講)/, "$1"))}</div>${field(S, `${k}.${j}`, "寫一句")}</div>`;
+        return `<div class="sess">${date}<div class="focus">${inline(x.focus)}</div>${field(S, `${k}.${j}`, "法師講到、我沒想到的一點")}</div>`;
       }).join("") +
-      (s.reveal ? reveal(`${k}.rv`, "", s.reveal.md, s.reveal.title) : "");
+      (s.reveal ? (read && s.reveal.rest ? `<div class="together md">${md(s.reveal.rest)}</div>` : reveal(`${k}.rv`, "", s.reveal.md, s.reveal.title)) : "");
   } else if (s.kind === "practice") {
     b = `<div class="q"><div class="lab"><span><strong>觸發點</strong>：每天都會遇到的小事（點一下，直接記一筆）</span></div>
         <div class="chips">${s.triggers.map((t, j) => `<button type="button" class="chip" data-pick="${j}">${esc(t)}</button>`).join("")}</div></div>
@@ -304,6 +318,7 @@ function stepHTML(X, S, s, i) {
 function wireLesson(X, S) {
   const id = X.id;
   app.querySelectorAll(".mplayer").forEach(wirePlayer);
+  app.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { const k = b.closest(".step").id.slice(2); S.a[`${k}.mode`] = b.dataset.mode; save(); const y = scrollY; route().then(() => scrollTo(0, y)); });
   // textareas: autosize + autosave
   const grow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
   app.querySelectorAll("textarea[data-k]").forEach(t => {
