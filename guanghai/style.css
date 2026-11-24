@@ -9,7 +9,7 @@
   --on-sea-2:#b9bfd0;   /* secondary text on the field */
   --moon:#f3ecda; --gold:#c8902e; --gold-ink:#8a5f12; --gold-tint:#f6ecd9;
   --ground:#ffffff; --raised:#ffffff; --raised-2:#e3e6ec;
-  --page:#edf1f8; --page-1:#edf1f8; --page-2:#f2f0ea; --page-3:#e8f2f1; /* 三段各一個底色：暮色藍、月光灰、海藍綠 */
+  --page:#e2e9f5; --page-1:#e2e9f5; --page-2:#ede7da; --page-3:#d9ebe8; /* 三段各一個底色：暮色藍、月光灰、海藍綠 */
   --ink:#1b2233; --muted:#5b6170; --faint:#6b707c;
   --border:#e4e2dc; --control:#cfccc4; --rule:#efede8;
   --fav:#b4473a; --fav-tint:#fbecea;
@@ -21,13 +21,13 @@
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --sea:#1a2849; --sea-2:#2a3d68; --ground:#121417; --raised:#1f2329; --raised-2:#2b3038;
-  --page:#14171d; --page-1:#14171d; --page-2:#17171a; --page-3:#121a1b;
+  --page:#161d2b; --page-1:#161d2b; --page-2:#1e1c18; --page-3:#11211f;
   --ink:#ecebe6; --muted:#a6aab3; --faint:#959aa4; --border:#2a2e35; --control:#3d424b; --rule:#22262c;
   --gold-ink:#e6b85c; --gold-tint:#2a2418; --fav:#f0a597; --fav-tint:#2c1e1c; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --sea:#1a2849; --sea-2:#2a3d68; --ground:#121417; --raised:#1f2329; --raised-2:#2b3038;
-  --page:#14171d; --page-1:#14171d; --page-2:#17171a; --page-3:#121a1b;
+  --page:#161d2b; --page-1:#161d2b; --page-2:#1e1c18; --page-3:#11211f;
   --ink:#ecebe6; --muted:#a6aab3; --faint:#959aa4; --border:#2a2e35; --control:#3d424b; --rule:#22262c;
   --gold-ink:#e6b85c; --gold-tint:#2a2418; --fav:#f0a597; --fav-tint:#2c1e1c; color-scheme:dark;
 }
@@ -364,3 +364,17 @@ body.ph-0{--page:var(--page-1)} body.ph-1{--page:var(--page-2)} body.ph-2{--page
 .ph-bar{border-bottom-color:var(--raised-2)}
 .checks,.chk,.sess2s,.sess2,.ladder,.ladder li,.step .lvls,.lvl,.entry,.unit-h,.lrow,.howto ol,.howto li,footer{border-color:var(--raised-2)!important}
 @media print{body{background:#fff!important}}
+
+/* 首頁角色 */
+.cast{display:flex;justify-content:space-between;align-items:flex-end;margin:20px -4px 0}
+.cast figure{margin:0;display:grid;justify-items:center;gap:2px}
+.cast figcaption{font-size:13px;color:var(--on-sea-2)}
+.howto li{grid-template-columns:56px 1fr;align-items:center}
+.howto li > div{display:grid;gap:0}
+.howto .who{font-size:13px;color:var(--muted)}
+.howto li span:last-child{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .cast .chr{animation:chr-bob 4s ease-in-out infinite}
+  .cast figure:nth-child(2) .chr{animation-delay:-1s}.cast figure:nth-child(3) .chr{animation-delay:-2s}.cast figure:nth-child(4) .chr{animation-delay:-3s}
+  @keyframes chr-bob{50%{transform:translateY(-4px)}}
+}

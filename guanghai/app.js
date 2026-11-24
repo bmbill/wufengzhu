@@ -113,6 +113,11 @@ async function renderHome() {
   const list = await index();
   const overall = list.length ? list.reduce((s, x) => s + progress(x.id), 0) / list.length : 0;
   const last = DB.last && list.find(x => x.id === DB.last);
+  const started = list.some(x => progress(x.id) > 0);
+  const lp = last ? progress(last.id) : 0;
+  const greet = !last ? `從第 ${list[0] ? list[0].no : ""} 講開始吧！每做完一步，我就亮一分；六步做完，我就圓了。`
+    : lp >= 1 ? `第 ${last.no} 講已經月圓了！帶著那一個請益的問題，去研討班問問看。`
+    : `第 ${last.no} 講亮到 ${Math.round(lp * 6)}／6 了，接著學吧。`;
   const units = [];
   for (const x of list) { const u = x.unit || "其他"; let g = units.find(g => g.u === u); if (!g) units.push(g = { u, items: [] }); g.items.push(x); }
   app.innerHTML = `
@@ -121,16 +126,20 @@ async function renderHome() {
     <div class="hero">
       <div><div class="by">真如老師・廣海明月</div><h1>廣海明月學習單</h1>
         <p>每一講一份，分三段走：聽聞前行、正聽、聽之後。每做完一步，月亮亮一分；六步做完，月就圓了。</p></div>
-      <div class="moonpair">${moon(overall, "moon-big")}${chr("yuyu", "calm", 60, "by-moon")}</div>
-    </div></div></section>
+      ${moon(overall, "moon-big")}
+    </div>
+    <div class="cast">${[["yuyu", "happy"], ["xiuxiu", "happy"], ["deng", "happy"], ["yuan", "happy"]].map(([w, m]) => `<figure>${chr(w, m, 64)}<figcaption>${CHARS[w].name}</figcaption></figure>`).join("")}</div>
+    </div></section>
   <div class="wrap paper">
+    ${say("yuan", started ? "happy" : "cheer", greet)}
     ${last ? `<a class="card continue" href="#/${last.no}">${moon(progress(last.id))}
       <div><div class="k">接著學</div><h3>第 ${last.no} 講・${esc(last.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
     ${units.map(g => `<div class="unit"><div class="unit-h">${esc(g.u)}</div>
       ${g.items.map(x => `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
         <div><h3>${esc(x.title)}</h3><p>${esc(x.verse || x.kepan)}</p></div>${moon(progress(x.id))}</a>`).join("")}</div>`).join("")}
-    <section class="howto"><h2>六步怎麼走</h2><ol>
-      ${PHASES.map((p, i) => `<li>${moon((i + 1) / 6)}<b>${p}</b><span>${["想想這週被什麼帶走，寫下現在的理解", "只聽師父原音，點選作答", "聽老師講解，逐段對照他做了哪幾步", "讀法師各從哪裡切入", "三種小事當觸發點，每天記一筆", "說得出、認得出、轉得動、生得起"][i]}</span></li>`).join("")}
+    <section class="howto"><h2>每一講分三段</h2><ol>
+      ${PH.map(g => `<li>${chr(g.host[0], g.host[1], 56)}<div><b>${esc(g.name)}</b><span class="who">${CHARS[g.host[0]].name}帶你</span>
+        <span>${g.steps.map(i => PHASES[i]).join("・")}：${esc(g.sub)}</span></div></li>`).join("")}
     </ol></section>
     ${footer()}
   </div>`;
