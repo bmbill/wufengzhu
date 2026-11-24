@@ -128,7 +128,6 @@ async function renderHome() {
         <p>每一講一份，分三段走：聽聞前行、正聽、聽之後。每做完一步，月亮亮一分；六步做完，月就圓了。</p></div>
       ${moon(overall, "moon-big")}
     </div>
-    <div class="cast">${[["yuyu", "happy"], ["xiuxiu", "happy"], ["deng", "happy"], ["yuan", "happy"]].map(([w, m]) => `<figure>${chr(w, m, 64)}<figcaption>${CHARS[w].name}</figcaption></figure>`).join("")}</div>
     </div></section>
   <div class="wrap paper">
     ${say("yuan", started ? "happy" : "cheer", greet)}
