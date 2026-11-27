@@ -429,6 +429,7 @@ function stepHTML(X, S, s, i) {
           <div class="s2-top"><span class="s2-who">${m ? `<span class="num">${esc(m[1])}</span>${esc(m[2])}` : esc(x.who)}</span>
             <button type="button" class="fav" data-fav="${j}" aria-pressed="${on}" aria-label="這場對我最有用">${on ? "♥" : "♡"}</button></div>
           ${x.head ? `<div class="s2-head">${inline(x.head)}</div>` : ""}
+          ${x.points && x.points.length ? (x.points.length === 1 ? `<p class="s2-pt">${inline(x.points[0])}</p>` : `<ul class="s2-pts">${x.points.map(p => `<li>${inline(p)}</li>`).join("")}</ul>`) : ""}
           ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡切入</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
           ${x.brief && x.brief.length ? `<details class="more s2"><summary>看法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
         </div>`;

@@ -181,6 +181,8 @@ def parse(path):
                             x["seg"] = seg_of(v)
                         elif h == "切入點":
                             x["head"] = v
+                        elif h == "重點":  # 一場一段重點；有兩三點時用「｜」分開
+                            x["points"] = [p.strip() for p in v.split("｜") if p.strip()]
                         elif v:
                             x["brief"].append([h, v])
                     st["sessions"].append(x)

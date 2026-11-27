@@ -223,6 +223,9 @@ details.more > div,details.more > .q{margin-top:8px}
 .s2-head{font-family:var(--f-display);font-size:19px;margin-top:12px;color:var(--ink)}
 .s2-head .arr{display:none}
 .s2-head strong{font-weight:700}
+.s2-pt,.s2-pts{font-size:16px;line-height:1.75;color:var(--ink);margin:8px 0 10px}
+.s2-pts{padding-left:1.2em;display:grid;gap:6px}
+.s2-pts li::marker{color:var(--muted)}
 details.more.s2{margin:4px 0 0}
 details.more.s2 > summary{min-height:40px;font-size:14px}
 .brief{display:grid;gap:10px;font-size:15px;line-height:1.7;padding:4px 0 4px 24px}
