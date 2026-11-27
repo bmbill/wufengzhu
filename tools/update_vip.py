@@ -7,6 +7,7 @@
 import html, json, os, re, sys, urllib.request
 
 RSS = "https://www.amrtf.org/podcast/rss/B000211.xml"
+VOL = "https://cdn.amec.amrtf.org/volume/B000211/%d"
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lectures_vip.js")
 
 
@@ -30,6 +31,15 @@ def main():
         if not enc:
             continue
         out[n] = [enc.group(1), int(dur.group(1)) if dur else 0, name, clean(link.group(1)) if link else ""]
+    # RSS 給的 taskMedia 網址有些已經失效（45、46 講 403），改用大慈恩網站本身用的 volumeMedia 網址；抓不到才留 RSS 的
+    for n in out:
+        try:
+            v = json.load(urllib.request.urlopen(urllib.request.Request(VOL % n, headers=req.headers), timeout=30))
+            a = [m for m in v.get("media", []) if m.get("mediaType") == "audio/mpeg"]
+            if a and a[0].get("src"):
+                out[n][0] = a[0]["src"]
+        except Exception as e:
+            print("第 %d 講讀不到 volume，保留 RSS 網址：%s" % (n, e))
     if len(out) < 10:
         sys.exit("清單太少（%d 講），可能抓取失敗，不更新" % len(out))
     data = {str(k): out[k] for k in sorted(out)}
