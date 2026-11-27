@@ -166,7 +166,7 @@ async function renderHome() {
         <span class="u-moons" aria-hidden="true">${g.items.map(x => moon(progress(x.id))).join("")}</span></summary>
       ${g.items[0].verse ? `<p class="u-verse">${esc(g.items[0].verse)}</p>` : ""}
       ${g.items.map(x => { const p = progress(x.id); return `<a class="lrow" href="#/${x.no}"><span class="no">${x.no}</span>
-        <div><h3>${esc(x.title)}</h3><p>${p >= 1 ? "月圓了" : p > 0 ? `亮到 ${Math.round(p * 6)}／6` : "還沒開始"}</p></div>${moon(p)}</a>`; }).join("")}
+        <div><h3>${esc(x.title)}</h3><p${p >= 1 ? ' class="st-done"' : p > 0 ? ' class="st-go"' : ""}>${p >= 1 ? "月圓了" : p > 0 ? `亮到 ${Math.round(p * 6)}／6` : "還沒開始"}</p></div>${moon(p)}</a>`; }).join("")}
     </details>`;
   };
   app.innerHTML = `
@@ -182,7 +182,7 @@ async function renderHome() {
     ${say("yuan", started ? "happy" : "cheer", greet)}
     ${cont ? `<a class="card continue" href="#/${cont.no}">${moon(progress(cont.id))}
       <div><div class="k">接著學</div><h3>第 ${cont.no} 講・${esc(cont.title)}</h3></div><span class="go">${ICON.go}</span></a>` : ""}
-    ${secs.map(s => `<section class="ksec"><div class="ksec-h">${s.path ? `<span>${esc(s.path)}</span>` : ""}<h2>${esc(s.k)}</h2></div>
+    ${secs.map((s, i) => `<section class="ksec" style="--k:var(--k${i % 5 + 1})"><div class="ksec-h">${s.path ? `<span>${esc(s.path)}</span>` : ""}<h2>${esc(s.k)}</h2></div>
       ${s.units.map(unitHTML).join("")}</section>`).join("")}
     <section class="howto"><h2>每一講分三段</h2><ol>
       ${PH.map(g => `<li>${chr(g.host[0], g.host[1], 56)}<div><b>${esc(g.name)}</b><span class="who">${CHARS[g.host[0]].name}帶你</span>
