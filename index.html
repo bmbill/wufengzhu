@@ -408,7 +408,6 @@ details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;padding:4px 
 .todo-go:active{transform:translateY(2px);box-shadow:none}
 .todo-note{font-size:12px;color:var(--mute);margin:8px 4px 0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
 .todo-note .todo-tag{width:26px;height:26px;font-size:13px;border-radius:8px;text-decoration:none}
-.todo-rev{margin-top:-6px}
 .subhead .back{display:inline-block;align-self:flex-start;text-decoration:none;color:var(--ink);background:var(--card-2);border-radius:999px;padding:5px 12px;font-size:13px;box-shadow:var(--shadow);margin-bottom:6px}
 /* 主題收藏 */
 .oilbar{display:flex;align-items:center;gap:12px}
@@ -1482,7 +1481,6 @@ function vToday(){
       go:n?`<button class="todo-go" data-act="study-basic" data-ch="v" data-n="${n}" aria-label="開始聽">▶</button>`:""}));
     rows.push(todoRow({k:"hui",href:"hui",done:huiOk,title:"觀察修 5 分鐘",stk:sticker(tileWho("hui"),huiOk?"cheer":"wow","tr",huiOk?"看到了！":"看一看"),meta:`第 ${vstage().n} 階・${vstage().name}`,
       go:`<button class="todo-go" data-act="vthink" aria-label="開始觀察修">▶</button>`}))}
-  const reviews=["L","s","v"].map(reviewCard).join("");
   return `
   <header class="hero">
     <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
@@ -1491,7 +1489,6 @@ function vToday(){
   </header>
   <section class="section solos" aria-label="聽聞與實修">${rows.join("")}
     <p class="todo-note">想做哪一件，就從哪一件開始。三學的頁面：<a class="todo-tag k-jie" href="#jie" aria-label="戒・聽聞廣論">戒</a><a class="todo-tag k-ding" href="#ding" aria-label="定・奢摩他">定</a><a class="todo-tag k-hui" href="#hui" aria-label="慧・毗婆舍那">慧</a></p></section>
-  ${reviews?`<div class="todo-rev">${reviews}</div>`:""}
   ${window.Shan?`<section class="section shan-sec">${Shan.strip()}</section>`:""}
   <section class="section"><a class="gh-entry" href="guanghai/"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="#f3e3b0"/><circle cx="26" cy="15" r="12" fill="#0d1a36"/></svg><span><b>廣海明月學習單</b><small>每一講一份，照六步走：聽前準備、聽師父、聽老師、共學、一週練習、四層核對</small></span><i aria-hidden="true">›</i></a></section>
   ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
