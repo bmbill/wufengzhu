@@ -388,6 +388,23 @@ details.adv summary{font-size:13px;color:var(--mute);cursor:pointer;padding:4px 
 .tile-pct{font-size:11px;color:var(--mute)}
 .tile-go{font-size:26px;color:var(--faint);line-height:1}
 .tile .sticker.tr{top:-30px;right:4px;width:60px;height:60px}
+.solos{gap:12px}
+.card.solo{flex-direction:row;align-items:center;gap:12px;padding:14px}
+.solo-main{flex:1;min-width:0;display:flex;align-items:center;gap:14px;color:var(--ink);text-decoration:none}
+.solo-k{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-family:var(--f-display);font-size:22px;font-weight:700;color:#fff}
+.solo.k-jie .solo-k{background:linear-gradient(150deg,#ff9a6b,#ff7a59)}.solo.k-ding .solo-k{background:linear-gradient(150deg,#ffc24d,#ffad1f)}.solo.k-hui .solo-k{background:linear-gradient(150deg,#8ea6ff,#6c8cff)}
+.solo-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.solo-b b{font-family:var(--f-display);font-size:18px;font-weight:700;line-height:1.3}
+.solo-b small{font-size:12.5px;color:var(--mute);line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.solo-ok{font-style:normal;color:#0f7a5e;font-weight:700}
+.todo-warn{color:#c2335a}
+.todo-tag{flex:none;width:24px;height:24px;border-radius:8px;display:inline-grid;place-items:center;font-family:var(--f-display);font-size:13px;font-weight:700;color:#fff}
+.todo-tag.k-jie{background:#ff8a62}.todo-tag.k-ding{background:#ffb52e}.todo-tag.k-hui{background:#7d98ff}
+.todo-go{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--gold);color:var(--ink);font-size:16px;display:grid;place-items:center;box-shadow:0 3px 0 #e08e00}
+.todo-go:active{transform:translateY(2px);box-shadow:none}
+.todo-note{font-size:12px;color:var(--mute);margin:8px 4px 0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.todo-note .todo-tag{width:26px;height:26px;font-size:13px;border-radius:8px;text-decoration:none}
+.todo-rev{margin-top:-6px}
 .subhead .back{display:inline-block;align-self:flex-start;text-decoration:none;color:var(--ink);background:var(--card-2);border-radius:999px;padding:5px 12px;font-size:13px;box-shadow:var(--shadow);margin-bottom:6px}
 /* 主題收藏 */
 .oilbar{display:flex;align-items:center;gap:12px}
@@ -1427,15 +1444,11 @@ function dailyTalk(){const n=daysBetween(S.start,today());const iss=lastIssue();
 /* 「今天想一想」卡片上引導者說的一句話 */
 function dailyTip(){const lines=dailyTalk().filter(l=>l[0]==="zz");const l=lines[lines.length-1]||["zz","gentle",stage().tip];return [l[1],l[2]]}
 function greet(){const h=new Date().getHours();return h<5?"夜深了":h<11?"早安":h<14?"午安":h<18?"午後好":"晚上好"}
-/* ================= 首頁：戒、定、慧三大塊；點進去才做各自的任務 ================= */
+/* ================= 首頁：今天要做的事（一列一件事，▶ 直接開始）；戒定慧是標籤，點文字進各自的頁面 ================= */
 const SUBS=["jie","ding","hui"];
-function chip(label,ok){return `<span class="tchip ${ok?"ok":""}">${ok?"✓":"○"} ${esc(label)}</span>`}
-function homeTile(o){return `<a class="tile tile-${o.k}" href="#${o.href}">${o.stk}
-  <span class="tile-k" aria-hidden="true">${o.glyph}</span>
-  <span class="tile-b"><span class="tile-eb">${esc(o.eb)}</span><span class="tile-t">${esc(o.title)}</span><span class="tile-sub">${esc(o.sub)}</span>
-    ${o.chips?`<span class="tchips">${o.chips}</span>`:""}
-    <span class="bar"><i style="width:${Math.round(o.pct*100)}%"></i></span><span class="tile-pct">${esc(o.pctLabel)}</span></span>
-  <span class="tile-go" aria-hidden="true">›</span></a>`}
+/* 首頁的一張小卡：一件獨立的事。左邊戒定慧色塊、動詞開頭的標題、一行說明、▶ 直接開始；做過了只在說明前面輕輕標一下 */
+function todoRow(o){const tag={jie:"戒",ding:"定",hui:"慧"}[o.k];
+  return `<div class="card solo k-${o.k}"><a class="solo-main" href="#${o.href}"><span class="solo-k" aria-hidden="true">${tag}</span><span class="solo-b"><b>${esc(o.title)}</b><small>${o.done?`<em class="solo-ok">✓ ${o.done===true?"今天做過了":esc(o.done)}</em>・`:""}${o.meta}</small></span></a>${o.go||""}</div>`}
 function vToday(){
   const t=today();const d=day(t)||{sits:[]};const st=stage();const w=weekNo(t);const dt=new Date();
   // 戒
@@ -1446,29 +1459,35 @@ function vToday(){
   // 慧
   const vhw=S.vipOn?vheardInWeek(w):0;const huiOk=S.vipOn&&!!d.vthink;
   const okCount=[jieOk,dingOk,huiOk].filter(Boolean).length,total=S.vipOn?3:2;dayAllDone=okCount>=total;
-  const tiles=[
-    homeTile({k:"jie",href:"jie",glyph:"戒",eb:"戒・增上戒學",title:"聽聞廣論",
-      sub:lcat?`${lcat[1]}・${lcat[0]}`:"道前基礎到四攝全部聽完了",
-      chips:chip(`今日聽聞 ${ldt}/${lpace} 段`,jieOk)+chip("睡前反省",!!d.night),
-      pct:L.length?ldone/L.length:0,pctLabel:`師父南普陀廣論 ${ldone}/${L.length} 段`,
-      stk:sticker(tileWho("jie"),jieOk?"cheer":"gentle","tr",jieOk?"聽完了！":"先發心")}),
-    homeTile({k:"ding",href:"ding",glyph:"定",eb:"定・增上定學",title:"奢摩他",
-      sub:`上座第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}`,
-      chips:chip(sneed>1?`上座 ${Math.min(sdone,sneed)}/${sneed}`:"上座",dingOk)+chip(`止觀初探 本週 ${hw}/${S.pace} 講`,hw>=S.pace)+(co.length?`<span class="tchip warn">${co.length} 則提醒</span>`:""),
-      pct:heardCount()/TOTAL,pctLabel:`止觀初探 ${heardCount()}/${TOTAL} 講`,
-      stk:sticker(tileWho("ding"),dingOk?"happy":"sit","tr",dingOk?"坐完了！":"一起坐")}),
-    homeTile({k:"hui",href:"hui",glyph:"慧",eb:"慧・增上慧學",title:"聽聞毗婆舍那",
-      sub:S.vipOn?`觀察修第 ${vstage().n} 階・${vstage().name}`:"還沒開啟，點進去看看",
-      chips:S.vipOn?chip(`本週 ${vhw}/${S.vpace||1} 講`,vhw>=(S.vpace||1))+chip("觀察修",!!d.vthink):"",
-      pct:S.vipOn&&vipNums().length?vheardCount()/vipNums().length:0,pctLabel:S.vipOn?`止觀初探・毗缽舍那 ${vheardCount()}/${vipNums().length} 講`:"還沒開啟",
-      stk:sticker(tileWho("hui"),"think","tr",S.vipOn?"往深處看":"")})];
+  // 首頁：一件一張卡，彼此獨立，不排成清單、不計完成幾件。止觀初探放在上座前面：先聽老師怎麼教，再坐
+  const rows=[];
+  {const mins=li!=null?Math.max(1,Math.round(planSec(li)/60)):0;
+   rows.push(todoRow({k:"jie",href:"jie",done:jieOk,title:"聽一段師父廣論",
+    meta:li!=null?`${lcat[0]}・${lrTopic(li)}・約 ${mins} 分鐘`:"道前基礎到四攝全部聽完了",
+    go:li!=null?`<button class="todo-go" data-act="lr-go" data-i="${li}" aria-label="開始聽這一段">▶</button>`:""}))}
+  {const n=focusLecture("s");
+   rows.push(todoRow({k:"ding",href:"ding",done:hw>=S.pace?"本週聽過了":false,title:"聽真如老師《止觀初探》",
+    meta:n?`第 ${n} 講・${LECT[n-1]}`:"153 講全部聽完了",
+    go:n?`<button class="todo-go" data-act="study-basic" data-ch="s" data-n="${n}" aria-label="開始聽第 ${n} 講">▶</button>`:""}))}
+  rows.push(todoRow({k:"ding",href:"ding",done:dingOk,title:`上座 ${sitMin()} 分鐘`,
+    meta:(heardCount()?`第 ${st.n} 階・${st.name}${warmLeft()?"（回溫中）":""}`:"先聽《止觀初探》第 1 講，知道怎麼坐，再來上座")+(co.length?`・<b class="todo-warn">${co.length} 則提醒</b>`:""),
+    go:`<button class="todo-go" data-act="sit" aria-label="開始語音引導上座">▶</button>`}));
+  if(S.vipOn){const n=focusLecture("v");const vp=S.vpace||1;
+    rows.push(todoRow({k:"hui",href:"hui",done:vhw>=vp?"本週聽過了":false,title:"聽真如老師《毗缽舍那》",
+      meta:n?vipTitle(n):"目前的講次都聽完了",
+      go:n?`<button class="todo-go" data-act="study-basic" data-ch="v" data-n="${n}" aria-label="開始聽">▶</button>`:""}));
+    rows.push(todoRow({k:"hui",href:"hui",done:huiOk,title:"觀察修 5 分鐘",meta:`第 ${vstage().n} 階・${vstage().name}`,
+      go:`<button class="todo-go" data-act="vthink" aria-label="開始觀察修">▶</button>`}))}
+  const reviews=["L","s","v"].map(reviewCard).join("");
   return `
   <header class="hero">
     <div class="date num">${dt.getFullYear()}.${pad(dt.getMonth()+1)}.${pad(dt.getDate())} · 星期${WD[dt.getDay()]} · 第 ${w+1} 週</div>
     <h1>${greet()}，<br>今天也點一盞燈。</h1>
     ${window.DDLamp?`<div class="hero-lamp">${DDLamp.todayCard()}${DDLamp.lampOf(today())&&window.shareLamp?`<button class="share-lamp" data-act="share-lamp" aria-label="分享今天的燈"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`:""}</div>`:`<div class="stagepill"><b>${okCount}</b>今天完成 ${okCount}／${total} 塊</div>`}
   </header>
-  <section class="section tiles" aria-label="戒定慧">${tiles.join("")}</section>
+  <section class="section solos" aria-label="聽聞與實修">${rows.join("")}
+    <p class="todo-note">想做哪一件，就從哪一件開始。三學的頁面：<a class="todo-tag k-jie" href="#jie" aria-label="戒・聽聞廣論">戒</a><a class="todo-tag k-ding" href="#ding" aria-label="定・奢摩他">定</a><a class="todo-tag k-hui" href="#hui" aria-label="慧・毗婆舍那">慧</a></p></section>
+  ${reviews?`<div class="todo-rev">${reviews}</div>`:""}
   ${window.Shan?`<section class="section shan-sec">${Shan.strip()}</section>`:""}
   <section class="section"><a class="gh-entry" href="guanghai/"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="#f3e3b0"/><circle cx="26" cy="15" r="12" fill="#0d1a36"/></svg><span><b>廣海明月學習單</b><small>每一講一份，照六步走：聽前準備、聽師父、聽老師、共學、一週練習、四層核對</small></span><i aria-hidden="true">›</i></a></section>
   ${S.onboarded&&(!S.lastBackup||daysBetween(S.lastBackup,today())>=30)&&Object.keys(DAYS).length>=5?`<div class="card calm" style="margin-top:22px"><h3>備份一下吧</h3><p class="meta">進度只存在這支手機的瀏覽器裡。${lastBackupNote()}下載一個備份檔，換手機或清除瀏覽器資料時就能還原。</p><div class="btns"><button class="btn small primary" data-act="download">下載備份檔</button></div></div>`:""}
