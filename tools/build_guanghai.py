@@ -134,6 +134,10 @@ def parse(path):
         if len(parts) > 1:
             L["master"]["parts"] = parts
         L["lecture"] = src.group(0)  # 整講音檔：第三步、第四步可以分段播
+    # 師父原音在別講的音檔裡（例如 566 講沒有師父原音、要聽 565 講的）：另給「整講音檔」一列
+    whole = re.search(r"https?://\S+?(?=[\s）)]|$)", meta.get("整講音檔", ""))
+    if whole:
+        L["lecture"] = whole.group(0)
     verse = re.search(r"「([^」]{8,})」", meta.get("廣論段落", ""))
     L["verse"] = verse.group(1) if verse else ""
     appendix = ""
