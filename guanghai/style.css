@@ -230,6 +230,8 @@ details.more.s2{margin:4px 0 0}
 details.more.s2 > summary{min-height:40px;font-size:14px}
 .brief{display:grid;gap:10px;font-size:15px;line-height:1.7;padding:4px 0 4px 24px}
 .brief span{display:block;font-size:13px;color:var(--muted)}
+.flow{display:grid;gap:6px;font-size:15px;line-height:1.7;padding:4px 0 4px 2.2em;margin:0}
+.flow li::marker{color:var(--muted)}
 .together{font-size:15px}
 .together > p:first-child{margin-top:4px}
 

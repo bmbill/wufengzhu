@@ -187,6 +187,8 @@ def parse(path):
                             x["head"] = v
                         elif h == "重點":  # 一場一段重點；有兩三點時用「｜」分開
                             x["points"] = [p.strip() for p in v.split("｜") if p.strip()]
+                        elif h == "怎麼帶":  # 這場的架構：①②③…一步一步
+                            x["flow"] = [s.strip() for s in re.split(r"[①-⑳]", v) if s.strip()]
                         elif v:
                             x["brief"].append([h, v])
                     st["sessions"].append(x)
