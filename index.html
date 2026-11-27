@@ -1052,17 +1052,16 @@ function openNotes(key){const k=keyInfo(key);const p=(((S.notes||{})[key]||{}).p
 const AFTER={next:"自動繼續",repeat:"自動重播",wait:"等我按"};
 const afterMode=()=>AFTER[S.afterMode]?S.afterMode:"next";
 const afterSec=()=>[10,15,30].includes(S.afterSec)?S.afterSec:15;
-/* o={next,repeat,more,auto}：next＝繼續／完成，repeat＝重聽，auto＝自動繼續時要做哪一個（預設 next）。耳機的下一首／上一首也可以 */
+/* o={next,repeat,more,auto}：next＝繼續／完成，repeat＝重聽，auto＝自動繼續時要做哪一個（預設 next） */
 const Hands={on:null,tm:null,left:0,
-  async arm(o,say){this.disarm();this.on=o;this.media(true);this.status();for(const s of [].concat(say||[])){if(this.on!==o)return;await Voice.speak(s)}if(this.on===o)this.count()},
+  async arm(o,say){this.disarm();this.on=o;this.status();for(const s of [].concat(say||[])){if(this.on!==o)return;await Voice.speak(s)}if(this.on===o)this.count()},
   count(){this.stopT();if(afterMode()==="wait"||!this.on){this.status();return}this.left=afterSec();this.keep(true);this.status();
     this.tm=setInterval(()=>{if(!this.on){this.stopT();return}if(--this.left<=0)this.fire(afterMode()==="repeat"?"repeat":(this.on.auto||"next"));else this.status()},1000)},
   hold(){this.stopT();this.status()},
   stopT(){if(this.tm){clearInterval(this.tm);this.tm=null;this.keep(false)}},
   /* 倒數時放無聲音檔，螢幕鎖住也照樣計時 */
   keep(on){try{if(on){player.loop=true;player.src="voice/silence.mp3";const p=player.play();if(p&&p.catch)p.catch(()=>{})}else if(player.loop){player.loop=false;player.pause()}}catch(e){}},
-  disarm(){this.on=null;this.stopT();this.media(false);this.status()},
-  media(on){if(!("mediaSession" in navigator))return;try{LP.seekKeys(!on)}catch(e){}try{navigator.mediaSession.setActionHandler("nexttrack",on?()=>this.fire("next"):null);navigator.mediaSession.setActionHandler("previoustrack",on?()=>this.fire("repeat"):null)}catch(e){}},
+  disarm(){this.on=null;this.stopT();this.status()},
   fire(k){const o=this.on;if(!o)return;this.disarm();Voice.stop();if(o[k])o[k]()},
   status(){document.querySelectorAll(".hands").forEach(el=>{const t=el.querySelector(".hd-t"),b=el.querySelector(".lk-inline");el.className="hands "+(!this.on?"off":this.tm?"count":"idle");
     if(t)t.textContent=this.tm?`${this.left} 秒後${afterMode()==="repeat"?"重播這段":"自動繼續"}・先在心裡做個結論`:"先在心裡做個結論，想好了按下面的按鈕";if(b)b.hidden=!this.tm})}};
@@ -2007,7 +2006,7 @@ const LP={a:new Audio(),n:null,RATES:[1,1.25,1.5,0.8],saved:0,
   skip(s){const a=this.a;if(!a.src||this.gapCb)return;if(s>0&&this.po&&this.po.key==="HB"){toast("聞法勝利不能快轉");return}
     let lo=0,hi=isFinite(a.duration)?a.duration:Infinity;if(this.mode==="plan"){lo=this.partT0||0;hi=Math.min(hi,this.partT1)}
     if(!isFinite(hi))hi=a.currentTime+Math.max(0,s);a.currentTime=Math.min(Math.max(lo,hi-0.5),Math.max(lo,a.currentTime+s));this.ui()},
-  /* 鎖屏／耳機：倒退、快轉 15 秒（免手持開著時讓給「上一首／下一首」） */
+  /* 鎖屏：倒退、快轉 15 秒 */
   seekKeys(on){if(!("mediaSession" in navigator))return;const m=navigator.mediaSession;
     try{m.setActionHandler("seekbackward",on?e=>this.skip(-((e&&e.seekOffset)||15)):null);m.setActionHandler("seekforward",on?e=>this.skip((e&&e.seekOffset)||15):null)}catch(e){}},
   ui(){const a=this.a,d=a.duration||0,t=a.currentTime||0;
