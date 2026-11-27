@@ -1,5 +1,5 @@
 // 廣海明月學習單 service worker：離線也能開。頁面、程式、講次資料先連網拿最新版，連不上就用快取；字型用快取。
-const CACHE = "gh-v27";
+const CACHE = "gh-v28";
 const CORE = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-180.png", "./lessons/index.json",
   // 主題角色（燈燈相續的角色圖）
