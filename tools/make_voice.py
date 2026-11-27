@@ -34,6 +34,7 @@ APP_READ = {
     "覺知": "覺jue2", "感覺": "覺jue2", "正知": "正zheng4", "還是": "還hai2", "還在": "還hai2", "還會": "還hai2",
     "止住修": "住zhu4", "要破的": "要yao4",
     "了脫": "了liao3", "為了": "為wei4", "還清楚": "還hai2",
+    "大覺": "覺jue2", "共乘": "乘cheng2",
 }
 PRON = load_read(); PRON.update(APP_READ)
 
