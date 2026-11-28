@@ -438,6 +438,10 @@ function stepHTML(X, S, s, i) {
           ${x.points && x.points.length ? (x.points.length === 1 ? `<p class="s2-pt">${inline(x.points[0])}</p>` : `<ul class="s2-pts">${x.points.map(p => `<li>${inline(p)}</li>`).join("")}</ul>`) : ""}
           ${x.from ? `<div class="s2-from"><span class="lbl">從這一講的這裡切入</span>${inline(x.from)}${segBtn(x.seg)}</div>` : ""}
           ${x.flow && x.flow.length ? `<details class="more s2"><summary>這場怎麼帶（${x.flow.length} 步）</summary><ol class="flow">${x.flow.map(f => `<li>${inline(f)}</li>`).join("")}</ol></details>` : ""}
+          ${x.full && x.full.flow && x.full.flow.length ? `<details class="more s2 full"><summary>完整帶法：從頭到尾的流程（${x.full.flow.length} 段）</summary><div class="full-in">
+            <ol class="full-flow">${x.full.flow.map(([t, w]) => `<li><span class="num">${esc(t || "")}</span><span>${inline(w || "")}</span></li>`).join("")}</ol>
+            <p class="hint">時間是共學錄音裡的位置；內容是自動轉錄後整理的摘述，原話以錄音為準。</p>
+          </div></details>` : ""}
           ${x.brief && x.brief.length ? `<details class="more s2"><summary>看法師怎麼帶</summary><div class="brief">${x.brief.map(([h, v]) => `<div><span>${esc(h)}</span>${inline(v)}</div>`).join("")}</div></details>` : ""}
         </div>`;
       }).join("")}</div>

@@ -108,6 +108,36 @@ def items_of(body):
         out.append(q)
     return out
 
+NOTES = os.path.join(os.path.dirname(os.path.dirname(SITE)), "_廣海明月AI")
+
+def web_only(t):
+    """筆記裡不宜公開的地方：<!--不上網-->…<!--/不上網--> 整段略過（可跨行）；
+    <!--網：…--> 只在網站上出現（拿來放改寫得較委婉的說法）。刪完變空的條列一併拿掉。"""
+    t = re.sub(r"<!--\s*不上網\s*-->.*?<!--\s*/不上網\s*-->", "", t, flags=re.S)
+    t = re.sub(r"<!--\s*網[：:](.*?)-->", r"\1", t, flags=re.S)
+    return re.sub(r"^[ \t]*-[ \t]*\n", "", t, flags=re.M)
+
+
+def note_full(no, who):
+    """共學卡片的「完整帶法」：從那一場的 [AI筆記] 取主要成果、進行流程、核心教導。
+    筆記在 _廣海明月AI\\NNN講_共學錄音\\[AI筆記]YYYY-MM-DD-帶領人（…）.md，用講次＋月/日（同一天再比帶領人）對到場次。"""
+    m = re.match(r"(\d{1,2})/(\d{1,2})\s*(.*)", who)
+    if not m:
+        return None
+    md_ = "-%02d-%02d-" % (int(m.group(1)), int(m.group(2)))
+    fs = [f for f in glob.glob(os.path.join(NOTES, f"{no}講_共學錄音", "[[]AI筆記[]]*.md")) if md_ in os.path.basename(f)]
+    if len(fs) > 1:
+        fs = [f for f in fs if m.group(3)[:2] and m.group(3)[:2] in os.path.basename(f)] or fs[:1]
+    if not fs:
+        return None
+    t = web_only(open(fs[0], encoding="utf-8").read())
+    sec = {h.strip(): b.strip() for h, b in re.findall(r"^## ([^\n]+)\n(.*?)(?=^## |\Z)", t, re.S | re.M)}
+    # 只放進行流程（時間＋做了什麼）；主要成果、核心教導有太多學員私事和轉錄不確定的人名，不上網
+    full = {}
+    rows = [r for r in (sec.get("進行流程") or "").splitlines() if r.startswith("|")][2:]
+    full["flow"] = [x for x in ([c.strip() for c in r.strip().strip("|").split("|")][:2] for r in rows) if len(x) == 2 and x[1]]
+    return full if full["flow"] else None
+
 def parse(path):
     text = open(path, encoding="utf-8").read()
     no = int(re.search(r"第\s*(\d+)\s*講", os.path.basename(path)).group(1))
@@ -191,6 +221,9 @@ def parse(path):
                             x["flow"] = [s.strip() for s in re.split(r"[①-⑳]", v) if s.strip()]
                         elif v:
                             x["brief"].append([h, v])
+                    full = note_full(L["no"], r[0])
+                    if full:
+                        x["full"] = full
                     st["sessions"].append(x)
             lines = body.splitlines()
             last = max((i for i, l in enumerate(lines) if l.strip().startswith("|")), default=-1)
