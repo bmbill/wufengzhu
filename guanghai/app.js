@@ -149,12 +149,18 @@ async function renderHome() {
   // 分兩層：科判（例如「思惟聞法勝利」）→ 偈頌單元（例如「若由聞法發信意」一偈）→ 各講。
   // 單元預設收起來，只打開「接著學」那一講所在的；自己打開、收起的會記住。
   const secs = [];
+  // 同一個偈頌單元的各講一定放在一起，跟著單元第一講的科判走（科判位置在單元中途往下細分時，不拆開）。
   for (const x of list) {
-    const kp = (x.kepan || "").split("→").map(s => s.trim()).filter(Boolean);
-    const sk = kp.length ? kp[kp.length - 1] : "其他";
-    let s = secs.find(s => s.k === sk); if (!s) secs.push(s = { k: sk, path: kp.slice(0, -1).join(" → "), units: [] });
     const u = (x.unit || "其他").replace(/^[\d–\-~ ]+講[：:]\s*/, "");
-    let g = s.units.find(g => g.u === u); if (!g) s.units.push(g = { u, items: [] }); g.items.push(x);
+    let g = null;
+    for (const s of secs) { g = s.units.find(g => g.u === u); if (g) break; }
+    if (!g) {
+      const kp = (x.kepan || "").split("→").map(s => s.trim()).filter(Boolean);
+      const sk = kp.length ? kp[kp.length - 1] : "其他";
+      let s = secs.find(s => s.k === sk); if (!s) secs.push(s = { k: sk, path: kp.slice(0, -1).join(" → "), units: [] });
+      s.units.push(g = { u, items: [] });
+    }
+    g.items.push(x);
   }
   const uopen = DB.uopen || {};
   const isOpen = g => g.u in uopen ? uopen[g.u] : cont ? g.items.includes(cont) : g === secs[0].units[0];
